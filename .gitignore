@@ -1,2 +1,7 @@
 .DS_Store
 description/.DS_Store
+description/*.aux
+description/*.log
+description/*.pdf
+description/*.synctex.gz
+description/*.out

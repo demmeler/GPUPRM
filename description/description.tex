@@ -56,7 +56,7 @@ For example in robot motion planning, where the dimensions of the underlying spa
 
 
 
-\section{Problem Statement and Sequential PRM Method}
+\section{Problem Statement and Sequential PRM Method}\label{algintro}
 \newtheorem*{defi}{Definition}
 \newtheorem*{alg1}{Algorithm}
 
@@ -103,19 +103,19 @@ For two points \(q_1\) and \(q_2\) we define the connection with stepsize \(h>0\
 \end{alg1}
 
 
-The probability density \(p(\ \cdot\ ,G)\) (depending on the actual graph) can be for example first select randomly a node \(q_0 \in V\) and then sample a new node \(q\) in the neighbourhood of \(q_0\). Theory about success probabilities and convergence results can be found in \cite{prmlec}, \cite{prm1} or \cite{prm2}.
+The probability density \(p(\ \cdot\ ,G)\) (depending on the actual graph) can be for example first selecting randomly a node \(q_0 \in V\) and then sampling a new point \(q\) in the neighbourhood of \(q_0\). Theory about success probabilities and convergence results can be found in \cite{prmlec}, \cite{prm1} or \cite{prm2}.
 
 
 \section{Application to Robotics}
 
 In the project, it is planned to use this algorithm to create collisionfree trajectories of a robot arm. 
-For a robot with d joint angles \(q_i\) one can calculate straightforwardly all positions \(x_j \in \R^3\) and orientations \(R_j\in \R^{3\times3}\) of the single parts of the robot. Therefore the direct kinematic can be interpreted as a (strongly nonlinear) function
+For a robot with d joint angles \(q_i\) one can calculate straightforwardly all positions \(x_j \in \R^3\) and orientations \(R_j\in \R^{3\times3}\) of the single parts of the robot, \cite{robodyn} describes the exact calculations. Therefore this direct kinematic can be interpreted as a (strongly nonlinear) function
 \begin{equation*}
 	f: (q_1, ... , q_d) \mapsto (x_1, R_1, ..., x_l, R_l).
 \end{equation*}
 
 Now, we have given some obstacles with fixed positions \(x_{l+1}, ..., x_m\) and orientations \(R_{l+1}, ..., R_{m}\), which the robot has to avoid during movement. It is assumed that all objects are given in a form, that for each two objects it can be determined from the positions and orientations, if there is an intersection. For example as polyhedrons.
-From this the indicator function can be defined as
+From this the indicator function for the obstacles in the configuration space can be defined as
 \begin{equation*}
 	I(q)=
 	\begin{cases}
@@ -138,10 +138,10 @@ It has to be noted that the trajectories \(q(t)\) the PRM algorithm generates ar
 
 \section{Ideas for Parallelization}
 
-Like the stated robotics example, in many cases the most costly operation of the PRM algorithm is the evaluation of the indicator function \(I(q)\), which however can be done independently for every new \(q\).
+Like in the stated robotics example, in many cases the most costly operation of the PRM algorithm is the evaluation of the indicator function \(I(q)\), which however can be done independently for every new \(q\).
 \begin{itemize}
 \item 
-Therefore in a first step, it is planned to implement \(I(q)\) parallely in a vectorized way, i.e. as a function \((q_1, ... , q_P) \mapsto (I(q_1),...,I(q_P))\). For example with help of the GPU. In the robotics example this means, the direct kinematic and collision calculation is made parallely for \(P\) different joint angle values.
+Therefore in a first step, it is planned to implement \(I(q)\) parallely in a vectorized way, i.e. as a function \((q_1, ... , q_P) \mapsto (I(q_1),...,I(q_P))\). For example with help of the GPU. In the robotics example this means, the direct kinematic and collision calculation is made parallely for \(P\) different joint angle vectors.
 \item
 Then in a first level of parallelization, this function can be applied to the \(q_i \in [q, \tilde q]_h \) to check, if \(q\) and \(\tilde q\) are connected.
 \item

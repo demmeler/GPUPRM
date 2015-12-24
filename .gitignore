@@ -5,3 +5,6 @@ description/*.log
 description/*.pdf
 description/*.synctex.gz
 description/*.out
+prm/build
+*~
+*/*~

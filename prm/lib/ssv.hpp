@@ -2,39 +2,22 @@
 #define SSV_ELEMENT_HPP
 
 #include <math.h>
+#include <trafo.hpp>
 
 namespace ssv{
 
   class ssvele;
-  class ssv1;
-  class ssv2;
-  class ssv3;
-
   class ssvele
   {
   public:
     ssvele(){}
-  };
 
-  class ssv1: ssvele{
-  public:
-    ssv1();
-
-    inline double dist(ssv1& ele);
-    inline double dist(ssv2& ele);
-    inline double dist(ssv3& ele);
-  private:
-    double p[3];
-    double r2;
-  };
-
-  class ssv2: ssvele{
-  public:
-    ssv2();
-
-    inline double dist(ssv1& ele);
-    inline double dist(ssv2& ele);
-    inline double dist(ssv3& ele);
+    void set_from(const trafo& t,ssvele ref){
+      l=ref.l;
+      r2=ref.r2;
+      t.apply(&ref.p,&p);
+      t.apply_rot(&ref.d,&d);
+    }
 
   private:
     double p[3];
@@ -43,72 +26,7 @@ namespace ssv{
     double r2;
   };
 
-  class ssv3: ssvele{
-    ssv3();
-
-    inline double dist(ssv1& ele);
-    inline double dist(ssv2& ele);
-    inline double dist(ssv3& ele);
-
-  private:
-    double p1[3];
-    double d1[3];
-    double d2[3];
-    double l1, l2;
-    double r2;
-  };
-
-
-
-  inline double ssv1::dist(ssv1& ele){
-    return p[0]*ele.p[0]+p[1]*ele.p[1]+p[2]*ele.p[2];
-  }
-
-  inline double ssv1::dist(ssv2& ele){
-
-  }
-
-  inline double ssv1::dist(ssv3& ele){
-
-  }
-
-  inline double ssv2::dist(ssv1& ele){
-    return ele.dist(*this);
-  }
-
-  inline double ssv2::dist(ssv2& ele){
-
-  }
-
-  inline double ssv2::dist(ssv3& ele){
-
-  }
-
-  inline double ssv3::dist(ssv1& ele){
-    return ele.dist(*this);
-  }
-
-  inline double ssv3::dist(ssv2& ele){
-    return ele.dist(*this);
-  }
-
-  inline double ssv3::dist(ssv3& ele){
-
-  }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+  inline double dist(ssvele ele1, ssvele ele2);
 
 }
 

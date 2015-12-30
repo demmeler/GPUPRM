@@ -13,7 +13,6 @@ using namespace ssv;
 typedef vector<double> vecd;
 typedef vector<int> veci;
 
-class trafomat;
 class robogeo;
 class robokin;
 

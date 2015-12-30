@@ -6,3 +6,6 @@ lib/configspace.cpp
 lib/ssv.hpp
 lib/ssv.cpp
 lib/util.hpp
+lib/trafo.hpp
+lib/trafo.cpp
+lib/collision.hpp

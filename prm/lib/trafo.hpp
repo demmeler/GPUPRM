@@ -29,6 +29,20 @@ public:
     res[2]=val[2]*vec0+val[5]*vec1+val[8]*vec2+val[11];
   }
 
+  //!apply tafo to n vectors
+  inline void apply(const double* vec, double* res, const int n) const{
+    for(i=0;i<3*n;i+=3){
+      int i1=i+1;
+      int i2=i+2;
+      double vec0=vec[i];
+      double vec1=vec[i1];
+      double vec2=vec[i2];
+      res[i]=val[0]*vec0+val[3]*vec1+val[6]*vec2+val[9];
+      res[i1]=val[1]*vec0+val[4]*vec1+val[7]*vec2+val[10];
+      res[i2]=val[2]*vec0+val[5]*vec1+val[8]*vec2+val[11];
+    }
+  }
+
   //!apply inverse trafo: res=R^T*(vec-t)
   inline void apply_inv(const double* vec, double* res)const{
     double vec0=vec[0]-val[9];

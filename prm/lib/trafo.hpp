@@ -122,4 +122,69 @@ private:
   double val[12];
 };
 
+
+class trafon{
+public:
+  //!Trafo nach Denavit Hartenberg
+  trafon(double* q, double alpha, double a, double d, int n){
+    double cq=cos(q);
+    double sq=sin(q);
+    double ca=cos(alpha);
+    double sa=sin(alpha);
+
+    val[0]=cq;    val[3]=-sq;   val[6]=0.0;  val[9]=a;
+    val[1]=sq*ca; val[4]=cq*ca; val[7]=-sa;  val[10]=-sa*d;
+    val[2]=sq*sa; val[5]=cq*sa; val[8]=ca;   val[11]=ca*d;
+  }
+  trafon(int n_){
+    n=n_;
+    val=new double[12*n];
+  }
+  ~trafon(){delete[] val;}
+
+  //Zuweisung von DH-Trafo mit verschiedenen Konfigurationen q1, ...., qn \in \R^n
+  void assert(double* q, double alpha, double a, double d){
+    for(int i=0;i<n;++i){
+      double cq=cos(q[i]);
+      double sq=sin(q[i]);
+      double ca=cos(alpha);
+      double sa=sin(alpha);
+
+      int idx=i;
+      val[idx]=cq;
+      val[idx+=n]=sq*ca;
+      val[idx+=n]=sq*sa;
+      val[idx+=n]=-sq;
+      val[idx+=n]=cq*ca;
+      val[idx+=n]=cq*sa;
+      val[idx+=n]=0.0;
+      val[idx+=n]=-sa;
+      val[idx+=n]=ca;
+      val[idx+=n]=a;
+      val[idx+=n]=-sa*d;
+      val[idx+=n]=ca*d;
+    }
+  }
+
+  //!apply trafo to n vectors: res=R*vec+t, vec and res: struct of arrays
+  inline void apply(const double* vec, double* res) const{
+    for(int i=0;i<n;++i){
+      double vec0=vec[0];
+      double vec1=vec[1];
+      double vec2=vec[2];
+
+      res[0]=val[0]*vec0+val[3]*vec1+val[6]*vec2+val[9];
+      res[1]=val[1]*vec0+val[4]*vec1+val[7]*vec2+val[10];
+      res[2]=val[2]*vec0+val[5]*vec1+val[8]*vec2+val[11];
+    }
+  }
+
+
+
+private:
+  double* val;
+  int n;
+};
+
+
 #endif // TRAFO_H

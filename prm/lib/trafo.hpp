@@ -31,7 +31,7 @@ public:
 
   //!apply tafo to n vectors
   inline void apply(const double* vec, double* res, const int n) const{
-    for(i=0;i<3*n;i+=3){
+    for(int i=0;i<3*n;i+=3){
       int i1=i+1;
       int i2=i+2;
       double vec0=vec[i];

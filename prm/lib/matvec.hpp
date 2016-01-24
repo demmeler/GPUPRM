@@ -5,6 +5,10 @@
 
 namespace matvec{
 
+#define clamp(x,min,max) (x<min?min:(x>max?max:x))
+#define sign(x) (x>0.0 ? 1.0 : -1.0)
+#define minimum(x,y) (x<y?x:y)
+
   inline void normalize3(double* x){
     double sum=sqrt(x[0]*x[0]+x[1]*x[1]+x[2]*x[2]);
     if(sum>0){
@@ -64,7 +68,6 @@ namespace matvec{
   inline void copy2(double* from, double* to){
     to[0]=from[0];
     to[1]=from[1];
-    to[2]=from[2];
   }
 
   inline void scale3(double* x, double f){
@@ -100,6 +103,12 @@ namespace matvec{
     return x[0]*y[1]-x[1]*y[0];
   }
 
+  inline void cross3(double* x, double* y, double* z){
+    z[0]=x[1]*y[2]-x[2]*y[1];
+    z[1]=x[2]*y[0]-x[0]*y[2];
+    z[2]=x[0]*y[1]-x[1]*y[0];
+  }
+
 
   inline double dist3(double* x, double* y){
     double d0=x[0]-y[0];
@@ -108,9 +117,16 @@ namespace matvec{
     return sqrt(d0*d0+d1*d1+d2*d2);
   }
 
-  inline double normsq3(doubke* x){
+  inline double normsq3(double* x){
     //TODO: optimieren?
     return dot_prod3(x,x);
+  }
+
+  inline double det3(double* x, double* y, double* z){
+    double a=x[0]*(y[1]*z[2]-y[2]*z[1]);
+    double b=x[1]*(y[2]*z[0]-y[0]*z[2]);
+    double c=x[2]*(y[0]*z[1]-y[1]*z[0]);
+    return a+b+c;
   }
 
 }

@@ -1,50 +1,65 @@
 #ifndef GEO4_H
 #define GEO4_H
 
+#undef qualifier
+#ifdef CUDA_IMPLEMENTATION
+  #include <cuda.h>
+  #define qualifier __device__
+  #define cudaonly(x) x
+  #define devonly(x)
+#else
+  #define qualifier inline
+  #define cudaonly(x)
+  #define devonly(x) x
+#endif
+
+
 #include <math.h>
 #include <fstream>
 #include <iomanip>
 
 namespace geo4{
 
+#ifndef CUDA_IMPLEMENTATION
   struct float4{
     float x,y,z,w;
   };
+#endif
 
   class trafo4{
   public:
     float4 col[4];
 
     //!from DH-parameters
-    trafo4(float a, float alpha, float q, float d);
-    trafo4(){}
-    ~trafo4(){}
+    qualifier trafo4(float a, float alpha, float q, float d);
+    qualifier trafo4(){}
+    qualifier ~trafo4(){}
 
     //!u=T*u
-    inline float4& apply(float4& u) const;
+    qualifier float4& apply(float4& u) const;
     //!Tu=this*u
-    inline float4& apply(const float4& u, float4& Tu) const;
+    qualifier float4& apply(const float4& u, float4& Tu) const;
     //!u=R*u
-    inline float4& apply_rot(float4& u) const;
+    qualifier float4& apply_rot(float4& u) const;
     //!Ru=R*u
-    inline float4& apply_rot(float4& u, float4& Ru) const;
+    qualifier float4& apply_rot(float4& u, float4& Ru) const;
     //!u=R'*u
-    inline float4& apply_rot_inv(float4& u) const;
+    qualifier float4& apply_rot_inv(float4& u) const;
     //!Rtu=R'*u
-    inline float4& apply_rot_inv(float4& u, float4& Rtu) const;
+    qualifier float4& apply_rot_inv(float4& u, float4& Rtu) const;
 
     //!this=this*T
-    //inline trafo4& apply(const trafo4& T);
+    //qualifier trafo4& apply(const trafo4& T);
     //!Tres=this*T
-    inline trafo4& apply(const trafo4& T, trafo4& Tres) const;
+    qualifier trafo4& apply(const trafo4& T, trafo4& Tres) const;
     //!this=T*this
-    inline trafo4& lapply(trafo4& T);
+    qualifier trafo4& lapply(trafo4& T);
     //!Tres=T*this (not needed)
-    inline trafo4& lapply(const trafo4& T, trafo4& Tres) const;
+    qualifier trafo4& lapply(const trafo4& T, trafo4& Tres) const;
 
-    inline float4& t(){return col[3];}
+    qualifier float4& t(){return col[3];}
 
-    inline void print(std::ostream& out, const std::string& name="");
+    void print(std::ostream& out, const std::string& name="");
 
   };
 
@@ -55,86 +70,77 @@ namespace geo4{
   ///   *    implementations     *
   ///   **************************
 
-  inline float4 make_float4(float x, float y, float z, float w){
+  qualifier float4 make_float4(float x, float y, float z, float w){
     float4 f; f.x=x; f.y=y; f.z=z; f.w=w; return f;
   }
 
-  inline float4 make_float4(float x, float y, float z){
+  qualifier float4 make_float4(float x, float y, float z){
     float4 f; f.x=x; f.y=y; f.z=z; return f;
   }
 
-  inline float4& operator +=(float4& u, const float4& v){
+  qualifier float4& operator +=(float4& u, const float4& v){
     u.x+=v.x; u.y+=v.y; u.z+=v.z;
     return u;
   }
 
-  inline float4& operator -=(float4& u, const float4& v){
+  qualifier float4& operator -=(float4& u, const float4& v){
     u.x-=v.x; u.y-=v.y; u.z-=v.z;
     return u;
   }
 
-  inline float4& operator *=(float4& u, const float4& v){
+  qualifier float4& operator *=(float4& u, const float4& v){
     u.x*=v.x; u.y*=v.y; u.z*=v.z;
     return u;
   }
 
-  inline float4& operator *=(float4& u, const float f){
+  qualifier float4& operator *=(float4& u, const float f){
     u.x*=f; u.y*=f; u.z*=f;
     return u;
   }
 
-  inline float4& operator /=(float4& u, const float4& v){
+  qualifier float4& operator /=(float4& u, const float4& v){
     u.x/=v.x; u.y/=v.y; u.z/=v.z;
     return u;
   }
 
-  inline float4& operator /=(float4& u, const float f){
+  qualifier float4& operator /=(float4& u, const float f){
     u.x/=f; u.y/=f; u.z/=f;
     return u;
   }
 
-  inline const float sprod(float4& u, const float4& v){
+  qualifier float sprod(float4& u, const float4& v){
     return u.x*v.x+u.y*v.y+u.z*v.z;
   }
 
-  inline void add(const float4& u, const float4& v, float4& res){
+  qualifier void add(const float4& u, const float4& v, float4& res){
     res.x=u.x+v.x;
     res.y=u.y+v.y;
     res.z=u.z+v.z;
   }
 
-  inline void sub(const float4& u, const float4& v, float4& res){
+  qualifier void sub(const float4& u, const float4& v, float4& res){
     res.x=u.x-v.x;
     res.y=u.y-v.y;
     res.z=u.z-v.z;
   }
 
-  inline void lin(const float4& u, const float& b, const float4& v, float4& res){
+  qualifier void lin(const float4& u, const float& b, const float4& v, float4& res){
     res.x=u.x+b*v.x;
     res.y=u.y+b*v.y;
     res.z=u.z+b*v.z;
   }
 
-  inline void lin(const float& a, const float4& u, const float4& v, float4& res){
+  qualifier void lin(const float& a, const float4& u, const float4& v, float4& res){
     res.x=a+u.x+v.x;
     res.y=a*u.y+v.y;
     res.z=a*u.z+v.z;
   }
 
-  inline void lin(const float& a, const float4& u, const float& b, const float4& v, float4& res){
+  qualifier void lin(const float& a, const float4& u, const float& b, const float4& v, float4& res){
     res.x=a+u.x+b*v.x;
     res.y=a*u.y+b*v.y;
     res.z=a*u.z+b*v.z;
   }
-
-
-
-  inline void print(const float4& v, std::ostream& out, const std::string& name=""){
-    out<<std::setprecision(3);
-    out<<"float4: "<<name<<"=\n"<<v.x<<"\n"<<v.y<<"\n"<<v.z<<" \n"<<std::endl;
-  }
-
-#define f4print(v) print(v,std::cout,#v);
 
 
   ///   **************************
@@ -142,7 +148,7 @@ namespace geo4{
   ///   *    implementations     *
   ///   **************************
 
-  trafo4::trafo4(float a, float alpha, float q, float d){
+  qualifier trafo4::trafo4(float a, float alpha, float q, float d){
     float cq=cos(q);
     float sq=sin(q);
     float ca=cos(alpha);
@@ -154,7 +160,7 @@ namespace geo4{
   }
 
   //!u=T*u
-  inline float4& trafo4::apply(float4& u) const
+  qualifier float4& trafo4::apply(float4& u) const
   {
     float a=u.x,b=u.y,c=u.z;
     u.x=col[0].x*a+col[1].x*b+col[2].x*c+col[3].x;
@@ -163,7 +169,7 @@ namespace geo4{
     return u;
   }
   //!Tu=this*u
-  inline float4& trafo4::apply(const float4& u, float4& Tu) const
+  qualifier float4& trafo4::apply(const float4& u, float4& Tu) const
   {
     Tu.x=col[0].x*u.x+col[1].x*u.y+col[2].x*u.z+col[3].x;
     Tu.y=col[0].y*u.x+col[1].y*u.y+col[2].y*u.z+col[3].y;
@@ -171,7 +177,7 @@ namespace geo4{
     return Tu;
   }
   //!u=R*u
-  inline float4& trafo4::apply_rot(float4& u) const
+  qualifier float4& trafo4::apply_rot(float4& u) const
   {
     float a=u.x,b=u.y,c=u.z;
     u.x=col[0].x*a+col[1].x*b+col[2].x*c;
@@ -180,7 +186,7 @@ namespace geo4{
     return u;
   }
   //!Ru=R*u
-  inline float4& trafo4::apply_rot(float4& u, float4& Ru) const
+  qualifier float4& trafo4::apply_rot(float4& u, float4& Ru) const
   {
     Ru.x=col[0].x*u.x+col[1].x*u.y+col[2].x*u.z;
     Ru.y=col[0].y*u.x+col[1].y*u.y+col[2].y*u.z;
@@ -188,7 +194,7 @@ namespace geo4{
     return Ru;
   }
   //!u=R'*u
-  inline float4& trafo4::apply_rot_inv(float4& u) const
+  qualifier float4& trafo4::apply_rot_inv(float4& u) const
   {
     float a=u.x,b=u.y,c=u.z;
     u.x=col[0].x*a+col[0].y*b+col[0].z*c;
@@ -197,7 +203,7 @@ namespace geo4{
     return u;
   }
   //!Rtu=R'*u
-  inline float4& trafo4::apply_rot_inv(float4& u, float4& Rtu) const
+  qualifier float4& trafo4::apply_rot_inv(float4& u, float4& Rtu) const
   {
     Rtu.x=col[0].x*u.x+col[0].y*u.y+col[0].z*u.z;
     Rtu.y=col[1].x*u.x+col[1].y*u.y+col[1].z*u.z;
@@ -206,37 +212,51 @@ namespace geo4{
   }
 
   //!this=this*T
-  //inline trafo4& trafo4::apply(const trafo4& T)
+  //qualifier trafo4& trafo4::apply(const trafo4& T)
   //{
   //
   //}
   //!Tres=this*T
-  inline trafo4& trafo4::apply(const trafo4& T, trafo4& Tres) const
+  qualifier trafo4& trafo4::apply(const trafo4& T, trafo4& Tres) const
   {
     apply(T.col[0],Tres.col[0]);
     apply(T.col[1],Tres.col[1]);
     apply(T.col[2],Tres.col[2]);
     apply(T.col[3],Tres.col[3]);
+    return Tres;
   }
   //!this=T*this
-  inline trafo4& trafo4::lapply(trafo4& T)
+  qualifier trafo4& trafo4::lapply(trafo4& T)
   {
     T.apply(col[0]);
     T.apply(col[1]);
     T.apply(col[2]);
     T.apply(col[3]);
+    return *this;
   }
   //!Tres=T*this (not needed)
-  inline trafo4& trafo4::lapply(const trafo4& T, trafo4& Tres) const
+  qualifier trafo4& trafo4::lapply(const trafo4& T, trafo4& Tres) const
   {
     T.apply(col[0],Tres.col[0]);
     T.apply(col[1],Tres.col[1]);
     T.apply(col[2],Tres.col[2]);
     T.apply(col[3],Tres.col[3]);
+    return Tres;
   }
 
 
-  inline void trafo4::print(std::ostream& out, const std::string& name){
+
+  ///   **************************
+  ///   *       debugging        *
+  ///   *    implementations     *
+  ///   **************************
+
+  void print(const float4& v, std::ostream& out, const std::string& name=""){
+    out<<std::setprecision(3);
+    out<<"float4: "<<name<<"=\n"<<v.x<<"\n"<<v.y<<"\n"<<v.z<<" \n"<<std::endl;
+  }
+
+  void trafo4::print(std::ostream& out, const std::string& name){
     out<<"trafo4: "<<name<<"="<<std::endl;
     out<<std::setprecision(3);
     out<<col[0].x<<"\t"<<col[1].x<<"\t"<<col[2].x<<"\t"<<col[3].x<<std::endl;
@@ -244,6 +264,7 @@ namespace geo4{
     out<<col[0].z<<"\t"<<col[1].z<<"\t"<<col[2].z<<"\t"<<col[3].z<<std::endl<<std::endl;
   }
 
+#define f4print(v) print(v,std::cout,#v);
 #define t4print(T) T.print(std::cout,#T);
 
 

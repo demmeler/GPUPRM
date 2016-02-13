@@ -60,7 +60,6 @@ public:
     res[3]=val[0]*vec0+val[1]*vec1+val[2]*vec2+val[3];
     res[7]=val[4]*vec0+val[5]*vec1+val[6]*vec2+val[7];
     res[11]=val[8]*vec0+val[9]*vec1+val[10]*vec2+val[11];
-    return
   }
 
 private:

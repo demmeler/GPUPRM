@@ -9,6 +9,7 @@ lib/util.hpp
 lib/trafo.hpp
 lib/trafo.cpp
 lib/collision.hpp
-lib/vec4.h
+lib/geo4.h
 lib/matvec.hpp
 test.cpp
+test2.cpp

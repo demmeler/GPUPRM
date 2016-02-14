@@ -18,13 +18,16 @@
 #include <fstream>
 #include <iomanip>
 
-namespace geo4{
-
 #ifndef CUDA_IMPLEMENTATION
   struct float4{
     float x,y,z,w;
   };
+  struct float2{
+    float x,y;
+  };
 #endif
+
+namespace geo4{
 
   class trafo4{
   public:
@@ -32,6 +35,7 @@ namespace geo4{
 
     //!from DH-parameters
     qualifier trafo4(float a, float alpha, float q, float d);
+    qualifier void set(float a, float alpha, float q, float d);
     qualifier trafo4(){}
     qualifier ~trafo4(){}
 
@@ -57,12 +61,36 @@ namespace geo4{
     //!Tres=T*this (not needed)
     qualifier trafo4& lapply(const trafo4& T, trafo4& Tres) const;
 
-    qualifier float4& t(){return col[3];}
+    qualifier const float4& translation() const {return col[3];}
 
     void print(std::ostream& out, const std::string& name="");
 
   };
 
+
+  ///   **************************
+  ///   *        float2          *
+  ///   *    implementations     *
+  ///   **************************
+
+  qualifier float cross2(float2& v, float2& w){
+    return v.x*w.y-v.y*w.x;
+  }
+
+  qualifier void add(const float2& u, const float2& v, float2& res){
+    res.x=u.x+v.x;
+    res.y=u.y+v.y;
+  }
+
+  qualifier void sub(const float2& u, const float2& v, float2& res){
+    res.x=u.x-v.x;
+    res.y=u.y-v.y;
+  }
+
+  qualifier void normalize(float2& u){
+    float factor=1.0/sqrt(u.x*u.x+u.y*u.y);
+    u.x*=factor; u.y*=factor;
+  }
 
 
   ///   **************************
@@ -142,6 +170,11 @@ namespace geo4{
     res.z=a*u.z+b*v.z;
   }
 
+  qualifier void normalize(float4& u){
+    float factor=1.0/sqrt(u.x*u.x+u.y*u.y+u.z*u.z);
+    u.x*=factor; u.y*=factor; u.z*=factor;
+  }
+
 
   ///   **************************
   ///   *        trafo4          *
@@ -149,6 +182,17 @@ namespace geo4{
   ///   **************************
 
   qualifier trafo4::trafo4(float a, float alpha, float q, float d){
+    float cq=cos(q);
+    float sq=sin(q);
+    float ca=cos(alpha);
+    float sa=sin(alpha);
+
+    col[0].x=cq;    col[1].x=-sq;   col[2].x=0.0;  col[3].x=a;
+    col[0].y=sq*ca; col[1].y=cq*ca; col[2].y=-sa;  col[3].y=-sa*d;
+    col[0].z=sq*sa; col[1].z=cq*sa; col[2].z=ca;   col[3].z=ca*d;
+  }
+
+  qualifier void trafo4::set(float a, float alpha, float q, float d){
     float cq=cos(q);
     float sq=sin(q);
     float ca=cos(alpha);

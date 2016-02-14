@@ -1,4 +1,4 @@
-ARCHITECTURE=sm_20
+ARCHITECTURE=sm_11
 
 all:
 #	g++ -o test test.cpp

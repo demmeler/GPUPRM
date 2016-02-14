@@ -6,7 +6,7 @@
 #include "matvec.hpp"
 #include <vector>
 #include <math.h>
-
+#include "polytope.h"
 
 namespace collision{
 
@@ -14,16 +14,6 @@ namespace collision{
 
 
   const int L=10;
-
-  struct Polytope{
-    double* vertices;
-    int n;
-    //!edges saved in crs format
-    int* dsp;
-    int* cnt;
-    int* dest;
-    int m;
-  };
 
 
   class support_vertex_searcher{

@@ -8,5 +8,4 @@
 #define printarr(x,n) std::cout<<#x<<"=";for(int i=0;i<n;++i){std::cout<<x[i]<<" ";}std::cout<<std::endl;
 #define msg(x) std::cout<<x<<std::endl;
 
-
 #endif // UTIL_HPP

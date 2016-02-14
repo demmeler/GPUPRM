@@ -4,7 +4,10 @@
 
 #define CUDA_IMPLEMENTATION
 #include "lib/geo4.h"
+#include "lib/robot.h"
+#include "lib/collision4.h"
 
+#include "lib/util.hpp"
 
 using namespace std;
 using namespace geo4;
@@ -15,7 +18,16 @@ const float pi=3.14159265358;
 __global__ void kernel(float* q, float* res, int n){
   int i = blockDim.x * blockIdx.x + threadIdx.x;
   if(i<n){
-      res[i]=q[i];
+      float4 u=make_float4(1.0,0.0,0.0);
+      trafo4 T(0.0,0.0,q[i],0.0);
+      T.apply(u);
+      res[i]=u.y;
+  }
+}
+
+void handle(cudaError_t res){
+  if(res!=0){
+    cout<<"cudaError_t:  "<<cudaGetErrorString(res)<<endl;
   }
 }
 
@@ -42,6 +54,10 @@ int main()
 
   int n = 256 * 1024, BLOCK = 256, GRID = (n + BLOCK - 1)/BLOCK;
 
+  printvar(n);
+  printvar(GRID);
+  printvar(BLOCK);
+
 
   float *hst_q=new float[n]();
   float *dev_q;
@@ -49,21 +65,29 @@ int main()
   float *dev_res;
 
   for(int i=0;i<n;++i){
-    hst_q[i]=pi/2;
+    hst_q[i]=pi/4.0;
   }
 
-  cudaMalloc((void**)&dev_q, GRID * sizeof(float));
-  cudaMalloc((void**)&dev_res, GRID * sizeof(float));
+  res=cudaMalloc((void**)&dev_q, n * sizeof(float));
+  handle(res);
+  res=cudaMalloc((void**)&dev_res, n * sizeof(float));
+  handle(res);
 
-  cudaMemcpy(dev_q, hst_q, n * sizeof(float), cudaMemcpyHostToDevice);
+  cout<<"allocated"<<endl;
+
+  res=cudaMemcpy(dev_q, hst_q, n * sizeof(float), cudaMemcpyHostToDevice);
+  handle(res);
 
   kernel<<<GRID, BLOCK>>>(dev_q,dev_res,n);
 
-  cudaMemcpy(dev_res, hst_res, n * sizeof(float), cudaMemcpyHostToDevice);
+  res=cudaMemcpy(hst_res, dev_res, n * sizeof(float), cudaMemcpyDeviceToHost);
+  handle(res);
 
-  cout<<hst_res[100]<<endl;
+  cudaFree(dev_q);
+  cudaFree(dev_res);
 
-  cout<<"test.cpp"<<endl;
+  cout<<"hst_res[100]="<<hst_res[100]<<endl;
+
   return 0;
 }
 

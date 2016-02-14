@@ -1,6 +1,6 @@
 main.cpp
-lib/robokin.cpp
-lib/robokin.hpp
+lib/robokin_alt.cpp
+lib/robokin_alt.hpp
 lib/configspace.hpp
 lib/configspace.cpp
 lib/ssv.hpp
@@ -13,3 +13,7 @@ lib/geo4.h
 lib/matvec.hpp
 test.cpp
 test2.cpp
+lib/robot.h
+lib/polytope.h
+lib/polytope4.h
+lib/collision4.h

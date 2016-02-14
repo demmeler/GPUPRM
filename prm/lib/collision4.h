@@ -1,36 +1,28 @@
 #ifndef COLLISION4_H
 #define COLLISION4_H
 
-#undef qualifier
-#ifdef CUDA_IMPLEMENTATION
-  #include <cuda.h>
-  #define qualifier __device__
-  #define cudaonly(x) x
-  #define devonly(x)
-#else
-  #define qualifier inline
-  #define cudaonly(x)
-  #define devonly(x) x
-#endif
+#include "cuda_head.h"
 
 #include "geo4.h"
-#include "robot.h"
 #include "polytope4.h"
 
 #include "util.hpp"
-#include <vector>
-#include <math.h>
+
 
 namespace collision4{
 
   const int L=10;
+  const int max_vertices_number=10;
 
 
   class support_vertex_searcher{
   public:
-    qualifier support_vertex_searcher(int* vmarks_buffer){
+    qualifier support_vertex_searcher(const polytope4& P, int* vmarks_buffer){
       counter=0;
       vmarks=vmarks_buffer;
+      for(int i=0;i<P.n;++i){
+          vmarks[i]=0;
+      }
     }
 
     qualifier int search_support_vertex(const polytope4& P, int p, float4& Sp){
@@ -79,7 +71,7 @@ namespace collision4{
       float y=rk.y;
       float z=rk.z;
       float d2=x*x+y*y;
-      float d=sqrt(d2);
+      float d=sqrt_(d2);
       M[0]=x*z/d; M[1]=y*z/d; M[2]=-d;
       M[3]=-y/d;  M[4]=x/d;   M[5]=0.0;
       //M[6]=x;     M[7]=y;     M[8]=z;
@@ -97,7 +89,7 @@ namespace collision4{
   };
 
   qualifier bool find_half_plane(const float4* R, int k, float4& w, const float4& rk){
-    double dp=sprod(w,rk);
+    float dp=sprod(w,rk);
     if(dp>0)return true;
     orthtrafo23 M(rk);
     float2 ra,rb,T;
@@ -144,14 +136,19 @@ namespace collision4{
     float4 R[L];
     rk=&R[0];
 
+#if 0
     int* vmarks_buffer_P=new int[P.n];
     int* vmarks_buffer_Q=new int[Q.n];
+#else
+    int vmarks_buffer_P[max_vertices_number];
+    int vmarks_buffer_Q[max_vertices_number];
+#endif
 
-    support_vertex_searcher psearcher(&vmarks_buffer_P[0]);
-    support_vertex_searcher qsearcher(&vmarks_buffer_Q[0]);
+    support_vertex_searcher psearcher(P,&vmarks_buffer_P[0]);
+    support_vertex_searcher qsearcher(Q,&vmarks_buffer_Q[0]);
 
     for(int k=0;k<L;++k){
-        /*devonly(printvar(k);)*/
+        /*hostonly(printvar(k);)*/
 
         tp.apply_rot_inv(S,Sp);
         S*=-1.0;
@@ -165,7 +162,7 @@ namespace collision4{
 
         float dp=sprod(S,*rk);
 
-        /*devonly(
+        /*hostonly(
           f4print(S);
           printvar(p);
           printvar(q);
@@ -187,7 +184,7 @@ namespace collision4{
             normalize(w);
           }
           if(find_half_plane(R,k,w,*rk)==false){
-            //devonly(msg("no half plane");)
+            //hostonly(msg("no half plane");)
             return 1;
           }
         }
@@ -196,7 +193,7 @@ namespace collision4{
 
         ++rk;
     }
-    //devonly(msg("maximal iterations reached!"));
+    //hostonly(msg("maximal iterations reached!"));
     return 2;
   }
 

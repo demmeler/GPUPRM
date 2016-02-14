@@ -1,17 +1,7 @@
 #ifndef ROBOT_H
 #define ROBOT_H
 
-#undef qualifier
-#ifdef CUDA_IMPLEMENTATION
-  #include <cuda.h>
-  #define qualifier __device__
-  #define cudaonly(x) x
-  #define devonly(x)
-#else
-  #define qualifier inline
-  #define cudaonly(x)
-  #define devonly(x) x
-#endif
+#include "cuda_head.h"
 
 
 #include "geo4.h"

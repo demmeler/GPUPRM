@@ -1,22 +1,11 @@
 #ifndef GEO4_H
 #define GEO4_H
 
-#undef qualifier
-#ifdef CUDA_IMPLEMENTATION
-  #include <cuda.h>
-  #define qualifier __device__
-  #define cudaonly(x) x
-  #define devonly(x)
-#else
-  #define qualifier inline
-  #define cudaonly(x)
-  #define devonly(x) x
-#endif
+#include "cuda_head.h"
 
-
-#include <math.h>
 #include <fstream>
 #include <iomanip>
+
 
 #ifndef CUDA_IMPLEMENTATION
   struct float4{
@@ -88,7 +77,7 @@ namespace geo4{
   }
 
   qualifier void normalize(float2& u){
-    float factor=1.0/sqrt(u.x*u.x+u.y*u.y);
+    float factor=1.0/sqrt_(u.x*u.x+u.y*u.y);
     u.x*=factor; u.y*=factor;
   }
 
@@ -171,7 +160,7 @@ namespace geo4{
   }
 
   qualifier void normalize(float4& u){
-    float factor=1.0/sqrt(u.x*u.x+u.y*u.y+u.z*u.z);
+    float factor=1.0/sqrt_(u.x*u.x+u.y*u.y+u.z*u.z);
     u.x*=factor; u.y*=factor; u.z*=factor;
   }
 
@@ -182,10 +171,10 @@ namespace geo4{
   ///   **************************
 
   qualifier trafo4::trafo4(float a, float alpha, float q, float d){
-    float cq=cos(q);
-    float sq=sin(q);
-    float ca=cos(alpha);
-    float sa=sin(alpha);
+    float cq=cos_(q);
+    float sq=sin_(q);
+    float ca=cos_(alpha);
+    float sa=sin_(alpha);
 
     col[0].x=cq;    col[1].x=-sq;   col[2].x=0.0;  col[3].x=a;
     col[0].y=sq*ca; col[1].y=cq*ca; col[2].y=-sa;  col[3].y=-sa*d;
@@ -193,10 +182,10 @@ namespace geo4{
   }
 
   qualifier void trafo4::set(float a, float alpha, float q, float d){
-    float cq=cos(q);
-    float sq=sin(q);
-    float ca=cos(alpha);
-    float sa=sin(alpha);
+    float cq=cos_(q);
+    float sq=sin_(q);
+    float ca=cos_(alpha);
+    float sa=sin_(alpha);
 
     col[0].x=cq;    col[1].x=-sq;   col[2].x=0.0;  col[3].x=a;
     col[0].y=sq*ca; col[1].y=cq*ca; col[2].y=-sa;  col[3].y=-sa*d;
@@ -291,7 +280,7 @@ namespace geo4{
 
 
   ///   **************************
-  ///   *       debugging        *
+  ///   *        output          *
   ///   *    implementations     *
   ///   **************************
 

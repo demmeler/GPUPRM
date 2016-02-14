@@ -18,3 +18,5 @@ lib/polytope.h
 lib/polytope4.h
 lib/collision4.h
 colltest.cpp
+colltestcuda.cpp
+lib/cuda_head.h

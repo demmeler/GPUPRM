@@ -143,8 +143,8 @@ namespace collision4{
     float4 R[L];
     rk=&R[0];
 
-    int vmarks_buffer_P[P.n];
-    int vmarks_buffer_Q[Q.n];
+    int* vmarks_buffer_P=new int[P.n];
+    int* vmarks_buffer_Q=new int[Q.n];
 
     support_vertex_searcher psearcher(&vmarks_buffer_P[0]);
     support_vertex_searcher qsearcher(&vmarks_buffer_Q[0]);

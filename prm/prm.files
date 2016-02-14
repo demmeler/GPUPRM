@@ -17,3 +17,4 @@ lib/robot.h
 lib/polytope.h
 lib/polytope4.h
 lib/collision4.h
+colltest.cpp

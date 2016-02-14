@@ -1,8 +1,9 @@
 #include <iostream>
 
+#define CUDA_IMPLEMENTATION
 #include <cuda.h>
 
-#define CUDA_IMPLEMENTATION
+
 #include "lib/geo4.h"
 #include "lib/robot.h"
 #include "lib/collision4.h"

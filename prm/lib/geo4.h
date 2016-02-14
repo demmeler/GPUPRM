@@ -46,11 +46,11 @@ namespace geo4{
     //!u=R*u
     qualifier float4& apply_rot(float4& u) const;
     //!Ru=R*u
-    qualifier float4& apply_rot(float4& u, float4& Ru) const;
+    qualifier float4& apply_rot(const float4& u, float4& Ru) const;
     //!u=R'*u
     qualifier float4& apply_rot_inv(float4& u) const;
     //!Rtu=R'*u
-    qualifier float4& apply_rot_inv(float4& u, float4& Rtu) const;
+    qualifier float4& apply_rot_inv(const float4& u, float4& Rtu) const;
 
     //!this=this*T
     //qualifier trafo4& apply(const trafo4& T);
@@ -230,7 +230,7 @@ namespace geo4{
     return u;
   }
   //!Ru=R*u
-  qualifier float4& trafo4::apply_rot(float4& u, float4& Ru) const
+  qualifier float4& trafo4::apply_rot(const float4& u, float4& Ru) const
   {
     Ru.x=col[0].x*u.x+col[1].x*u.y+col[2].x*u.z;
     Ru.y=col[0].y*u.x+col[1].y*u.y+col[2].y*u.z;
@@ -247,7 +247,7 @@ namespace geo4{
     return u;
   }
   //!Rtu=R'*u
-  qualifier float4& trafo4::apply_rot_inv(float4& u, float4& Rtu) const
+  qualifier float4& trafo4::apply_rot_inv(const float4& u, float4& Rtu) const
   {
     Rtu.x=col[0].x*u.x+col[0].y*u.y+col[0].z*u.z;
     Rtu.y=col[1].x*u.x+col[1].y*u.y+col[1].z*u.z;
@@ -263,27 +263,27 @@ namespace geo4{
   //!Tres=this*T
   qualifier trafo4& trafo4::apply(const trafo4& T, trafo4& Tres) const
   {
-    apply(T.col[0],Tres.col[0]);
-    apply(T.col[1],Tres.col[1]);
-    apply(T.col[2],Tres.col[2]);
+    apply_rot(T.col[0],Tres.col[0]);
+    apply_rot(T.col[1],Tres.col[1]);
+    apply_rot(T.col[2],Tres.col[2]);
     apply(T.col[3],Tres.col[3]);
     return Tres;
   }
   //!this=T*this
   qualifier trafo4& trafo4::lapply(trafo4& T)
   {
-    T.apply(col[0]);
-    T.apply(col[1]);
-    T.apply(col[2]);
+    T.apply_rot(col[0]);
+    T.apply_rot(col[1]);
+    T.apply_rot(col[2]);
     T.apply(col[3]);
     return *this;
   }
   //!Tres=T*this (not needed)
   qualifier trafo4& trafo4::lapply(const trafo4& T, trafo4& Tres) const
   {
-    T.apply(col[0],Tres.col[0]);
-    T.apply(col[1],Tres.col[1]);
-    T.apply(col[2],Tres.col[2]);
+    T.apply_rot(col[0],Tres.col[0]);
+    T.apply_rot(col[1],Tres.col[1]);
+    T.apply_rot(col[2],Tres.col[2]);
     T.apply(col[3],Tres.col[3]);
     return Tres;
   }
@@ -296,13 +296,13 @@ namespace geo4{
   ///   **************************
 
   void print(const float4& v, std::ostream& out, const std::string& name=""){
-    out<<std::setprecision(3);
+    out<<std::setprecision(5);
     out<<"float4: "<<name<<"=\n"<<v.x<<"\n"<<v.y<<"\n"<<v.z<<" \n"<<std::endl;
   }
 
   void trafo4::print(std::ostream& out, const std::string& name){
     out<<"trafo4: "<<name<<"="<<std::endl;
-    out<<std::setprecision(3);
+    out<<std::setprecision(5);
     out<<col[0].x<<"\t"<<col[1].x<<"\t"<<col[2].x<<"\t"<<col[3].x<<std::endl;
     out<<col[0].y<<"\t"<<col[1].y<<"\t"<<col[2].y<<"\t"<<col[3].y<<std::endl;
     out<<col[0].z<<"\t"<<col[1].z<<"\t"<<col[2].z<<"\t"<<col[3].z<<std::endl<<std::endl;

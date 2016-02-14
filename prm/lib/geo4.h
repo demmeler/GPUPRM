@@ -125,7 +125,7 @@ namespace geo4{
     return u;
   }
 
-  qualifier float sprod(float4& u, const float4& v){
+  qualifier float sprod(const float4& u, const float4& v){
     return u.x*v.x+u.y*v.y+u.z*v.z;
   }
 

@@ -10,3 +10,6 @@ lib/collision4.h
 colltest.cpp
 colltestcuda.cpp
 lib/cuda_head.h
+lib/arrayconfigspace.hpp
+lib/arrayconfigspace.cpp
+test3.cpp

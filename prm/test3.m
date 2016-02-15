@@ -1,12 +1,12 @@
 
-if 0
+if 1
     A=imread('labyrinth.jpg');
     A=A(:,:,1);
 
     [h,b]=size(A);
 end
 
-if 1
+if 0
     A=zeros(3,4);
     A(1,1)=1;
     A(1,2)=1;
@@ -17,8 +17,7 @@ if 1
 end
 
 if 1
-binwrite('array.bin',A','int');
-
-B=reshape(binread('array.bin','int'),b,[])';
+    binwrite('array.bin',A','int');
+    B=reshape(binread('array.bin','int'),b,[])';
 end
 

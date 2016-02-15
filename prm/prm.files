@@ -13,3 +13,6 @@ lib/cuda_head.h
 lib/arrayconfigspace.hpp
 lib/arrayconfigspace.cpp
 test3.cpp
+lib/prmsolver.hpp
+lib/prmsolver.cpp
+lib/vertexlist.h

@@ -74,7 +74,7 @@ int main()
   int *coll, *colldev;
   coll=new int[n];
 
-#if 0
+#if 1
   cudaMalloc((void**)&qdev,n*sizeof(float));
   cudaMalloc((void**)&colldev,n*sizeof(int));
 

@@ -3,10 +3,13 @@ ARCHITECTURE=sm_35
 all:
 #	g++ -o test test.cpp
 #	g++ -o test2 test2.cpp
-	nvcc -O3 -x=cu -arch=$(ARCHITECTURE) -o test2 test2.cpp
+#	nvcc -O3 -x=cu -arch=$(ARCHITECTURE) -o test2 test2.cpp
+#	nvcc -O3 -x=cu -arch=$(ARCHITECTURE) -o test4 test4.cpp
 #	g++ -o colltest colltest.cpp
 #	nvcc -O3 -x=cu -arch=$(ARCHITECTURE) -o colltestcuda colltestcuda.cpp
-#	nvcc -g -G -x=cu -arch=$(ARCHITECTURE) -o colltestcuda colltestcuda.cpp
+	nvcc -g -G -x=cu -arch=$(ARCHITECTURE) -o colltestcuda colltestcuda.cpp
+
+
 
 test3: arrayconfigspace
 	g++ -c -o test3.o test3.cpp

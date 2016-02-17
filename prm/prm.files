@@ -16,3 +16,4 @@ test3.cpp
 lib/prmsolver.hpp
 lib/prmsolver.cpp
 lib/vertexlist.h
+test4.cpp

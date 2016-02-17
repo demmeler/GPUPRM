@@ -11,21 +11,22 @@
 
 namespace collision4{
 
-  const int L=10;
-  const int max_vertices_number=10;
+  #define max_for_loop 100
+  #define max_vertices_number 10
 
 
   class support_vertex_searcher{
   public:
-    qualifier support_vertex_searcher(const polytope4& P, int* vmarks_buffer){
+    qualifierd support_vertex_searcher(const polytope4& P, int* vmarks_buffer){
       counter=0;
       vmarks=vmarks_buffer;
+      //dprintvard(P.n);
       for(int i=0;i<P.n;++i){
           vmarks[i]=0;
       }
     }
 
-    qualifier int search_support_vertex(const polytope4& P, int p, float4& Sp){
+    qualifierd int search_support_vertex(const polytope4& P, int p, float4& Sp){
       int newp=p;
       float max=sprod(P.vertices[p],Sp);
       ++counter;
@@ -66,7 +67,7 @@ namespace collision4{
   class orthtrafo23{
   public:
     float M[6];
-    qualifier orthtrafo23(float4 rk){
+    qualifierd orthtrafo23(float4 rk){
       float x=rk.x;
       float y=rk.y;
       float z=rk.z;
@@ -76,19 +77,19 @@ namespace collision4{
       M[3]=-y/d;  M[4]=x/d;   M[5]=0.0;
       //M[6]=x;     M[7]=y;     M[8]=z;
     }
-    qualifier void mult23(const float4& x, float2& res){
+    qualifierd void mult23(const float4& x, float2& res){
       res.x=M[0]*x.x+M[1]*x.y+M[2]*x.z;
       res.y=M[3]*x.x+M[4]*x.y+M[5]*x.z;
     }
 
-    qualifier void mult23T(const float2& x, float4& res){
+    qualifierd void mult23T(const float2& x, float4& res){
       res.x=M[0]*x.x+M[3]*x.y;
       res.y=M[1]*x.x+M[4]*x.y;
       res.z=M[2]*x.x+M[5]*x.y;
     }
   };
 
-  qualifier bool find_half_plane(const float4* R, int k, float4& w, const float4& rk){
+  qualifierd bool find_half_plane(const float4* R, int k, float4& w, const float4& rk){
     float dp=sprod(w,rk);
     if(dp>0)return true;
     orthtrafo23 M(rk);
@@ -123,19 +124,17 @@ namespace collision4{
 
 
   //!0 = no collision, 1 = collision, 2 = max iterations reached
-  qualifier int seperating_vector_algorithm(const polytope4& P, const polytope4& Q, const trafo4& tp, const trafo4& tq){
+  qualifierd int seperating_vector_algorithm(const polytope4& P, const polytope4& Q, const trafo4& tp, const trafo4& tq){
     int p=0;
     int q=0;
     float4 S;
     sub(tq.translation(),tp.translation(),S);
     normalize(S);
     //TODO: get better starting values
-
     float4 Sp,Sq,p0,q0,w;
     float4* rk;
-    float4 R[L];
+    float4 R[max_for_loop];
     rk=&R[0];
-
 #if 0
     int* vmarks_buffer_P=new int[P.n];
     int* vmarks_buffer_Q=new int[Q.n];
@@ -147,9 +146,8 @@ namespace collision4{
     support_vertex_searcher psearcher(P,&vmarks_buffer_P[0]);
     support_vertex_searcher qsearcher(Q,&vmarks_buffer_Q[0]);
 
-    for(int k=0;k<L;++k){
+    for(int k=0;k<max_for_loop;++k){
         /*hostonly(printvar(k);)*/
-
         tp.apply_rot_inv(S,Sp);
         S*=-1.0;
         tq.apply_rot_inv(S,Sq);
@@ -159,18 +157,18 @@ namespace collision4{
         tp.apply(P.vertices[p],p0);
         tq.apply(Q.vertices[q],q0);
         sub(q0,p0,*rk); normalize(*rk);
-
         float dp=sprod(S,*rk);
 
-        /*hostonly(
-          f4print(S);
-          printvar(p);
-          printvar(q);
-          f4print(p0);
-          f4print(q0);
-          f4print(*rk);
-          printvar(dp);
-        )*/
+#if 0
+          df4print(S);
+          dprintvard(p);
+          dprintvard(q);
+          df4print(p0);
+          df4print(q0);
+          {float4 rko=*rk;
+          df4print(rko);}
+          dprintvarf(dp);
+#endif
 
         if(dp>=0.0){
           //save S, p, q
@@ -185,7 +183,7 @@ namespace collision4{
           }
           if(find_half_plane(R,k,w,*rk)==false){
             //hostonly(msg("no half plane");)
-            return 1;
+            return k+1;
           }
         }
 
@@ -193,8 +191,9 @@ namespace collision4{
 
         ++rk;
     }
+//dmsg("Hello");
     //hostonly(msg("maximal iterations reached!"));
-    return 2;
+    return -1;
   }
 
 

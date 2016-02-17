@@ -297,9 +297,19 @@ namespace geo4{
     out<<col[0].z<<"\t"<<col[1].z<<"\t"<<col[2].z<<"\t"<<col[3].z<<std::endl<<std::endl;
   }
 
-#define f4print(v) print(v,std::cout,#v);
-#define t4print(T) T.print(std::cout,#T);
-
+#ifdef CUDA_IMPLEMENTATION
+    #define df4print(v) printf("float4: %s=\n%f\n%f\n%f\n\n",#v, v.x,v.y,v.z);
+    #define dt4print(T) printf("trafo4: %s=\n%f\t%f\t%f\t%f\n%f\t%f\t%f\t%f\n%f\t%f\t%f\t%f\n\n",\
+                              #T,\
+                              T.col[0].x,T.col[1].x,T.col[2].x,T.col[3].x,\
+                              T.col[0].y,T.col[1].y,T.col[2].y,T.col[3].y,\
+                              T.col[0].z,T.col[1].z,T.col[2].z,T.col[3].z);
+#else
+    #define df4print(v) print(v,std::cout, #v);
+    #define dt4print(T) T.print(std::cout, #T);
+#endif
+#define f4print(v) print(v,std::cout, #v);
+#define t4print(T) T.print(std::cout, #T);
 
 }//namespace geo4
 

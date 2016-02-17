@@ -1,11 +1,16 @@
+#ifndef CUDA_HEAD_H
+#define CUDA_HEAD_H
+
 #undef qualifier
 #ifdef CUDA_IMPLEMENTATION
   #include <cuda.h>
   #define qualifier __host__ __device__
+  #define qualifierd __host__ __device__
   #define cudaonly(x) x
   #define hostonly(x)
 #else
   #define qualifier inline
+  #define qualifierd inline
   #define cudaonly(x)
   #define hostonly(x) x
 #endif
@@ -20,3 +25,10 @@
   #define cos_ cos
   #define sqrt_ sqrt
 #endif
+
+#ifndef CUDA_IMPLEMENTATION
+  #warning ("NO CUDA_IMPLEMENTATION");
+#endif
+
+
+#endif //CUDA_HEAD_H

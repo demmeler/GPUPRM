@@ -16,7 +16,12 @@ const float pi=3.14159265358;
 
 __global__ void kernel(polytope4* Pdev, polytope4* Qdev, float* q, int* coll, int n){
   int i = blockDim.x * blockIdx.x + threadIdx.x;
+#if 1
+  dprintvard(i);
+#endif
   if(i<n){
+    //dprintvard(Pdev->n);
+
     trafo4 tp(0.0, 0.0, 0.0, 0.0);
     trafo4 tq(-0.8, 0.0, q[i], 0.0);
     coll[i]=seperating_vector_algorithm(*Pdev,*Qdev,tp,tq);
@@ -41,17 +46,17 @@ int main()
   trafo4 tr(-0.9, 0.0, 0.0005, 0.0);
 
 
-  polytope4 P,Pdev;
+  polytope4 P, *Pdev;
   generate_simplex(P, 1.0, 1.0, 1.0);
-  cuda_init_and_copy(P,Pdev);
+  cuda_init_and_copy(&P,&Pdev);
 
-  polytope4 Q,Qdev;
+  polytope4 Q, *Qdev;
   generate_simplex(Q, 1.0, 1.0, 1.0);
-  cuda_init_and_copy(Q,Qdev);
+  cuda_init_and_copy(&Q,&Qdev);
 
-  polytope4 R,Rdev;
+  polytope4 R, *Rdev;
   generate_quader(R, 1.0, 1.0, 1.0);
-  cuda_init_and_copy(R,Rdev);
+  cuda_init_and_copy(&R,&Rdev);
 
 #if 0
   polytope4 P1;
@@ -63,7 +68,7 @@ int main()
 
 
 #if 1
-  int n=20, BLOCK = 1, GRID = (n + BLOCK - 1)/BLOCK;
+  int n=24, BLOCK = 4, GRID = (n + BLOCK - 1)/BLOCK;
   float *q, *qdev;
   q=new float[n];
   float qmin=-pi/2.0,qmax=pi/2.0;
@@ -79,8 +84,8 @@ int main()
   cudaMalloc((void**)&colldev,n*sizeof(int));
 
   cudaMemcpy((void*)qdev, (void*)q, n*sizeof(float), cudaMemcpyHostToDevice);
-  kernel<<<GRID, BLOCK>>>(&Pdev,&Qdev, qdev, colldev, n);
-  cudaMemcpy((void*)coll, (void*)colldev, n*sizeof(float), cudaMemcpyDeviceToHost);
+  kernel<<<GRID, BLOCK>>>(Pdev, Qdev, qdev, colldev, n);
+  cudaMemcpy((void*)coll, (void*)colldev, n*sizeof(int), cudaMemcpyDeviceToHost);
 #else
   kernel_(&P,&Q, q, coll, n);
 #endif

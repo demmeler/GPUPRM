@@ -23,82 +23,92 @@ namespace collision4{
 
 
   ///   **************************
-  ///   *       polytope4         *
+  ///   *       polytope4        *
   ///   *         memory         *
   ///   *    implementations     *
   ///   **************************
 
-  //!allocate devpoly according to hostpoly
-  int cuda_alloc(polytope4& devpoly, int n, int m){
+  //!allocate polytope4 struct on device
+  int cuda_alloc(polytope4** pdevpoly, int n, int m){
     hostonly(
       return -1;
     )
     cudaonly(
-      devpoly.n=n;
-      devpoly.m=m;
-      int res[4];
-      res[0]=cudaMalloc((void**)&devpoly.vertices, devpoly.n * sizeof(float4));
-      res[1]=cudaMalloc((void**)&devpoly.dsp, devpoly.n * sizeof(int));
-      res[2]=cudaMalloc((void**)&devpoly.cnt, devpoly.n * sizeof(int));
-      res[3]=cudaMalloc((void**)&devpoly.dest, devpoly.m * sizeof(int));
-      for(int i=0;i<4;++i)if(res[i]!=0)return res[i];
+      polytope4 polytemp;
+      polytemp.n=n;
+      polytemp.m=m;
+      int res[6];
+      res[0]=cudaMalloc((void**)&(polytemp.vertices), n * sizeof(float4));
+      res[1]=cudaMalloc((void**)&(polytemp.dsp), n * sizeof(int));
+      res[2]=cudaMalloc((void**)&(polytemp.cnt), n * sizeof(int));
+      res[3]=cudaMalloc((void**)&(polytemp.dest), m * sizeof(int));
+      res[4]=cudaMalloc((void**)pdevpoly,sizeof(polytope4));
+      res[5]=cudaMemcpy((void*)*pdevpoly,&polytemp, sizeof(polytope4), cudaMemcpyHostToDevice);
+      for(int i=0;i<6;++i)if(res[i]!=0)return res[i];
       return 0;
     )
   }
 
   //!copy hostpoly to (initialized) devpoly
-  int cuda_copy_to_device(const polytope4& hostpoly, polytope4& devpoly){
+  int cuda_copy_to_device(const polytope4* hostpoly, polytope4* devpoly){
     hostonly(
       return -1;
     )
     cudaonly(
-      int res[4];
-      res[0]=cudaMemcpy((void*)devpoly.vertices, (void*)hostpoly.vertices, hostpoly.n * sizeof(float4), cudaMemcpyHostToDevice);
-      res[1]=cudaMemcpy((void*)devpoly.dsp, (void*)hostpoly.dsp, hostpoly.n * sizeof(int), cudaMemcpyHostToDevice);
-      res[2]=cudaMemcpy((void*)devpoly.cnt, (void*)hostpoly.cnt, hostpoly.n * sizeof(int), cudaMemcpyHostToDevice);
-      res[3]=cudaMemcpy((void*)devpoly.dest, (void*)hostpoly.dest, hostpoly.m * sizeof(int), cudaMemcpyHostToDevice);
-      for(int i=0;i<4;++i)if(res[i]!=0)return res[i];
+      int res[5];
+      polytope4 polytemp;
+      res[0]=cudaMemcpy(&polytemp,(void*)devpoly, sizeof(polytope4), cudaMemcpyDeviceToHost);
+      res[1]=cudaMemcpy((void*)polytemp.vertices, (void*)hostpoly->vertices, hostpoly->n * sizeof(float4), cudaMemcpyHostToDevice);
+      res[2]=cudaMemcpy((void*)polytemp.dsp, (void*)hostpoly->dsp, hostpoly->n * sizeof(int), cudaMemcpyHostToDevice);
+      res[3]=cudaMemcpy((void*)polytemp.cnt, (void*)hostpoly->cnt, hostpoly->n * sizeof(int), cudaMemcpyHostToDevice);
+      res[4]=cudaMemcpy((void*)polytemp.dest, (void*)hostpoly->dest, hostpoly->m * sizeof(int), cudaMemcpyHostToDevice);
+      for(int i=0;i<5;++i)if(res[i]!=0)return res[i];
       return 0;
     )
   }
 
   //!alloc (uninitialized) devpoly and copy from host
-  int cuda_init_and_copy(const polytope4& hostpoly, polytope4& devpoly){
+  int cuda_init_and_copy(const polytope4* hostpoly, polytope4** pdevpoly){
     int res[2];
-    res[0]=cuda_alloc(devpoly, hostpoly.n, hostpoly.m);
-    res[1]=cuda_copy_to_device(hostpoly, devpoly);
+    res[0]=cuda_alloc(pdevpoly, hostpoly->n, hostpoly->m);
+    res[1]=cuda_copy_to_device(hostpoly, *pdevpoly);
     for(int i=0;i<2;++i)if(res[i]!=0)return res[i];
     return 0;
   }
 
   //!copy devpoly to (initialized) hostpoly
-  int cuda_copy_to_host(polytope4& devpoly, const polytope4& hostpoly){
+  int cuda_copy_to_host(polytope4* devpoly, const polytope4* hostpoly){
     hostonly(
       return -1;
     )
     cudaonly(
-      int res[4];
-      res[0]=cudaMemcpy((void*)hostpoly.vertices, (void*)devpoly.vertices, devpoly.n * sizeof(float4), cudaMemcpyDeviceToHost);
-      res[1]=cudaMemcpy((void*)hostpoly.dsp, (void*)devpoly.dsp, devpoly.n * sizeof(int), cudaMemcpyDeviceToHost);
-      res[2]=cudaMemcpy((void*)hostpoly.cnt, (void*)devpoly.cnt, devpoly.n * sizeof(int), cudaMemcpyDeviceToHost);
-      res[3]=cudaMemcpy((void*)hostpoly.dest, (void*)devpoly.dest, devpoly.m * sizeof(int), cudaMemcpyDeviceToHost);
-      for(int i=0;i<4;++i)if(res[i]!=0)return res[i];
+      int res[5];
+      polytope4 polytemp;
+      res[0]=cudaMemcpy(&polytemp,(void*)devpoly, sizeof(polytope4), cudaMemcpyDeviceToHost);
+      res[1]=cudaMemcpy((void*)hostpoly->vertices, (void*)polytemp.vertices, polytemp.n * sizeof(float4), cudaMemcpyDeviceToHost);
+      res[2]=cudaMemcpy((void*)hostpoly->dsp, (void*)polytemp.dsp, polytemp.n * sizeof(int), cudaMemcpyDeviceToHost);
+      res[3]=cudaMemcpy((void*)hostpoly->cnt, (void*)polytemp.cnt, polytemp.n * sizeof(int), cudaMemcpyDeviceToHost);
+      res[4]=cudaMemcpy((void*)hostpoly->dest, (void*)polytemp.dest, polytemp.m * sizeof(int), cudaMemcpyDeviceToHost);
+      for(int i=0;i<5;++i)if(res[i]!=0)return res[i];
       return 0;
     )
   }
 
   //!cudaFree devpoly arrays
-  int cuda_free(polytope4& devpoly){
+  int cuda_free(polytope4* devpoly){
     hostonly(
       return -1;
     )
     cudaonly(
-      int res[4];
-      res[0]=cudaFree(devpoly.vertices);
-      res[1]=cudaFree(devpoly.dsp);
-      res[2]=cudaFree(devpoly.cnt);
-      res[3]=cudaFree(devpoly.dest);
-      for(int i=0;i<4;++i)if(res[i]!=0)return res[i];
+      int res[6];
+      polytope4 polytemp;
+      res[0]=cudaMemcpy(&polytemp,(void*)devpoly, sizeof(polytope4), cudaMemcpyDeviceToHost);
+      res[1]=cudaFree(polytemp.vertices);
+      res[2]=cudaFree(polytemp.dsp);
+      res[3]=cudaFree(polytemp.cnt);
+      res[4]=cudaFree(polytemp.dest);
+      res[5]=cudaFree(devpoly);
+      for(int i=0;i<6;++i)if(res[i]!=0)return res[i];
       return 0;
     )
   }

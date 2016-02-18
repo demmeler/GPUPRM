@@ -11,6 +11,9 @@
 
 namespace collision4{
 
+  using namespace geo4;
+
+
   #define max_for_loop 100
   #define max_vertices_number 10
 
@@ -132,7 +135,7 @@ namespace collision4{
     normalize(S);
     //TODO: get better starting values
     float4 Sp,Sq,p0,q0,w;
-    float4* rk;
+    float4 *rk;
     float4 R[max_for_loop];
     rk=&R[0];
 #if 0

@@ -26,9 +26,11 @@ template<int ndof>
 class Kinematics{
 public:
   const Robot<ndof>* robot;
-  trafo4 trafos[ndof];
+  trafo4 trafos[ndof+1];
 
-  qualifier void calculate(float* q);
+  qualifier Kinematics(const Robot<ndof>* robot_): robot(robot_){}
+
+  qualifier void calculate(float* q, int offset);
 };
 
 
@@ -37,19 +39,15 @@ public:
 ///   *       Kinematics       *
 ///   *    implementations     *
 ///   **************************
-
 template<int ndof>
-qualifier void Kinematics<ndof>::calculate(float* q){
-  float qset=robot->q[0], dset=robot->d[0];
-  if(robot->types[0]==rotational) qset=q[0];
-  else dset=q[0];
-  trafos[0].set(robot->a[0],robot->alpha[0],qset,dset);
-  for(int i=1;i<ndof;++i){
+qualifier void Kinematics<ndof>::calculate(float* q, int offset){
+  trafos[0].set(0.0, 0.0, 0.0, 0.0);
+  for(int i=0;i<ndof;++i){
       float qset=robot->q[i], dset=robot->d[i];
       if(robot->types[i]==rotational) qset=q[i];
-      else dset=q[i];
-      trafos[i].set(robot->a[i],robot->alpha[i],qset,dset);
-      trafos[i].lapply(trafos[i-1]);
+      else dset=q[i*offset];
+      trafos[i+1].set(robot->a[i],robot->alpha[i],qset,dset);
+      trafos[i+1].lapply(trafos[i]);
   }
 }
 

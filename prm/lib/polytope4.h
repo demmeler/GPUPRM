@@ -7,7 +7,7 @@
 #include "geo4.h"
 #include <sstream>
 
-using namespace geo4;
+//using namespace geo4;
 
 namespace collision4{
 
@@ -27,7 +27,7 @@ namespace collision4{
   ///   *         memory         *
   ///   *    implementations     *
   ///   **************************
-
+#if 0
   //!allocate polytope4 struct on device
   int cuda_alloc(polytope4** pdevpoly, int n, int m){
     hostonly(
@@ -57,7 +57,7 @@ namespace collision4{
     cudaonly(
       int res[5];
       polytope4 polytemp;
-      res[0]=cudaMemcpy(&polytemp,(void*)devpoly, sizeof(polytope4), cudaMemcpyDeviceToHost);
+      res[0]=cudaMemcpy((void*)&polytemp,(void*)devpoly, sizeof(polytope4), cudaMemcpyDeviceToHost);
       res[1]=cudaMemcpy((void*)polytemp.vertices, (void*)hostpoly->vertices, hostpoly->n * sizeof(float4), cudaMemcpyHostToDevice);
       res[2]=cudaMemcpy((void*)polytemp.dsp, (void*)hostpoly->dsp, hostpoly->n * sizeof(int), cudaMemcpyHostToDevice);
       res[3]=cudaMemcpy((void*)polytemp.cnt, (void*)hostpoly->cnt, hostpoly->n * sizeof(int), cudaMemcpyHostToDevice);
@@ -112,6 +112,7 @@ namespace collision4{
       return 0;
     )
   }
+#endif
 
   //!delete hostpoly arrays
   int host_free(polytope4& hostpoly){
@@ -129,14 +130,20 @@ namespace collision4{
   ///   *    implementations     *
   ///   **************************
 
+  void transform(polytope4& P, geo4::trafo4& t){
+    for(int i=0;i<P.n;++i){
+      t.apply(P.vertices[i]);
+    }
+  }
+
   //!create simpley (for polytope on host)
   void generate_simplex(polytope4& P, float lx, float ly, float lz){
     P.n=4;
     P.vertices=new float4[P.n];
-    P.vertices[0]=make_float4(0.0, 0.0, 0.0);
-    P.vertices[1]=make_float4(lx, 0.0, 0.0);
-    P.vertices[2]=make_float4(0.0, ly, 0.0);
-    P.vertices[3]=make_float4(0.0, 0.0, lz);
+    P.vertices[0]=geo4::make_float4(0.0, 0.0, 0.0);
+    P.vertices[1]=geo4::make_float4(lx, 0.0, 0.0);
+    P.vertices[2]=geo4::make_float4(0.0, ly, 0.0);
+    P.vertices[3]=geo4::make_float4(0.0, 0.0, lz);
 
 
     P.m=12;
@@ -167,14 +174,14 @@ namespace collision4{
   void generate_quader(polytope4& P, float lx, float ly, float lz){
     P.n=8;
     P.vertices=new float4[P.n];
-    P.vertices[0]=make_float4(0.0, 0.0, 0.0);
-    P.vertices[1]=make_float4(lx, 0.0, 0.0);
-    P.vertices[2]=make_float4(0.0, ly, 0.0);
-    P.vertices[3]=make_float4(lx, ly, 0.0);
-    P.vertices[4]=make_float4(0.0, 0.0, lz);
-    P.vertices[5]=make_float4(lx, 0.0, lz);
-    P.vertices[6]=make_float4(0.0, ly, lz);
-    P.vertices[7]=make_float4(lx, ly, lz);
+    P.vertices[0]=geo4::make_float4(0.0, 0.0, 0.0);
+    P.vertices[1]=geo4::make_float4(lx, 0.0, 0.0);
+    P.vertices[2]=geo4::make_float4(0.0, ly, 0.0);
+    P.vertices[3]=geo4::make_float4(lx, ly, 0.0);
+    P.vertices[4]=geo4::make_float4(0.0, 0.0, lz);
+    P.vertices[5]=geo4::make_float4(lx, 0.0, lz);
+    P.vertices[6]=geo4::make_float4(0.0, ly, lz);
+    P.vertices[7]=geo4::make_float4(lx, ly, lz);
 
     P.m=24;
     P.dsp=new int[P.n];

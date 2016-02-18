@@ -11,7 +11,7 @@
 #define printarr(x,n) std::cout<<#x<<"=";for(int i=0;i<n;++i){std::cout<<x[i]<<" ";}std::cout<<std::endl;
 #define msg(x) std::cout<<x<<std::endl;
 
-#if 1//def CUDA_IMPLEMENTATION
+#ifdef CUDA_IMPLEMENTATION
 #if 0
     #define dprintsetup std::stringstream str; str<<blockIdx.x<<" "<<threadIdx.x;
     #define dcheck(x) if(!(x)) printf( "check %s failed.\n", #x );

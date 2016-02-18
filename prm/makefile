@@ -7,7 +7,9 @@ all:
 #	nvcc -O3 -x=cu -arch=$(ARCHITECTURE) -o test4 test4.cpp
 #	g++ -o colltest colltest.cpp
 #	nvcc -O3 -x=cu -arch=$(ARCHITECTURE) -o colltestcuda colltestcuda.cpp
-	nvcc -g -G -x=cu -arch=$(ARCHITECTURE) -o colltestcuda colltestcuda.cpp
+#	nvcc -g -G -x=cu -arch=$(ARCHITECTURE) -o colltestcuda colltestcuda.cpp
+	g++ -o colltest2 colltest2.cpp
+#	nvcc -O3 -x=cu -arch=$(ARCHITECTURE) -o colltest2 colltest2.cpp
 
 
 

@@ -121,7 +121,8 @@ namespace geo4{
   }
 
   qualifier float4& operator /=(float4& u, const float f){
-    u.x/=f; u.y/=f; u.z/=f;
+    float factor=1.0/f;
+    u.x*=factor; u.y*=factor; u.z*=factor;
     return u;
   }
 

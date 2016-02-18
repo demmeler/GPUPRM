@@ -4,8 +4,6 @@
 #include "lib/cuda_head.h"
 
 #include "lib/geo4.h"
-
-#include "lib/robot.h"
 #include "lib/collision4.h"
 
 using namespace std;
@@ -27,6 +25,7 @@ __global__ void kernel(polytope4* Pdev, polytope4* Qdev, float* q, int* coll, in
     coll[i]=seperating_vector_algorithm(*Pdev,*Qdev,tp,tq);
   }
 }
+
 
 void kernel_(polytope4* Pdev, polytope4* Qdev, float* q, int* coll, int n){
   for(int i=0;i<n;++i){

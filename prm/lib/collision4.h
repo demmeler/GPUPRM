@@ -14,8 +14,10 @@ namespace collision4{
   using namespace geo4;
 
 
-  #define max_for_loop 100
+  #define max_for_loop 10
+  #define max_for_loop_whole 10
   #define max_vertices_number 10
+  #define collision_eps 0.000001
 
 
   class support_vertex_searcher{
@@ -93,34 +95,87 @@ namespace collision4{
   };
 
   qualifierd bool find_half_plane(const float4* R, int k, float4& w, const float4& rk){
+    dmsg("find_half_plane: -----------");
+    df4print(rk);
+    df4print(w);
+
     float dp=sprod(w,rk);
-    if(dp>0)return true;
+
+    dprintvarf(dp);
+
+    if(dp>0){
+        dmsg("nothing to do");
+        return true;
+    }
     orthtrafo23 M(rk);
     float2 ra,rb,T;
 
+    df4print(R[0]);
+    df4print(R[1]);
+
     M.mult23(R[0],ra);
     M.mult23(R[1],rb);
+
     if(cross2(ra,rb)<0){
       float2 temp=ra; //optimieren!
       ra=rb;
       rb=temp;
+      dmsg("swapping ra, rb");
     }
-    for(int i=2;i<=k;++i){
+
+    df2print(ra);
+    df2print(rb);
+
+    float4 R0test;
+    M.mult23T(ra,R0test);
+    df4print(R0test);
+
+    for(int i=2;i<k;++i){
       M.mult23(R[i],T);
+      dprintvard(i);
+      df4print(R[i]);
+      df2print(T);
       if(cross2(ra,T)>0){
-          if(cross2(rb,T)>0)
+          if(cross2(rb,T)>0){
             rb=T;
+            df2print(rb);
+          }else{
+            dmsg("T in < ra,rb");
+          }
       }else{
           if(cross2(rb,T)<0){
             ra=T;
+            df2print(ra);
           }else{
+            dmsg("exit");
             return false;
           }
       }
     }
+
+
+    dmsg("result:");
+
+    normalize(ra);
+    normalize(rb);
     add(ra,rb,T);
+
+    df2print(ra);
+    df2print(rb);
+    df2print(T);
+
     normalize(T);
     M.mult23T(T,w);
+
+    df2print(T);
+    df4print(w);
+    dprintvarf(sprod(w,w));
+
+    for(int i=0;i<=k;++i){
+        dprintvarf(sprod(w,R[i]));
+    }
+
+    dmsg("end");
 
     return true;
   }
@@ -132,12 +187,17 @@ namespace collision4{
     int q=0;
     float4 S;
     sub(tq.translation(),tp.translation(),S);
+
+    df4print(tp.translation());
+    df4print(tq.translation());
+    df4print(S);
+
     normalize(S);
     //TODO: get better starting values
     float4 Sp,Sq,p0,q0,w;
-    float4 *rk;
     float4 R[max_for_loop];
-    rk=&R[0];
+    int combsp[max_for_loop];
+    int combsq[max_for_loop];
 #if 0
     int* vmarks_buffer_P=new int[P.n];
     int* vmarks_buffer_Q=new int[Q.n];
@@ -149,7 +209,10 @@ namespace collision4{
     support_vertex_searcher psearcher(P,&vmarks_buffer_P[0]);
     support_vertex_searcher qsearcher(Q,&vmarks_buffer_Q[0]);
 
-    for(int k=0;k<max_for_loop;++k){
+
+    for(int k=0, l=0; k<max_for_loop && l<max_for_loop_whole; ++l ){
+        float4 *rk=&R[k];
+
         /*hostonly(printvar(k);)*/
         tp.apply_rot_inv(S,Sp);
         S*=-1.0;
@@ -162,37 +225,49 @@ namespace collision4{
         sub(q0,p0,*rk); normalize(*rk);
         float dp=sprod(S,*rk);
 
-#if 0
+#if 1
+          dmsg("+++++++++++++++++++++++++++++++++++++++++");
+          dprintvard(k);
           df4print(S);
+          dprintvarf(sprod(S,S));
           dprintvard(p);
           dprintvard(q);
           df4print(p0);
           df4print(q0);
-          {float4 rko=*rk;
-          df4print(rko);}
+          df4print(R[k]);
           dprintvarf(dp);
+          dmsg("");
 #endif
 
-        if(dp>=0.0){
+        if(dp>=-collision_eps){
           //save S, p, q
           return 0;
         }
-        if(false){ //wenn (p,q) bereits aufgetreten
+        combsp[k]=p;
+        combsq[k]=q;
+        bool repetition=false;
+        for(int j=0;j<k;++j)if(combsp[j]==combsp[k] && combsq[j]==combsq[k]){
+            dmsg("repetition");
+            repetition=true;
+            break;
+        }
+        if(repetition){ //wenn (p,q) bereits aufgetreten
           S=w;
         }else{
           if(k==1){
             add(R[0],*rk,w); //w=<r0+r1>
             normalize(w);
           }
-          if(find_half_plane(R,k,w,*rk)==false){
-            //hostonly(msg("no half plane");)
-            return k+1;
+          if(k>=2 && find_half_plane(&R[0],k,w,*rk)==false){
+            dmsg("no half plane");
+            return l+1;
           }
+          lin(S,-2.0*dp,*rk,S);
+          ++k;
         }
 
-        lin(S,-2.0*dp,*rk,S);
+        df4print(w);
 
-        ++rk;
     }
 //dmsg("Hello");
     //hostonly(msg("maximal iterations reached!"));

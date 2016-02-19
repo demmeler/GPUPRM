@@ -1,6 +1,8 @@
 #include <iostream>
 
-//#define CUDA_IMPLEMENTATION
+#define SILENT
+#define CUDA_IMPLEMENTATION
+
 #include "lib/cuda_head.h"
 
 #include "lib/geo4.h"
@@ -17,15 +19,33 @@ template<int ndof>
 __global__ void kernel(Robot<ndof>* robot, polytope4data* polydata, float* q, int* coll, int n){
   int i = blockDim.x * blockIdx.x + threadIdx.x;
   if(i<n){
+    dmsg("Hello");
     coll[i]=0;
     Kinematics<ndof> kin(robot);
     kin.calculate(&q[i],n);
-    for(int dof0=0;dof0<=ndof;++dof0) for(int dof1=dof0+1;dof1<=ndof;++dof1){
+    dmsg("Hello");
+    for(int dof0=0;dof0<=ndof;++dof0)
+    for(int dof1=dof0+1;dof1<=ndof;++dof1){
+      dmsg("Hello");
+      dprintvard(dof0);
+      dprintvard(dof1);
       int numsys0=polydata->get_numsys(dof0), numsys1=polydata->get_numsys(dof1);
-      for(int k0=0;k0<numsys0;++k0) for(int k1=0;k1<numsys1;++k1){
+      dprintvard(numsys0);
+      dprintvard(numsys1);
+      dmsg("Hello4");
+      dmsg("Hello4");
+      dmsg("Hello4");
+      dmsg("Hello4");
+      for(int k0=0;k0<numsys0;++k0)
+      for(int k1=0;k1<numsys1;++k1){
+        dmsg("Hello5");
         polytope4 poly0, poly1;
         polydata->get_polytope(poly0, dof0,k0);
         polydata->get_polytope(poly1, dof1,k1);
+#if 1
+        dp4print(poly0);
+        dp4print(poly1);
+#endif
         int res=seperating_vector_algorithm(poly0,poly1,kin.trafos[dof0],kin.trafos[dof1]);
         if(res!=0){
           coll[i]=res;
@@ -67,7 +87,7 @@ void build_example1(Robot<1>* &robot, polytope4data* &polydata){
   robot->a[0]=0.9;
   robot->alpha[0]=0.0;
   robot->q[0]=0.0;
-  robot->d[0]=0.15;
+  robot->d[0]=0.3;
   robot->types[0]=rotational;
 
 
@@ -109,14 +129,17 @@ int main()
 
 
   polytope4 poly;
-  polydata->get_polytope(poly,0,0);
+  polydata->get_polytope(poly,1,0);
+  polytope4 poly0;
+  polydata->get_polytope(poly0,0,0);
 
   Kinematics<ndof> kin(robot);
 
   float qtest[ndof];
-  qtest[0]=0/2.0;
+  qtest[0]=pi/2.0*47/48;
   kin.calculate(&qtest[0],1);
 
+#if 0
   p4print(poly,kin.trafos[1]);
   t4print(kin.trafos[1]);
 
@@ -127,11 +150,11 @@ int main()
   printarr(poly.cnt, poly.n);
   printarr(poly.dest,poly.m);
 
-
-
+  printvar(seperating_vector_algorithm(poly0,poly,kin.trafos[0],kin.trafos[1]));
+#endif
 
 #if 1
-  int n=24;
+  int n=48;
   float *q;
   q=new float[n];
   float qmin=-0.0,qmax=pi/2.0;
@@ -144,18 +167,32 @@ int main()
 
 #if 0
   int BLOCK = 4, GRID = (n + BLOCK - 1)/BLOCK;
-  int *qdev, *colldev;
+  float *qdev;
+  int *colldev;
   cudaMalloc((void**)&qdev,n*sizeof(float));
   cudaMalloc((void**)&colldev,n*sizeof(int));
 
   cudaMemcpy((void*)qdev, (void*)q, n*sizeof(float), cudaMemcpyHostToDevice);
-  kernel<<<GRID, BLOCK>>>(Pdev, Qdev, qdev, colldev, n);
+  Robot<ndof> *robotdev;
+  cudaMalloc((void**)&robotdev, sizeof(Robot<ndof>));
+  cudaMemcpy((void*)robotdev,(void*)robot, sizeof(Robot<ndof>), cudaMemcpyHostToDevice);
+
+  polytope4data *polydatadev_hostref=new polytope4data;
+  copy_host_to_device(*polydatadev_hostref,*polydata);
+  polytope4data *polydatadev;
+  cudaMalloc((void**)&polydatadev, sizeof(polytope4data));
+  cudaMemcpy((void*)polydatadev, (void*)polydatadev_hostref, sizeof(polytope4data), cudaMemcpyHostToDevice);
+
+  kernel<ndof><<<GRID, BLOCK>>>(robotdev, polydatadev, qdev, colldev, n);
   cudaMemcpy((void*)coll, (void*)colldev, n*sizeof(int), cudaMemcpyDeviceToHost);
+
+
+
 #else
   kernel_(robot,polydata, q, coll, n);
 #endif
 
-  printarr(q,n);
+  //printarr(q,n);
   printarr(coll,n);
 #endif
 

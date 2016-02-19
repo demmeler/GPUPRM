@@ -2,7 +2,7 @@
 #define POLYTOPE4_H
 
 #include "cuda_head.h"
-
+#include "util.hpp"
 
 #include "geo4.h"
 #include <sstream>
@@ -237,6 +237,11 @@ namespace collision4{
   }
 
 #define p4print(p,t) print(p,t,std::cout,#p);
+#ifdef SILENT
+    #define dp4print(P)
+#else
+    #define dp4print(P) {dmsg(#P); for(int i=0;i<P.n;++i) df4print(P.vertices[i]);}
+#endif
 }
 
 #endif // POLYTOPE4_H

@@ -50,6 +50,7 @@ namespace collision4{
 #ifdef CUDA_IMPLEMENTATION
         friend int copy_host_to_device(polytope4data& devdata, const polytope4data& hostdata);
         friend int copy_device_to_host(polytope4data& hostdata, const polytope4data& devdata);
+        //TODO: cudaFree
 #endif
 
     };

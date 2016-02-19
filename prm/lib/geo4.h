@@ -290,6 +290,11 @@ namespace geo4{
     out<<"float4: "<<name<<"=\n"<<v.x<<"\n"<<v.y<<"\n"<<v.z<<" \n"<<std::endl;
   }
 
+  void print(const float2& v, std::ostream& out, const std::string& name=""){
+    out<<std::setprecision(5);
+    out<<"float2: "<<name<<"="<<v.x<<" "<<v.y<<""<<std::endl;
+  }
+
   void trafo4::print(std::ostream& out, const std::string& name){
     out<<"trafo4: "<<name<<"="<<std::endl;
     out<<std::setprecision(5);
@@ -298,17 +303,27 @@ namespace geo4{
     out<<col[0].z<<"\t"<<col[1].z<<"\t"<<col[2].z<<"\t"<<col[3].z<<std::endl<<std::endl;
   }
 
+#ifndef SILENT
 #ifdef CUDA_IMPLEMENTATION
-    #define df4print(v) printf("float4: %s=\n%f\n%f\n%f\n\n",#v, v.x,v.y,v.z);
+    #define df2print(v) printf("float2: %s= %f %f\n",#v, v.x,v.y);
+    #define df4print(v) printf("float4: %s= %f %f %f\n",#v, v.x,v.y,v.z);
     #define dt4print(T) printf("trafo4: %s=\n%f\t%f\t%f\t%f\n%f\t%f\t%f\t%f\n%f\t%f\t%f\t%f\n\n",\
                               #T,\
                               T.col[0].x,T.col[1].x,T.col[2].x,T.col[3].x,\
                               T.col[0].y,T.col[1].y,T.col[2].y,T.col[3].y,\
                               T.col[0].z,T.col[1].z,T.col[2].z,T.col[3].z);
 #else
+    #define df2print(v) print(v,std::cout, #v);
     #define df4print(v) print(v,std::cout, #v);
     #define dt4print(T) T.print(std::cout, #T);
 #endif
+#else
+    #define df2print(v)
+    #define df4print(v)
+    #define dt4print(T)
+#endif
+
+#define f2print(v) print(v,std::cout, #v);
 #define f4print(v) print(v,std::cout, #v);
 #define t4print(T) T.print(std::cout, #T);
 

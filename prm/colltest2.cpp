@@ -154,7 +154,7 @@ int main()
 #endif
 
 #if 1
-  int n=48;
+  int n=1024*1024;
   float *q;
   q=new float[n];
   float qmin=-0.0,qmax=pi/2.0;
@@ -165,8 +165,8 @@ int main()
   int *coll;
   coll=new int[n];
 
-#if 0
-  int BLOCK = 4, GRID = (n + BLOCK - 1)/BLOCK;
+#if 1
+  int BLOCK = 256, GRID = (n + BLOCK - 1)/BLOCK;
   float *qdev;
   int *colldev;
   cudaMalloc((void**)&qdev,n*sizeof(float));
@@ -184,16 +184,14 @@ int main()
   cudaMemcpy((void*)polydatadev, (void*)polydatadev_hostref, sizeof(polytope4data), cudaMemcpyHostToDevice);
 
   kernel<ndof><<<GRID, BLOCK>>>(robotdev, polydatadev, qdev, colldev, n);
+
   cudaMemcpy((void*)coll, (void*)colldev, n*sizeof(int), cudaMemcpyDeviceToHost);
-
-
-
 #else
   kernel_(robot,polydata, q, coll, n);
 #endif
 
   //printarr(q,n);
-  printarr(coll,n);
+  //printarr(coll,n);
 #endif
 
 

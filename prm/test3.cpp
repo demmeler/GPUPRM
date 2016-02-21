@@ -21,11 +21,18 @@ int main()
   printvar(space.max(0));
   printvar(space.min(1));
   printvar(space.max(1));
+  printvar(space.deltaq());
 
-  float qs[2]={0.5,0.4};
-  float qe[2]={0.99,0.4};
+  float qs[4]={0.8,0.1,
+               0.4,0.4};
+  float qe[4]={0.99,0.9,
+               0.4,0.4};
 
-  printvar(space.indicator2(&qs[0],&qe[0],0.01));
+  float res[2]={7,7};
+  space.indicator2(&qs[0],&qe[0],&res[0],2);
+  printarr(res,2);
+
+  //printarr(array,3000);
 
   //printarr(array,n);
 }

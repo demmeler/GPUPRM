@@ -9,6 +9,8 @@ ArrayConfigspace::ArrayConfigspace(const int* array_, int b_, int h_, float minx
   maxs[1]=maxy;
   factor[0]=b/(maxs[0]-mins[0]);
   factor[1]=h/(maxs[1]-mins[1]);
+  dq=1.0/factor[0];
+  if(1.0/factor[1]<dq)dq=1.0/factor[1];
   array=new int[n];
   for(int i=0;i<n;++i){
       array[i]=array_[i];
@@ -41,21 +43,32 @@ int ArrayConfigspace::indicator(const float* q, int* res, int N){
 }
 //! checks if indicator function = 1 somewhere on the line between qs and qe
 //! res is return value
-int ArrayConfigspace::indicator2(const float* qs, const float* qe, float dq){
-  if(0 != check_boundaries(&qs[0]) || 0 != check_boundaries(&qe[0])) return 2;
-  float qsx=qs[0], qsy=qs[1], qex=qe[0], qey=qe[1];
-  float dqx=qex-qsx, dqy=qey-qsy;
-  float dist=sqrt(dqx*dqx+dqy*dqy);
-  int n=(int)(dist/dq);
-  if(n==0)n=1;
-  float nqx=dqx/n, nqy=dqy/n;
-  for(int i=0;i<n;++i){
-    float q[2]={qsx+nqx*i,qsy+nqy*i};
-    int x=(int)((q[0]-mins[0])*factor[0]);
-    int y=(int)((q[1]-mins[1])*factor[1]);
-    int index=b*y+x;
-    if(0 != array[index]) return 1;
-  }
+int ArrayConfigspace::indicator2(const float* qs, const float* qe, float *res, const int N){
+  for(int k=0;k<N;++k){
+    float qs_[]={qs[k],qs[k+N]};
+    float qe_[]={qe[k],qe[k+N]};
+    if(0 != check_boundaries(&qs_[0]) || 0 != check_boundaries(&qe_[0])){
+      res[k]=2;
+    }else{
+      float qsx=qs_[0], qsy=qs_[1], qex=qe_[0], qey=qe_[1];
+      float dqx=qex-qsx, dqy=qey-qsy;
+      float dist=sqrt(dqx*dqx+dqy*dqy);
+      int n=(int)(dist/dq);
+      if(n==0)n=1;
+      float nqx=dqx/n, nqy=dqy/n;
+      res[k]=0;
+      for(int i=0;i<n;++i){
+        float q[2]={qsx+nqx*i,qsy+nqy*i};
+        int x=(int)((q[0]-mins[0])*factor[0]);
+        int y=(int)((q[1]-mins[1])*factor[1]);
+        int index=b*y+x;
+        if(0 != array[index]){
+          res[k]=1;
+          break;
+        }
+      }//for
+    }
+  }//for
   return 0;
 }
 

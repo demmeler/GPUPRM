@@ -19,3 +19,4 @@ lib/vertexlist.h
 test4.cpp
 lib/polytope4data.h
 colltest2.cpp
+test5.cpp

@@ -3,6 +3,7 @@
 
 #include <map>
 #include <vector>
+#include "util.hpp"
 
 template<int ndof>
 class vertexlist{
@@ -65,17 +66,19 @@ public:
   //! D: maximal distance
   inline int get_near_vertices(const float (&qref)[ndof], float* qlist, const int nbuf, const int offset){
     int key=(int)(qref[0]*factor);
-    const float keylower=key-1;
+    const int keylower=key-1;
     piterator begin=map.lower_bound(keylower);
-    const float keyupper=key+1;
+    const int keyupper=key+1;
     piterator end=map.upper_bound(keyupper);
     int index[ndof];
     for(int i=0;i<ndof;++i){
         index[i]=i*offset;
     }
     for(;!(begin==end);++begin){
+      //printvar(begin->first);
       block *b=&(begin->second);
-      for(int k=0;k<b->q.size()*ndof;k+=ndof){
+      //printvar(b->q.size()/2);
+      for(int k=0;k<b->q.size();k+=ndof){
         //!calc norm
         float normsq=0;
         float qakt[ndof];
@@ -86,6 +89,7 @@ public:
         }
         //!compare norm
         if(normsq<D2){
+          //printvar(k);
           //! store neighbour in buffer
           for(int i=0;i<ndof;++i){
             qlist[index[i]++]=qakt[i];
@@ -103,7 +107,7 @@ public:
     int key=calc_key(q[0]);
     piterator it = map.find(key);
     block *b;
-    if(it=map.end()){
+    if(it==map.end()){
       b=&(map[key]);
     }else{
       b=&(it->second);
@@ -116,10 +120,11 @@ public:
     }
   }
 
+  inline int calc_key(const float& component){
+    return (int)(component*factor);
+  }
 
 private:
-  inline int calc_key(const float& component){return (int)(component*factor);}
-
   float D;
   float D2;
   float factor;

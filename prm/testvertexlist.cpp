@@ -21,23 +21,47 @@ int pow(int x, int n){
     else return 0;
 }
 
-#define tick(t1) std::chrono::high_resolution_clock::time_point t1=std::chrono::high_resolution_clock::now();
-#define tock(t1,t2) std::chrono::high_resolution_clock::time_point t2=std::chrono::high_resolution_clock::now(); \
-                  {int time=std::chrono::duration_cast<std::chrono::milliseconds>(t2-t1).count();              \
-                  std::cout << #t1 << " to "<< #t2 << ": \t" << time << "ms" << endl; }
+
 
 int main()
 {
 
   tick(t1);
 
-  int x=0;
-  for(int i=0;i<100000000;++i){
-      x+=i*i;
+  float D=0.5;
+
+  vertexlist<2> vlist(D);
+
+
+  int nbuf=10000;
+  float* qlist=new float[2*nbuf]();
+
+  float qtemp[2];
+
+  for(int i=0;i<1000000;++i){
+    qtemp[0]=-5.0+10.0*(float)rand()/RAND_MAX;
+    qtemp[1]=-5.0+10.0*(float)rand()/RAND_MAX;
+    if(i%1000==0)
+    //printvar(vlist.get_near_vertices(qtemp,qlist,nbuf,nbuf));
+    vlist.insert(qtemp);
   }
-  printvar(x);
+
 
   tock(t1,t2);
+  tick(t3);
+
+  int sum=0;
+
+  for(int i=0;i<100000;++i){
+      qtemp[0]=-5.0+10.0*(float)rand()/RAND_MAX;
+      qtemp[1]=-5.0+10.0*(float)rand()/RAND_MAX;
+      sum+=vlist.get_near_vertices(qtemp,qlist,nbuf,nbuf);
+      //printarr(qlist,2*nbuf);
+  }
+
+  printvar(sum);
+
+  tock(t3,t4);
 
 
   return 0;

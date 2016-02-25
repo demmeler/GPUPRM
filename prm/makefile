@@ -10,8 +10,8 @@ all:
 #	nvcc -g -G -x=cu -arch=$(ARCHITECTURE) -o colltestcuda colltestcuda.cpp
 #	g++ -o colltest2 colltest2.cpp
 #	nvcc -g -G -x=cu -arch=$(ARCHITECTURE) -o colltest2 colltest2.cpp
-	g++ -O3 -std=c++11 -o test5 test5.cpp
-
+#	g++ -O3 -std=c++11 -o test5 test5.cpp
+	g++ -std=c++11 -o testvertexlist testvertexlist.cpp
 
 test3: arrayconfigspace
 	g++ -c -o test3.o test3.cpp

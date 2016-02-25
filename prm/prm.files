@@ -21,3 +21,4 @@ lib/polytope4data.h
 colltest2.cpp
 test5.cpp
 lib/vertexlist.h
+testvertexlist.cpp

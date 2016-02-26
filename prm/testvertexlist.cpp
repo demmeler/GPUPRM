@@ -26,43 +26,64 @@ int pow(int x, int n){
 int main()
 {
 
+  int seed=0;
+
+  for(int l=1;l<100;++l){
+  srand(0);
+
+  msg("*********");
+
   tick(t1);
 
-  float D=0.5;
+  float D=0.1;
+  float H=l*0.0005;
 
-  vertexlist<2> vlist(D);
+  printvar(D);
+  printvar(H);
 
+  vertexlist<2> vlist(H,D);
 
   int nbuf=10000;
   float* qlist=new float[2*nbuf]();
-
   float qtemp[2];
 
-  for(int i=0;i<1000000;++i){
+  for(int i=0;i<10000;++i){
     qtemp[0]=-5.0+10.0*(float)rand()/RAND_MAX;
     qtemp[1]=-5.0+10.0*(float)rand()/RAND_MAX;
-    if(i%1000==0)
-    //printvar(vlist.get_near_vertices(qtemp,qlist,nbuf,nbuf));
+#if 0
+    int x=vlist.get_near_vertices(qtemp,qlist,nbuf,nbuf);
+    if(i%10000==0){
+      printvar(x);
+      tock(t1);
+    }
+#endif
     vlist.insert(qtemp);
   }
 
 
-  tock(t1,t2);
-  tick(t3);
+  tock(t1);
+  tick(t2);
 
   int sum=0;
 
   for(int i=0;i<100000;++i){
-      qtemp[0]=-5.0+10.0*(float)rand()/RAND_MAX;
-      qtemp[1]=-5.0+10.0*(float)rand()/RAND_MAX;
-      sum+=vlist.get_near_vertices(qtemp,qlist,nbuf,nbuf);
-      //printarr(qlist,2*nbuf);
+    qtemp[0]=-5.0+10.0*(float)rand()/RAND_MAX;
+    qtemp[1]=-5.0+10.0*(float)rand()/RAND_MAX;
+    sum+=vlist.get_near_vertices(qtemp,qlist,nbuf,nbuf);
+    //printarr(qlist,2*nbuf);
+#if 0
+    if(i%5000==0){
+      printvar(i);
+      printvar(sum);
+      tock(t2);
+    }
+#endif
   }
 
   printvar(sum);
+  tock(t2);
 
-  tock(t3,t4);
-
+  }
 
   return 0;
 }

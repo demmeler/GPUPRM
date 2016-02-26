@@ -3,7 +3,7 @@
 
 #include "configspace.hpp"
 
-class ArrayConfigspace : public Configspace
+class ArrayConfigspace : public Configspace<2>
 {
 public:
   ArrayConfigspace(const int* array_, int b_, int h_, float minx, float maxx, float miny, float maxy);

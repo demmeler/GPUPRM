@@ -51,7 +51,12 @@ class vertexlist{
 
 public:
 
-  vertexlist(float D_){D=D_; D2=D*D; factor=1.0/D;}
+  vertexlist(float H_, float D_){
+    H=H_;
+    D=D_;
+    D2=D*D;
+    factor=1.0/H;
+  }
 
   ~vertexlist(){
     //nicht ganz sicher wie ...
@@ -65,10 +70,9 @@ public:
   //! nbuf: length(qlist)
   //! D: maximal distance
   inline int get_near_vertices(const float (&qref)[ndof], float* qlist, const int nbuf, const int offset){
-    int key=(int)(qref[0]*factor);
-    const int keylower=key-1;
+    const int keylower=calc_key(qref[0]-D);
     piterator begin=map.lower_bound(keylower);
-    const int keyupper=key+1;
+    const int keyupper=calc_key(qref[0]+D);
     piterator end=map.upper_bound(keyupper);
     int index[ndof];
     for(int i=0;i<ndof;++i){
@@ -125,6 +129,7 @@ public:
   }
 
 private:
+  float H;
   float D;
   float D2;
   float factor;

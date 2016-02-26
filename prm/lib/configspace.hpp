@@ -1,6 +1,7 @@
 #ifndef CONFIGSPACE_HPP
 #define CONFIGSPACE_HPP
 
+template<int ndof>
 class Configspace
 {
 public:
@@ -29,7 +30,7 @@ public:
   virtual float deltaq()=0;
 
   //! dimension d
-  virtual int dim()=0;
+  virtual int dim()=ndof;
 
 
 };

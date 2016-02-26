@@ -3,6 +3,9 @@
 
 #include <map>
 #include <vector>
+#include <cmath>
+
+#include "configspace.hpp"
 #include "util.hpp"
 
 template<int ndof>
@@ -39,9 +42,10 @@ class vertexlist{
   struct graph{
     pmap map; //map for sorting on high level
 
-    std::vector<float> qstorage;              //length ndof*N
-    std::vector<int> surrnum;                 //length N
-    std::vector<std::vector<int>> edgelists;  //length N
+    std::vector<float> qstorage;                 //length ndof*N
+    std::vector<int> surrnum;                    //length N
+    std::vector<std::vector<int>> edgelists;     //length N
+    std::vector<std::vector<float>> edgeweights; //length N
 
     int newblockpos;  //number of used blocks
   };
@@ -55,16 +59,28 @@ class vertexlist{
 
 public:
 
-  vertexlist(float H_, float D_)
+  vertexlist(float H_, float D_, Configspace *space_)
   {
-    qstorage.resize(ndof*N);
-    surrnum.resize(N);
-    edgelists.resize(N);
+    graphl.qstorage.resize(ndof*N);
+    graphl.surrnum.resize(N);
+    graphl.edgelists.resize(N);
+    graphl.edgeweights.resize(N);
+
+    graphl.newblockpos=0;
+
+    graphr.qstorage.resize(ndof*N);
+    graphr.surrnum.resize(N);
+    graphr.edgelists.resize(N);
+    graphr.edgeweights.resize(N);
+
+    graphr.newblockpos=0;
+
     H=H_;
     D=D_;
     D2=D*D;
     factor=1.0/H;
-    newblockpos=0;
+
+    space=space_;
   }
 
   ~vertexlist(){
@@ -192,7 +208,7 @@ public:
     return index[0];
   }
 
-  inline int get_near_vertices(const float* qref, const int& offsetref, float* qlist, int* posqlist, const int& nbuf, const int& offset, graph& g){
+  inline int get_near_vertices(const float* qref, const int& offsetref, float* qlist, int* posqlist, float* distlist, const int& nbuf, const int& offset, graph& g){
     const int keylower=calc_key(qref[0]-D);
     piterator begin=g.map.lower_bound(keylower);
     const int keyupper=calc_key(qref[0]+D);
@@ -227,6 +243,7 @@ public:
             //printvar(k);
             //! store neighbour in buffer
             posqlist[index[0]]=l;
+            distlist[index[0]]=sqrt(normsq);
             for(int i=0;i<ndof;++i){
               qlist[index[i]++]=g.qstorage[k+i];
             }
@@ -243,24 +260,27 @@ public:
 
 
 
-#if 1
   //! get list of all vertices nearer than D
   //! qlist: buffer to store neighbour candidates, struct of arrays
   //! offset: i-th component of k-th vec in qlist is qlist[i*offset+k]
   //! nbuf: length(qlist)
   //! D: maximal distance
+  //! return: 0 - no errors, 1 - connection found
   inline int processing_step(float* qnew, const int num, float* qlist, int* resbuf, const int nbuf, const int offset){
     //!
-    //! create random node qref
+    //! create nodes qnew randomly
     //!
 
-    set_nodes_randomly(qnew, num);
+    for(int i=0;i<num;++i){
+
+    }
 
     //!
     //! check if qnew is free
     //!
 
     // ....... --> call indicator function on cpu, wait
+    //no, already done in set_nodes_randomly
 
     //!
     //! make list of potential neighbours for all new nodes
@@ -268,21 +288,23 @@ public:
 
 
     //!posqlist[i]: position in qlist buffer, at which neighbours of qnew[i] start
-    int *poslist=new int[nbuf];
     int posqlist[num];
     int numqlist[num];
     int numqlistleft[num];
     int Nqlist;             //sum(numqlist)
 
+    int *poslist=new int[nbuf];
+    float *distlist=new float[nbuf];
     int index=0;
     int *qlistp=qlist;
     int *poslistp=poslist;
+    float *distlistp=distlist;
     int nbufrest=nbuf;
 
     for(int j=0;j<num;++j){
       posqlist[j]=index;
 
-      int writtenleft=get_near_vertices(&qnew[j],num,qlistp,poslistp,nbufrest,offset,graphl);
+      int writtenleft=get_near_vertices(&qnew[j],num,qlistp,poslistp,distlistp,nbufrest,offset,graphl);
 
       if(writtenleft>=nbufrest){
         for(int l=j+1;l<num;++l){
@@ -297,10 +319,11 @@ public:
 
       qlistp+=writtenleft;
       poslistp+=writtenleft;
+      distlistp+=writtenleft;
       nbufrest-=writtenleft;
       index+=writtenleft;
 
-      int writtenright=get_near_vertices(&qnew[j],num,qlistp,poslistp,nbufrest,offset,graphr);
+      int writtenright=get_near_vertices(&qnew[j],num,qlistp,poslistp,distlistp,nbufrest,offset,graphr);
 
       if(writtenright>=nbufrest){
         for(int l=j+1;l<num;++l){
@@ -313,6 +336,7 @@ public:
 
       qlistp+=writtenright;
       poslistp+=writtenright;
+      distlistp+=writtenright;
       nbufrest-=writtenright;
       index+=writtenright;
 
@@ -334,7 +358,7 @@ public:
 
 
     //...... --> call indicator function on GPU
-    // => resbuf= ......
+    space->indicator2(qnew,num,qlist,resbuf,posqlist,numqlist,offset);
 
 
     //!
@@ -350,7 +374,7 @@ public:
       int max=min+numqlist[j];
 
       bool leftconn=false;
-      for(int i=posqlist[j];i<maxleft;++i){
+      for(int i=min;i<maxleft;++i){
         if(resbuf[i]==0){
           leftconn=true;
           break;
@@ -363,13 +387,17 @@ public:
         int position=insert(&q[j],num,graphl);
         int surrnump=0;
         std::vector<int> *v=&(graphl.edgelists[position]);
+        std::vector<float> *w=&(graphl.edgeweights[position]);
         for(int i=min;i<maxleft;++i){
           if(resbuf[i]==0){
             int goalpos=poslist[i];
+            float dist=distlist[i];
             ++surrnump;
             v->push_back(goalpos);
+            w->push_back(dist);
             ++(graphl.surrnum[goalpos]);
             graphl.edgelists[goalpos].push_back(position);
+            graphl.edgeweights[goalpos].push_back(dist);
           }
         }
         graphl.surrnum[position]+=surrnump;
@@ -378,7 +406,15 @@ public:
             //!
             //!  Connection found! abort
             //!
-              //..........
+            for(int l=0;l<ndof;++l)connection.q[l]=q[j+num*l];
+            float minnorm=w->at(0);
+            int minpos=0;
+            for(int j=0;j<w->size();++j){
+              if(minnorm>w->at(j)){minnorm=w->at(j);minpos=j;}
+            }
+            connection.index_left=v->at(minpos);
+            connection.index_right=poslist[i];
+            return 1;
           }
         }
       }else{
@@ -396,13 +432,17 @@ public:
           int position=insert(&q[j],num,graphr);
           int surrnump=0;
           std::vector<int> *v=&(graphr.edgelists[position]);
+          std::vector<float> *w=&(graphl.edgeweights[position]);
           for(int i=maxleft;i<max;++i){
             if(resbuf[i]==0){
               int goalpos=poslist[i];
+              float dist=distlist[i];
               ++surrnump;
               v->push_back(goalpos);
+              w->push_back(dist);
               ++(graphr.surrnum[goalpos]);
               graphr.edgelists[goalpos].push_back(position);
+              graphr.edgeweights[goalpos].push_back(dist);
             }
           }
           graphr.surrnum[position]+=surrnump;
@@ -411,21 +451,32 @@ public:
               //!
               //!  Connection found! abort
               //!
-                //..........
+              for(int l=0;l<ndof;++l)connection.q[l]=q[j+num*l];
+              float minnorm=w->at(0);
+              int minpos=0;
+              for(int j=0;j<w->size();++j){
+                if(minnorm>w->at(j)){minnorm=w->at(j);minpos=j;}
+              }
+              connection.index_right=v->at(minpos);
+              connection.index_left=poslist[i];
+              return 1;
             }
           }//for
         }
       }
 
     }//for
+
+
+    return 0;
+
   }
-#endif
 
   inline int calc_key(const float& component){
     return (int)(component*factor);
   }
 
-  inline void set_nodes_randomly(float* qnew, int num){
+  inline int random_node(){
 
   }
 
@@ -435,10 +486,19 @@ private:
   float D2;
   float factor;
 
+  Configspace *space=space_;
+
+
   const int N=1024*1024;   //whole capacity: how many nodes can be stored
   const int blocksize=256; //size of blocks
 
   graph graphl, graphr;
+
+  struct {
+    float q[ndof];   //connecting node
+    int index_left;  //index of connected node in graphl
+    int index_right; //index of connected node in graphr
+  }connection;
 
 };
 

@@ -1,11 +1,12 @@
 
 
 
+
 #include <iostream>
 
 #include "lib/util.hpp"
 
-#include "lib/vertexlist3.h"
+#include "lib/vertexlist.h"
 
 #include <chrono>
 #include <cstdlib>
@@ -28,38 +29,30 @@ int main()
 
   int seed=0;
 
-  for(int l=1;l<100;++l){
-  srand(0);
+  srand(seed);
 
   msg("*********");
 
   tick(t1);
 
-  float D=0.01;
-  float H=l*0.001;//0.001;
+  float D=0.5;
+  float H=1.0;//0.001;
 
   printvar(D);
   printvar(H);
 
-  const int ndof=8;
+  const int ndof=2;
 
   vertexlist<ndof> vlist(H,D);
 
-  int nbuf=100000;
+  int nbuf=100;
   float* qlist=new float[ndof*nbuf]();
   float qtemp[ndof];
 
-  for(int i=0;i<100000;++i){
+  for(int i=0;i<10000;++i){
     for(int i=0;i<ndof;++i){
       qtemp[i]=-5.0+10.0*(float)rand()/RAND_MAX;
     }
-#if 0
-    int x=vlist.get_near_vertices(qtemp,qlist,nbuf,nbuf);
-    if(i%10000==0){
-      printvar(x);
-      tock(t1);
-    }
-#endif
     vlist.insert(qtemp);
   }
 
@@ -69,26 +62,19 @@ int main()
 
   int sum=0;
 
-  for(int i=0;i<100000;++i){
-    for(int i=0;i<ndof;++i){
-      qtemp[i]=-5.0+10.0*(float)rand()/RAND_MAX;
-    }
-
-    sum+=vlist.get_near_vertices(qtemp,qlist,nbuf,nbuf);
-    //printarr(qlist,2*nbuf);
-#if 0
-    if(i%50==0){
-      printvar(i);
-      printvar(sum);
-      tock(t2);
-    }
-#endif
+  for(int i=0;i<ndof;++i){
+    qtemp[i]=-5.0+10.0*(float)rand()/RAND_MAX;
   }
 
-  //printvar(sum);
+  printvar(vlist.get_near_vertices(qtemp,qlist,nbuf,nbuf));
+
+  printvar(sum);
+  printarr(qtemp,2);
+  printarr(qlist,nbuf*ndof);
+
   tock(t2);
 
-  }
+
 
   return 0;
 }

@@ -72,6 +72,39 @@ int ArrayConfigspace::indicator2(const float* qs, const float* qe, float *res, c
   return 0;
 }
 
+
+//! same paircheck as above, but with compressed storage:
+//! checks pairs: (qs[i],...) ->  (qe(posqe[i]),...) , ...., (qe[posqe[i]+numqe[i]-1],...) for i=0,...,M-1
+int indicator2(const float* qs, const int M, const float* qe, float *res, const int *posqe, const int *numqe, const int offset){
+  for(int k=0;k<M;++k)
+  for(int l=posqe[k];l<posqe[k]+numqe[k];++l){
+    float qs_[]={qs[k],qs[k+N]};
+    float qe_[]={qe[l],qe[l+offset]};
+    if(0 != check_boundaries(&qs_[0]) || 0 != check_boundaries(&qe_[0])){
+      res[l]=2;
+    }else{
+      float qsx=qs_[0], qsy=qs_[1], qex=qe_[0], qey=qe_[1];
+      float dqx=qex-qsx, dqy=qey-qsy;
+      float dist=sqrt(dqx*dqx+dqy*dqy);
+      int n=(int)(dist/dq);
+      if(n==0)n=1;
+      float nqx=dqx/n, nqy=dqy/n;
+      res[l]=0;
+      for(int i=0;i<n;++i){
+        float q[2]={qsx+nqx*i,qsy+nqy*i};
+        int x=(int)((q[0]-mins[0])*factor[0]);
+        int y=(int)((q[1]-mins[1])*factor[1]);
+        int index=b*y+x;
+        if(0 != array[index]){
+          res[l]=1;
+          break;
+        }
+      }//for
+    }
+  }//for
+  return 0;
+}
+
 //! structure like indicator function
 //! returns if lies in boundaries
 int ArrayConfigspace::check_boundaries(const float* q, int* res, int N){

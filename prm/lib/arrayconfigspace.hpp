@@ -18,6 +18,9 @@ public:
   //! checks if indicator function = 1 somewhere on the line between (qs[i],qs[i+N]) and (qe[i],qe[i+N])
   //! res is return value
   int indicator2(const float* qs, const float* qe, float *res, const int N);
+  //! same paircheck as above, but with compressed storage:
+  //! checks pairs: (qs[i],...) ->  (qe(posqe[i]),...) , ...., (qe[posqe[i]+numqe[i]-1],...) for i=0,...,M-1
+  int indicator2(const float* qs, const int M, const float* qe, float *res, const int *posqe, const int *numqe, const int offset);
   //! structure like indicator function
   //! returns if lies in boundaries
   int check_boundaries(const float* q, int* res, int N);

@@ -1,5 +1,5 @@
-#ifndef VERTEXLIST_H
-#define VERTEXLIST_H
+#ifndef VERTEXLIST2_H
+#define VERTEXLIST2_H
 
 #include <map>
 #include <vector>
@@ -12,13 +12,19 @@ class vertexlist{
     //! *    subtypes     *
     //! *******************
 
-#if 0
+    struct key{
+        int index[ndof];
+    };
+
+#if 1
   //!lexikographic comparison
   struct comparer{
-    bool operator() (const vertex& l, const vertex& r) const
+    inline bool operator() (const key& l, const key& r) const
     {
       for(int i=0;i<ndof;++i){
-        if(l.val[i]<r.val[i])return true;
+        int diff=l.index[i]-r.index[i];
+        if(diff<0)return true;
+        else if(diff>0)return false;
       }
       return false;
     }
@@ -35,13 +41,14 @@ class vertexlist{
 
   struct block{
   //public:
-    //block(){}
+    //block():q(100),edgelists(100){count=0;}
     //!array of structs
     std::vector<float> q;
     std::vector<edgelist> edgelists;
+    //int count;
   };
 
-  typedef std::map<int,block> pmap;
+  typedef std::map<key,block,comparer> pmap;
   typedef typename pmap::iterator piterator;
 
 
@@ -72,18 +79,20 @@ public:
   //! nbuf: length(qlist)
   //! D: maximal distance
   inline int get_near_vertices(const float (&qref)[ndof], float* qlist, const int nbuf, const int offset){
-    const int keylower=calc_key(qref[0]-D);
+    const key keylower=calc_key_dist(qref,-D);
     piterator begin=map.lower_bound(keylower);
-    const int keyupper=calc_key(qref[0]+D);
+    const key keyupper=calc_key_dist(qref,D);
     piterator end=map.upper_bound(keyupper);
     int index[ndof];
     for(int i=0;i<ndof;++i){
         index[i]=i*offset;
     }
-    //printvar(begin->first);
-    //printvar(end->first);
+
+    //printarr(begin->first.index,ndof);
+    //printarr(end->first.index,ndof);
+
     for(;!(begin==end);++begin){
-      //printvar(begin->first);
+      //printarr(begin->first.index,ndof);
       block *b=&(begin->second);
       //printvar(b->q.size()/2);
       for(int k=0;k<b->q.size();k+=ndof){
@@ -112,12 +121,15 @@ public:
   }
 
   void insert(const float (&q)[ndof]){ //kanten?
-    int key=calc_key(q[0]);
-    piterator it = map.find(key);
+    //printvar(q[0]);
+    key k=calc_key(q);
+    //printarr(k.index,ndof);
+    piterator it = map.find(k);
     block *b;
+    bool end=false;
     if(it==map.end()){
-      b=&(map[key]);
-      b->q.clear();
+      end=true;
+      b=&(map[k]);
     }else{
       b=&(it->second);
     }
@@ -129,8 +141,15 @@ public:
     }
   }
 
-  inline int calc_key(const float& component){
-    return (int)(component*factor);
+  inline key calc_key(const float (&q)[ndof]) const{
+    key k;
+    for(int i=0;i<ndof;++i) k.index[i]=(int)(factor*q[i]);
+    return k;
+  }
+  inline key calc_key_dist(const float (&q)[ndof], const float& D) const{
+    key k;
+    for(int i=0;i<ndof;++i) k.index[i]=(int)(factor*(q[i]+D));
+    return k;
   }
 
 private:
@@ -141,4 +160,4 @@ private:
   pmap map;
 };
 
-#endif // VERTEXLIST_H
+#endif // VERTEXLIST2_H

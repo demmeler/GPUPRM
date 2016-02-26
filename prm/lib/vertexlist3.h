@@ -43,8 +43,6 @@ class vertexlist{
     std::vector<int> surrnum;                 //length N
     std::vector<std::vector<int>> edgelists;  //length N
 
-    const int N=1024*1024;   //whole capacity: how many nodes can be stored
-    const int blocksize=256; //size of blocks
     int newblockpos;  //number of used blocks
   };
 
@@ -77,13 +75,13 @@ public:
   //!insert node q, data of surrnum and edges are not modified -> position returned for this
   int insert(const float* q, graph& g){
     int key=calc_key(q[0]);
-    piterator it = map.find(key);
+    piterator it = g.map.find(key);
     block *b;
-    if(it==map.end()){
-      b=&(map[key]);
-      if(newblockpos>=N) return -1;
-      b->pos=newblockpos;
-      newblockpos+=blocksize;
+    if(it==g.map.end()){
+      b=&(g.map[key]);
+      if(g.newblockpos>=N) return -1;
+      b->pos=g.newblockpos;
+      g.newblockpos+=blocksize;
       b->num=0;
     }else{
       b=&(it->second);
@@ -94,14 +92,14 @@ public:
     int position=b->pos+b->num++;
     int qposition=ndof*position;
     for(int i=0;i<ndof;++i){
-      qstorage[qposition+i]=q[i];
+      g.qstorage[qposition+i]=q[i];
     }
     //surrnum[position]=0;
     if(b->num>=blocksize){
         b->next=new block;
         block *bnew=b->next;
-        bnew->pos=newblockpos;
-        newblockpos+=blocksize;
+        bnew->pos=g.newblockpos;
+        g.newblockpos+=blocksize;
         bnew->num=0;
     }
     return position;
@@ -114,11 +112,11 @@ public:
   //! offset: i-th component of k-th vec in qlist is qlist[i*offset+k]
   //! nbuf: length(qlist)
   //! D: maximal distance
-  inline int get_near_vertices(const float (&qref)[ndof], float* qlist, const int& nbuf, const int& offset){
+  inline int get_near_vertices(const float* qref, float* qlist, const int& nbuf, const int& offset, graph& g){
     const int keylower=calc_key(qref[0]-D);
-    piterator begin=map.lower_bound(keylower);
+    piterator begin=g.map.lower_bound(keylower);
     const int keyupper=calc_key(qref[0]+D);
-    piterator end=map.upper_bound(keyupper);
+    piterator end=g.map.upper_bound(keyupper);
     int index[ndof];
     for(int i=0;i<ndof;++i){
         index[i]=i*offset;
@@ -139,7 +137,7 @@ public:
           //!calc norm
           float normsq=0;
           for(int i=0;i<ndof;++i){
-            float diff=qstorage[k+i]-qref[i];
+            float diff=g.qstorage[k+i]-qref[i];
             //printvar(diff);
             normsq+=diff*diff;
           }
@@ -148,7 +146,7 @@ public:
             //printvar(k);
             //! store neighbour in buffer
             for(int i=0;i<ndof;++i){
-              qlist[index[i]++]=qstorage[k+i];
+              qlist[index[i]++]=g.qstorage[k+i];
             }
             //! terminate if buffer full
             if(index[0]==nbuf)return nbuf;
@@ -160,6 +158,57 @@ public:
     //!number of written q's
     return index[0];
   }
+
+  inline int get_near_vertices(const float* qref, float* qlist, int* qposlist, const int& nbuf, const int& offset, graph& g){
+    const int keylower=calc_key(qref[0]-D);
+    piterator begin=g.map.lower_bound(keylower);
+    const int keyupper=calc_key(qref[0]+D);
+    piterator end=g.map.upper_bound(keyupper);
+    int index[ndof];
+    for(int i=0;i<ndof;++i){
+        index[i]=i*offset;
+    }
+    //printvar(begin->first);
+    //printvar(end->first);
+    for(;!(begin==end);++begin){
+      //printvar(begin->first);
+      block *b=&(begin->second);
+      //printvar(b->pos);
+      bool more=true;
+      while(more){
+        more=b->num>=blocksize;
+        //printvar(b->num);
+        const int pos=ndof*b->pos;
+        const int max=pos+ndof*b->num;
+        for(int l=pos;l<max;l+=ndof){
+          int k=ndof*l;
+          //!calc norm
+          float normsq=0;
+          for(int i=0;i<ndof;++i){
+            float diff=g.qstorage[k+i]-qref[i];
+            //printvar(diff);
+            normsq+=diff*diff;
+          }
+          //!compare norm
+          if(normsq<D2){
+            //printvar(k);
+            //! store neighbour in buffer
+            qposlist[index[0]]=k;
+            for(int i=0;i<ndof;++i){
+              qlist[index[i]++]=g.qstorage[k+i];
+            }
+            //! terminate if buffer full
+            if(index[0]==nbuf)return nbuf;
+          }
+        }//for
+        b=b->next;
+      }
+    }//for
+    //!number of written q's
+    return index[0];
+  }
+
+
 
 #if 1
   //! get list of all vertices nearer than D
@@ -195,6 +244,7 @@ public:
     int numqlist[num];
     int Nqlist;             //sum(numqlist)
     bool buffer_full=false; //abort flag if buffer is full (should not happen normally)
+
 
     for(int j=0;j<num && !buffer_full;++j){
       int p=ndof*j;
@@ -313,7 +363,10 @@ private:
   float D2;
   float factor;
 
-  graph graphl, graphr;
+  const int N=1024*1024;   //whole capacity: how many nodes can be stored
+  const int blocksize=256; //size of blocks
+
+  graph gl, gr;
 
 };
 

@@ -105,6 +105,39 @@ public:
     return position;
   }
 
+  //!insert node q, data of surrnum and edges are not modified -> position returned for this
+  int insert(const float* q, const int offset, graph& g){
+    int key=calc_key(q[0]);
+    piterator it = g.map.find(key);
+    block *b;
+    if(it==g.map.end()){
+      b=&(g.map[key]);
+      if(g.newblockpos>=N) return -1;
+      b->pos=g.newblockpos;
+      g.newblockpos+=blocksize;
+      b->num=0;
+    }else{
+      b=&(it->second);
+      while(b->num>=blocksize){
+        b=b->next;
+      }
+    }
+    int position=b->pos+b->num++;
+    int qposition=ndof*position;
+    for(int i=0;i<ndof;++i){
+      g.qstorage[qposition+i]=q[offset*i];
+    }
+    //surrnum[position]=0;
+    if(b->num>=blocksize){
+        b->next=new block;
+        block *bnew=b->next;
+        bnew->pos=g.newblockpos;
+        g.newblockpos+=blocksize;
+        bnew->num=0;
+    }
+    return position;
+  }
+
 
   //! get list of all vertices nearer than D
   //! qref: vertex to process
@@ -159,7 +192,7 @@ public:
     return index[0];
   }
 
-  inline int get_near_vertices(const float* qref, float* qlist, int* qposlist, const int& nbuf, const int& offset, graph& g){
+  inline int get_near_vertices(const float* qref, const int& offsetref, float* qlist, int* posqlist, const int& nbuf, const int& offset, graph& g){
     const int keylower=calc_key(qref[0]-D);
     piterator begin=g.map.lower_bound(keylower);
     const int keyupper=calc_key(qref[0]+D);
@@ -185,7 +218,7 @@ public:
           //!calc norm
           float normsq=0;
           for(int i=0;i<ndof;++i){
-            float diff=g.qstorage[k+i]-qref[i];
+            float diff=g.qstorage[k+i]-qref[offsetref*i];
             //printvar(diff);
             normsq+=diff*diff;
           }
@@ -193,7 +226,7 @@ public:
           if(normsq<D2){
             //printvar(k);
             //! store neighbour in buffer
-            qposlist[index[0]]=k;
+            posqlist[index[0]]=l;
             for(int i=0;i<ndof;++i){
               qlist[index[i]++]=g.qstorage[k+i];
             }
@@ -233,74 +266,57 @@ public:
     //! make list of potential neighbours for all new nodes
     //!
 
-    int index[ndof];
-    for(int i=0;i<ndof;++i){
-        index[i]=i*offset;
-    }
 
     //!posqlist[i]: position in qlist buffer, at which neighbours of qnew[i] start
     int *poslist=new int[nbuf];
     int posqlist[num];
     int numqlist[num];
+    int numqlistleft[num];
     int Nqlist;             //sum(numqlist)
-    bool buffer_full=false; //abort flag if buffer is full (should not happen normally)
 
+    int index=0;
+    int *qlistp=qlist;
+    int *poslistp=poslist;
+    int nbufrest=nbuf;
 
-    for(int j=0;j<num && !buffer_full;++j){
-      int p=ndof*j;
-      posqlist[j]=index[0];
+    for(int j=0;j<num;++j){
+      posqlist[j]=index;
 
-      const int keylower=calc_key(qnew[p]-D);
-      piterator begin=map.lower_bound(keylower);
-      const int keyupper=calc_key(qnew[p]+D);
-      piterator end=map.upper_bound(keyupper);
+      int writtenleft=get_near_vertices(&qnew[j],num,qlistp,poslistp,nbufrest,offset,graphl);
 
-      //printvar(begin->first);
-      //printvar(end->first);
-      for(;!(begin==end)&&!buffer_full;++begin){
-        //printvar(begin->first);
-        block *b=&(begin->second);
-        //printvar(b->pos);
-        bool more=true;
-        while(more){
-          const int bnum=b->num;
-          if(index[0]+bnum>nbuf){
-            buffer_full=true;
-            for(int l=j+1;l<num;++l){
-              posqlist[l]=nbuf;
-              numqlist[l]=0;
-            }
-            break;
-          }
-          more=bnum>=blocksize;
-          //printvar(b->num);
-          const int pos=b->pos;
-          const int max=pos+bnum;
-          for(int l=pos;l<max;l+=ndof){
-            int k=ndof*l;
-            //!calc norm
-            float normsq=0;
-            for(int i=0;i<ndof;++i){
-              float diff=qstorage[k+i]-qnew[p+i];
-              //printvar(diff);
-              normsq+=diff*diff;
-            }
-            //!compare norm
-            if(normsq<D2){
-              //printvar(k);
-              //! store neighbour in buffer
-              poslist[index[0]]=l;
-              for(int i=0;i<ndof;++i){
-                qlist[index[i]++]=qstorage[k+i];
-              }
-            }
-          }//for
-          b=b->next;
+      if(writtenleft>=nbufrest){
+        for(int l=j+1;l<num;++l){
+          posqlist[l]=nbuf;
+          numqlist[l]=0;
         }
-      }//for
+        numqlist[j]=writtenleft;
+        break;
+      }
 
-      numqlist[j]=index[0]-posqlist[j];
+      numqlistleft[j]=writtenleft;
 
+      qlistp+=writtenleft;
+      poslistp+=writtenleft;
+      nbufrest-=writtenleft;
+      index+=writtenleft;
+
+      int writtenright=get_near_vertices(&qnew[j],num,qlistp,poslistp,nbufrest,offset,graphr);
+
+      if(writtenright>=nbufrest){
+        for(int l=j+1;l<num;++l){
+          posqlist[l]=nbuf;
+          numqlist[l]=0;
+        }
+        numqlist[j]=writtenleft+writtenright;
+        break;
+      }
+
+      qlistp+=writtenright;
+      poslistp+=writtenright;
+      nbufrest-=writtenright;
+      index+=writtenright;
+
+      numqlist[j]=writtenleft+writtenright;
     }
 
     Nqlist=index[0];
@@ -326,26 +342,82 @@ public:
     //!
 
     for(int j=0;j<num;++j){
-      int p=ndof*j;
 
-      int position=insert(&q[p]);
-      int surrnump=0;
-      std::vector<int> *v=&(edgelists[position]);
-      int max=posqlist[i]+numqlist[j];
-      for(int i=posqlist[i];i<max;++i){
+      //! left:  min,...,maxleft-1
+      //! right: maxleft,...,max-1
+      int min=posqlist[j];
+      int maxleft=min+numqlistleft[j];
+      int max=min+numqlist[j];
+
+      bool leftconn=false;
+      for(int i=posqlist[j];i<maxleft;++i){
         if(resbuf[i]==0){
-          int goalpos=poslist[i];
-          ++surrnump;
-          v->push_back(goalpos);
-          ++(surrnum[goalpos]);
-          edgelists[goalpos].push_back(position);
+          leftconn=true;
+          break;
         }
       }
-      surrnum[position]+=surrnump;
+      if(leftconn){
+        //!
+        //! connection to left graph exists -> insert in left graph
+        //!
+        int position=insert(&q[j],num,graphl);
+        int surrnump=0;
+        std::vector<int> *v=&(graphl.edgelists[position]);
+        for(int i=min;i<maxleft;++i){
+          if(resbuf[i]==0){
+            int goalpos=poslist[i];
+            ++surrnump;
+            v->push_back(goalpos);
+            ++(graphl.surrnum[goalpos]);
+            graphl.edgelists[goalpos].push_back(position);
+          }
+        }
+        graphl.surrnum[position]+=surrnump;
+        for(int i=maxleft;i<max;++i){
+          if(resbuf[i]==0){
+            //!
+            //!  Connection found! abort
+            //!
+              //..........
+          }
+        }
+      }else{
+        bool rightconn=false;
+        for(int i=maxleft;i<max;++i){
+          if(resbuf[i]==0){
+            rightconn=true;
+            break;
+          }
+        }
+        if(rightconn){
+          //!
+          //! connection to right graph exists -> insert in right graph
+          //!
+          int position=insert(&q[j],num,graphr);
+          int surrnump=0;
+          std::vector<int> *v=&(graphr.edgelists[position]);
+          for(int i=maxleft;i<max;++i){
+            if(resbuf[i]==0){
+              int goalpos=poslist[i];
+              ++surrnump;
+              v->push_back(goalpos);
+              ++(graphr.surrnum[goalpos]);
+              graphr.edgelists[goalpos].push_back(position);
+            }
+          }
+          graphr.surrnum[position]+=surrnump;
+          for(int i=min;i<maxleft;++i){
+            if(resbuf[i]==0){
+              //!
+              //!  Connection found! abort
+              //!
+                //..........
+            }
+          }//for
+        }
+      }
 
-      //! insert edges in dependance of resbuf
-
-    }
+    }//for
   }
 #endif
 
@@ -366,7 +438,7 @@ private:
   const int N=1024*1024;   //whole capacity: how many nodes can be stored
   const int blocksize=256; //size of blocks
 
-  graph gl, gr;
+  graph graphl, graphr;
 
 };
 

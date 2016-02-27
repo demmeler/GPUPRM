@@ -26,3 +26,4 @@ lib/PRMSolver.h
 lib/vertexlist2.h
 lib/vertexlist3.h
 testvertexlist2.cpp
+test6.cpp

@@ -4,6 +4,7 @@
 #include <map>
 #include <vector>
 #include <cmath>
+#include <stdlib.h>
 
 #include "configspace.hpp"
 #include "util.hpp"
@@ -306,9 +307,34 @@ public:
     //! create nodes qnew randomly
     //!
 
-    for(int i=0;i<num;++i){
-
+    //!from left graph
+    for(int j=0;j<num/2;++j){
+      do{
+      //!choose random block
+      int k=rand()%graphl.blocknum;
+      block *b =&(graphl.blocks[k]);
+      //!chose random vertex
+      int l=b->pos+rand()%b->num;
+      for(int i=0;i<ndof;++i){
+        qnew[j+num*i]=graphl.qstorage[l+i]-D+2*D*((float)rand()/RAND_MAX);
+      }
+      }while(!space->indicator(&qnew[j]));
     }
+    //!from right graph
+    for(int j=num/2;j<num;++j){
+      do{
+      //!choose random block
+      int k=rand()%graphr.blocknum;
+      block *b =&(graphr.blocks[k]);
+      //!chose random vertex
+      int l=b->pos+rand()%b->num;
+      for(int i=0;i<ndof;++i){
+        qnew[j+num*i]=graphr.qstorage[l+i]-D+2*D*((float)rand()/RAND_MAX);
+      }
+      }while(!space->indicator(&qnew[j]));
+    }
+
+
 
     //!
     //! check if qnew is free

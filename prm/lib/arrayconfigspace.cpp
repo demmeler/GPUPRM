@@ -41,9 +41,16 @@ int ArrayConfigspace::indicator(const float* q, int* res, int N){
   }
   return 0;
 }
+//!case N=1
+int ArrayConfigspace::indicator(const float* q){
+  int res=0;
+  indicator(q,&res,1);
+  return res;
+}
+
 //! checks if indicator function = 1 somewhere on the line between qs and qe
 //! res is return value
-int ArrayConfigspace::indicator2(const float* qs, const float* qe, float *res, const int N){
+int ArrayConfigspace::indicator2(const float* qs, const float* qe, int *res, const int N){
   for(int k=0;k<N;++k){
     float qs_[]={qs[k],qs[k+N]};
     float qe_[]={qe[k],qe[k+N]};
@@ -75,10 +82,10 @@ int ArrayConfigspace::indicator2(const float* qs, const float* qe, float *res, c
 
 //! same paircheck as above, but with compressed storage:
 //! checks pairs: (qs[i],...) ->  (qe(posqe[i]),...) , ...., (qe[posqe[i]+numqe[i]-1],...) for i=0,...,M-1
-int indicator2(const float* qs, const int M, const float* qe, float *res, const int *posqe, const int *numqe, const int offset){
+int ArrayConfigspace::indicator2(const float* qs, const int M, const float* qe, int *res, const int *posqe, const int *numqe, const int offset){
   for(int k=0;k<M;++k)
   for(int l=posqe[k];l<posqe[k]+numqe[k];++l){
-    float qs_[]={qs[k],qs[k+N]};
+    float qs_[]={qs[k],qs[k+M]};
     float qe_[]={qe[l],qe[l+offset]};
     if(0 != check_boundaries(&qs_[0]) || 0 != check_boundaries(&qe_[0])){
       res[l]=2;

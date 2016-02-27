@@ -16,6 +16,9 @@ all:
 #	g++ -g -O3 -std=c++11 -o testvertexlist2 testvertexlist2.cpp
 #	g++ -g -std=c++11 -o testvertexlist2 testvertexlist2.cpp
 
+test6: arrayconfigspace
+	g++ -c -o test6.o test6.cpp
+	g++ -o test6 test6.o arrayconfigspace.o
 
 test3: arrayconfigspace
 	g++ -c -o test3.o test3.cpp

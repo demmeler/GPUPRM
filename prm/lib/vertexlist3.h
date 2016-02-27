@@ -103,10 +103,19 @@ public:
     //nicht ganz sicher wie ...
   }
 
+  int init(const float* qstart, const float* qend){
+    i0l=insert(qstart,graphl);
+    i0r=insert(qend,graphr);
+  }
 
   //!insert node q, data of surrnum and edges are not modified -> position returned for this
   int insert(const float* q){return insert(q,graphl);}
   int insert(const float* q, graph& g){
+    return insert(q,1,g);
+  }
+
+  //!insert node q, data of surrnum and edges are not modified -> position returned for this
+  int insert(const float* q, const int offset, graph& g){
     int key=calc_key(q[0]);
     piterator it = g.map.find(key);
     block *b;
@@ -139,7 +148,7 @@ public:
     int position=b->pos+b->num++;
     int qposition=ndof*position;
     for(int i=0;i<ndof;++i){
-      g.qstorage[qposition+i]=q[i];
+      g.qstorage[qposition+i]=q[offset*i];
     }
     //surrnum[position]=0;
     if(b->num>=blocksize){
@@ -149,39 +158,6 @@ public:
       g.newblockpos+=blocksize;
       if(g.newblockpos>N) return -1;
       bnew->num=0;
-    }
-    return position;
-  }
-
-  //!insert node q, data of surrnum and edges are not modified -> position returned for this
-  int insert(const float* q, const int offset, graph& g){
-    int key=calc_key(q[0]);
-    piterator it = g.map.find(key);
-    block *b;
-    if(it==g.map.end()){
-      b=&(g.map[key]);
-      if(g.newblockpos>=N) return -1;
-      b->pos=g.newblockpos;
-      g.newblockpos+=blocksize;
-      b->num=0;
-    }else{
-      b=&(it->second);
-      while(b->num>=blocksize){
-        b=b->next;
-      }
-    }
-    int position=b->pos+b->num++;
-    int qposition=ndof*position;
-    for(int i=0;i<ndof;++i){
-      g.qstorage[qposition+i]=q[offset*i];
-    }
-    //surrnum[position]=0;
-    if(b->num>=blocksize){
-        b->next=new block;
-        block *bnew=b->next;
-        bnew->pos=g.newblockpos;
-        g.newblockpos+=blocksize;
-        bnew->num=0;
     }
     return position;
   }
@@ -257,7 +233,7 @@ public:
     //printvar(end->first);
     for(;!(begin==end);++begin){
       //printvar(begin->first);
-      block *b=&(begin->second);
+      block *b=begin->second;
       //printvar(b->pos);
       bool more=true;
       while(more){
@@ -309,29 +285,35 @@ public:
 
     //!from left graph
     for(int j=0;j<num/2;++j){
+      float qnewtemp[ndof];
       do{
-      //!choose random block
-      int k=rand()%graphl.blocknum;
-      block *b =&(graphl.blocks[k]);
-      //!chose random vertex
-      int l=b->pos+rand()%b->num;
-      for(int i=0;i<ndof;++i){
-        qnew[j+num*i]=graphl.qstorage[l+i]-D+2*D*((float)rand()/RAND_MAX);
-      }
-      }while(!space->indicator(&qnew[j]));
+        //!choose random block
+        int k=rand()%graphl.blocknum;
+        block *b =&(graphl.blocks[k]);
+        //!chose random vertex
+        int l=b->pos+rand()%b->num;
+        for(int i=0;i<ndof;++i){
+          qnew[j+num*i]=graphl.qstorage[l+i]-D+2*D*((float)rand()/RAND_MAX);
+          qnewtemp[i]=qnew[j+num*i];
+        }
+        printarr(qnewtemp,ndof);
+      }while(space->indicator(&qnew[j])!=0);
     }
     //!from right graph
     for(int j=num/2;j<num;++j){
+      float qnewtemp[ndof];
       do{
-      //!choose random block
-      int k=rand()%graphr.blocknum;
-      block *b =&(graphr.blocks[k]);
-      //!chose random vertex
-      int l=b->pos+rand()%b->num;
-      for(int i=0;i<ndof;++i){
-        qnew[j+num*i]=graphr.qstorage[l+i]-D+2*D*((float)rand()/RAND_MAX);
-      }
-      }while(!space->indicator(&qnew[j]));
+        //!choose random block
+        int k=rand()%graphr.blocknum;
+        block *b =&(graphr.blocks[k]);
+        //!chose random vertex
+        int l=b->pos+rand()%b->num;
+        for(int i=0;i<ndof;++i){
+          qnew[j+num*i]=graphr.qstorage[l+i]-D+2*D*((float)rand()/RAND_MAX);
+          qnewtemp[i]=qnew[j+num*i];
+        }
+        printarr(qnewtemp,ndof);
+      }while(space->indicator(&qnew[j])!=0);
     }
 
 
@@ -357,7 +339,7 @@ public:
     int *poslist=new int[nbuf];
     float *distlist=new float[nbuf];
     int index=0;
-    int *qlistp=qlist;
+    float *qlistp=qlist;
     int *poslistp=poslist;
     float *distlistp=distlist;
     int nbufrest=nbuf;
@@ -417,10 +399,20 @@ public:
     //! calculate which edges exist
     //!
 
+    printarr(qnew,ndof*num);
+    printvar(num);
+    printarr(qlist,ndof*nbuf);
+    printarr(posqlist,num);
+    printarr(numqlist,num);
+    printvar(offset);
+    printarr(distlist,nbuf);
+    printarr(poslist,nbuf);
 
     //...... --> call indicator function on GPU
     space->indicator2(qnew,num,qlist,resbuf,posqlist,numqlist,offset);
 
+
+    printarr(resbuf,nbuf);
 
     //!
     //! insert nodes and edges
@@ -537,9 +529,49 @@ public:
     return (int)(component*factor);
   }
 
-  inline int random_node(){
 
+
+  void print(){
+    msg("-------vertexlist-------");
+    msg("graphl:");
+    for(piterator it=graphl.map.begin();it!=graphl.map.end();++it){
+      block *b=it->second;
+      bool more=false;
+      do{
+        printvar(b->pos);
+        printvar(b->num);
+        for(int i=0;i<b->num;++i){
+          float* qi=&(graphl.qstorage.data()[ndof*(b->pos+i)]);
+          printarr(qi,ndof);
+          int* goalsi=graphl.edgelists[b->pos+i].data();
+          printarr(goalsi,graphl.edgelists[b->pos+i].size());
+        }
+        more=(b->num>=blocksize);
+        b=b->next;
+      }while(more);
+    }
+
+    msg("graphr:");
+    for(piterator it=graphr.map.begin();it!=graphr.map.end();++it){
+      block *b=it->second;
+      bool more=false;
+      do{
+        printvar(b->pos);
+        printvar(b->num);
+        for(int i=0;i<b->num;++i){
+          float* qi=&(graphr.qstorage.data()[ndof*(b->pos+i)]);
+          printarr(qi,ndof);
+          int* goalsi=graphr.edgelists[b->pos+i].data();
+          printarr(goalsi,graphr.edgelists[b->pos+i].size());
+        }
+        more=(b->num>=blocksize);
+        b=b->next;
+      }while(more);
+    }
+
+    msg("------------------------");
   }
+
 
 private:
   float H;
@@ -554,6 +586,8 @@ private:
   const int blocksize=256; //size of blocks
 
   graph graphl, graphr;
+
+  int i0l, i0r; //indices of start and goal
 
   struct {
     float q[ndof];   //connecting node

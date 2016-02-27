@@ -59,10 +59,24 @@ int main()
   int nbuf=4;
   float *qlist=new float[ndof*nbuf];
   int *resbuf=new int[nbuf];
+  for(int i=0;i<nbuf;++i){resbuf[i]=27;}
   int offset=nbuf;
 
   prm.processing_step(qnew,num,qlist,resbuf,nbuf,offset);
 
+  prm.print();
+
+  prm.processing_step(qnew,num,qlist,resbuf,nbuf,offset);
+
+  prm.print();
+
+  prm.processing_step(qnew,num,qlist,resbuf,nbuf,offset);
+
+
+  prm.print();
+
+  system("mkdir prmoutput");
+  prm.store_graphs("prmoutput");
 
 
   //printarr(array,3000);

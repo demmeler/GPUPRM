@@ -54,7 +54,6 @@ class vertexlist{
   };
 
 
-
     //! *******************
     //! *      class      *
     //! *******************
@@ -239,9 +238,9 @@ public:
       while(more){
         more=b->num>=blocksize;
         //printvar(b->num);
-        const int pos=ndof*b->pos;
-        const int max=pos+ndof*b->num;
-        for(int l=pos;l<max;l+=ndof){
+        const int pos=b->pos;
+        const int max=pos+b->num;
+        for(int l=pos;l<max;++l){
           int k=ndof*l;
           //!calc norm
           float normsq=0;
@@ -291,29 +290,33 @@ public:
         int k=rand()%graphl.blocknum;
         block *b =&(graphl.blocks[k]);
         //!chose random vertex
-        int l=b->pos+rand()%b->num;
+        int l=ndof*(b->pos+rand()%b->num);
         for(int i=0;i<ndof;++i){
+          float x=graphl.qstorage[l+i];
           qnew[j+num*i]=graphl.qstorage[l+i]-D+2*D*((float)rand()/RAND_MAX);
+          float y=qnew[j+num*i];
           qnewtemp[i]=qnew[j+num*i];
         }
+        printvar(l);
         printarr(qnewtemp,ndof);
-      }while(space->indicator(&qnew[j])!=0);
+      }while(space->indicator(&qnewtemp[j])!=0);
     }
     //!from right graph
     for(int j=num/2;j<num;++j){
-      float qnewtemp[ndof];
+      float qnewtemp2[ndof];
       do{
         //!choose random block
         int k=rand()%graphr.blocknum;
         block *b =&(graphr.blocks[k]);
         //!chose random vertex
-        int l=b->pos+rand()%b->num;
+        int l=ndof*(b->pos+rand()%b->num);
         for(int i=0;i<ndof;++i){
           qnew[j+num*i]=graphr.qstorage[l+i]-D+2*D*((float)rand()/RAND_MAX);
-          qnewtemp[i]=qnew[j+num*i];
+          qnewtemp2[i]=qnew[j+num*i];
         }
-        printarr(qnewtemp,ndof);
-      }while(space->indicator(&qnew[j])!=0);
+        printvar(l);
+        printarr(qnewtemp2,ndof);
+      }while(space->indicator(&qnewtemp2[j])!=0);
     }
 
 
@@ -485,7 +488,7 @@ public:
           int position=insert(&qnew[j],num,graphr);
           int surrnump=0;
           std::vector<int> *v=&(graphr.edgelists[position]);
-          std::vector<float> *w=&(graphl.edgeweights[position]);
+          std::vector<float> *w=&(graphr.edgeweights[position]);
           for(int i=maxleft;i<max;++i){
             if(resbuf[i]==0){
               int goalpos=poslist[i];
@@ -538,31 +541,39 @@ public:
       block *b=it->second;
       bool more=false;
       do{
+        msg("--");
         printvar(b->pos);
         printvar(b->num);
         for(int i=0;i<b->num;++i){
+
           float* qi=&(graphl.qstorage.data()[ndof*(b->pos+i)]);
           printarr(qi,ndof);
           int* goalsi=graphl.edgelists[b->pos+i].data();
           printarr(goalsi,graphl.edgelists[b->pos+i].size());
+          float* weightsi=graphl.edgeweights[b->pos+i].data();
+          printarr(weightsi,graphl.edgeweights[b->pos+i].size());
         }
         more=(b->num>=blocksize);
         b=b->next;
       }while(more);
     }
-
+    msg("----------");
     msg("graphr:");
     for(piterator it=graphr.map.begin();it!=graphr.map.end();++it){
       block *b=it->second;
       bool more=false;
       do{
+        msg("--");
         printvar(b->pos);
         printvar(b->num);
         for(int i=0;i<b->num;++i){
+
           float* qi=&(graphr.qstorage.data()[ndof*(b->pos+i)]);
           printarr(qi,ndof);
           int* goalsi=graphr.edgelists[b->pos+i].data();
           printarr(goalsi,graphr.edgelists[b->pos+i].size());
+          float* weightsi=graphr.edgeweights[b->pos+i].data();
+          printarr(weightsi,graphr.edgeweights[b->pos+i].size());
         }
         more=(b->num>=blocksize);
         b=b->next;
@@ -571,6 +582,49 @@ public:
 
     msg("------------------------");
   }
+
+
+  void store_graphs(std::string path){
+    std::string pathl=path+"/graphl";
+    //system("rm -rf "+pathl);
+    system(("mkdir "+pathl).c_str());
+    store_graph(pathl,graphl);
+    std::string pathr=path+"/graphr";
+    //system("rm -rf "+pathr);
+    system(("mkdir "+pathr).c_str());
+    store_graph(pathr,graphr);
+  }
+
+  void store_graph(std::string path, graph& g) const {
+    write_file(path + "/qstorage.bin",g.qstorage.data(),ndof*g.newblockpos);
+    write_file(path + "/surrnum.bin",g.surrnum.data(), g.newblockpos);
+
+    std::vector<int> edgesfrom;
+    std::vector<int> edgesto;
+    std::vector<int> edgesweight;
+
+    for(piterator it=g.map.begin();it!=g.map.end();++it){
+      block *b=it->second;
+      bool more=true;
+      while(more){
+        for(int l=b->pos;l<b->pos+b->num;++l){
+          for(int i=0;i<g.edgelists[l].size();++i){
+            edgesfrom.push_back(l);
+            edgesto.push_back(g.edgelists[l][i]);
+            edgesweight.push_back(g.edgeweights[l][i]);
+          }
+        }
+        if(b->num>=blocksize)more=true;
+        b=b->next;
+      }
+    }
+
+    write_file(path + "/edgesfrom.bin",edgesfrom.data(),edgesfrom.size());
+    write_file(path + "/edgesto.bin",edgesto.data(),edgesto.size());
+    write_file(path + "/edgesweight.bin",edgesweight.data(),edgesweight.size());
+
+  }
+
 
 
 private:

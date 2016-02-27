@@ -35,8 +35,8 @@ int main()
 
   tick(t1);
 
-  float D=0.01;
-  float H=l*0.001;//0.001;
+  float D=0.1;
+  float H=l*0.01;//0.001;
 
   printvar(D);
   printvar(H);
@@ -60,7 +60,7 @@ int main()
       tock(t1);
     }
 #endif
-    vlist.insert(qtemp);
+    if(vlist.insert(qtemp)==-1){msg("ERROR");}
   }
 
 
@@ -87,6 +87,8 @@ int main()
 
   //printvar(sum);
   tock(t2);
+
+  delete qlist;
 
   }
 

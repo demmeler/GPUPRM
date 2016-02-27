@@ -63,7 +63,7 @@ public:
   }
 
 
-  void insert(const float (&q)[ndof]){ //kanten?
+  int insert(const float (&q)[ndof]){ //kanten?
     int key=calc_key(q[0]);
     piterator it = map.find(key);
     block *b;
@@ -79,6 +79,7 @@ public:
       //b->q.push_back(q[i]);
       b->q[count+i]=q[i];
     }
+    return 0;
   }
 
 

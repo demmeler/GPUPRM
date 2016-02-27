@@ -33,7 +33,7 @@ public:
   virtual float deltaq()=0;
 
   //! dimension d
-  virtual int dim()=ndof;
+  virtual int dim()=0;
 
 
 };

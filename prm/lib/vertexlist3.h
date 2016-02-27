@@ -61,7 +61,7 @@ class vertexlist{
 
 public:
 
-  vertexlist(float H_, float D_, Configspace *space_)
+  vertexlist(float H_, float D_, Configspace<ndof> *space_=0x0)
   {
     graphl.qstorage.resize(ndof*N);
     graphl.surrnum.resize(N);
@@ -81,6 +81,15 @@ public:
     graphr.newblockpos=0;
     graphr.blocknum=0;
 
+
+    block b;
+    b.next=0x0;
+    b.num=0;
+    b.pos=0;
+    graphl.blocks.assign(N,b);
+    graphr.blocks.assign(N,b);
+
+
     H=H_;
     D=D_;
     D2=D*D;
@@ -95,22 +104,37 @@ public:
 
 
   //!insert node q, data of surrnum and edges are not modified -> position returned for this
+  int insert(const float* q){return insert(q,graphl);}
   int insert(const float* q, graph& g){
     int key=calc_key(q[0]);
     piterator it = g.map.find(key);
     block *b;
+    int fall=0;
+    int size,size2,pos,num;
     if(it==g.map.end()){
-      b=g.map[key]=&(g.blocks[g.blocknum++]);
+      size2=g.blocknum;
+      size=g.newblockpos;
+
+      b=&(g.blocks[g.blocknum++]);
+      g.map[key]=b;
       b->pos=g.newblockpos;
       g.newblockpos+=blocksize;
       if(g.newblockpos>N) return -1;
       b->num=0;
     }else{
-      b=&(it->second);
+      size=g.newblockpos;
+      size2=g.blocknum;
+      fall=1;
+
+      b=it->second;
+      num=b->num;
+      pos=b->pos;
       while(b->num>=blocksize){
         b=b->next;
       }
     }
+    //printvar(b->pos);
+    //printvar(b->num);
     int position=b->pos+b->num++;
     int qposition=ndof*position;
     for(int i=0;i<ndof;++i){
@@ -168,6 +192,10 @@ public:
   //! offset: i-th component of k-th vec in qlist is qlist[i*offset+k]
   //! nbuf: length(qlist)
   //! D: maximal distance
+  inline int get_near_vertices(const float* qref, float* qlist, const int& nbuf, const int& offset){
+    return get_near_vertices(qref,qlist,nbuf,offset,graphl);
+  }
+
   inline int get_near_vertices(const float* qref, float* qlist, const int& nbuf, const int& offset, graph& g){
     const int keylower=calc_key(qref[0]-D);
     piterator begin=g.map.lower_bound(keylower);
@@ -181,12 +209,12 @@ public:
     //printvar(end->first);
     for(;!(begin==end);++begin){
       //printvar(begin->first);
-      block *b=&(begin->second);
+      block *b=begin->second;
       //printvar(b->pos);
       bool more=true;
       while(more){
         more=b->num>=blocksize;
-        //printvar(b->num);
+        printvar(b->num);
         const int pos=ndof*b->pos;
         const int max=pos+ndof*b->num;
         for(int k=pos;k<max;k+=ndof){
@@ -350,7 +378,7 @@ public:
       numqlist[j]=writtenleft+writtenright;
     }
 
-    Nqlist=index[0];
+    Nqlist=index;
 
 
     //!
@@ -391,7 +419,7 @@ public:
         //!
         //! connection to left graph exists -> insert in left graph
         //!
-        int position=insert(&q[j],num,graphl);
+        int position=insert(&qnew[j],num,graphl);
         int surrnump=0;
         std::vector<int> *v=&(graphl.edgelists[position]);
         std::vector<float> *w=&(graphl.edgeweights[position]);
@@ -413,7 +441,7 @@ public:
             //!
             //!  Connection found! abort
             //!
-            for(int l=0;l<ndof;++l)connection.q[l]=q[j+num*l];
+            for(int l=0;l<ndof;++l)connection.q[l]=qnew[j+num*l];
             float minnorm=w->at(0);
             int minpos=0;
             for(int j=0;j<w->size();++j){
@@ -436,7 +464,7 @@ public:
           //!
           //! connection to right graph exists -> insert in right graph
           //!
-          int position=insert(&q[j],num,graphr);
+          int position=insert(&qnew[j],num,graphr);
           int surrnump=0;
           std::vector<int> *v=&(graphr.edgelists[position]);
           std::vector<float> *w=&(graphl.edgeweights[position]);
@@ -458,7 +486,7 @@ public:
               //!
               //!  Connection found! abort
               //!
-              for(int l=0;l<ndof;++l)connection.q[l]=q[j+num*l];
+              for(int l=0;l<ndof;++l)connection.q[l]=qnew[j+num*l];
               float minnorm=w->at(0);
               int minpos=0;
               for(int j=0;j<w->size();++j){
@@ -493,7 +521,7 @@ private:
   float D2;
   float factor;
 
-  Configspace *space=space_;
+  Configspace<ndof> *space;
 
 
   const int N=1024*1024;   //whole capacity: how many nodes can be stored

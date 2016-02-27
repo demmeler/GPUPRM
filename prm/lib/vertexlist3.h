@@ -36,11 +36,12 @@ class vertexlist{
     block* next; //!if num==blocksize -> pointer to next block
   };
 
-  typedef std::map<int,block> pmap;
+  typedef std::map<int,block*> pmap;
   typedef typename pmap::iterator piterator;
 
   struct graph{
     pmap map; //map for sorting on high level
+    std::vector<block> blocks;
 
     std::vector<float> qstorage;                 //length ndof*N
     std::vector<int> surrnum;                    //length N
@@ -48,6 +49,7 @@ class vertexlist{
     std::vector<std::vector<float>> edgeweights; //length N
 
     int newblockpos;  //number of used blocks
+    int blocknum;
   };
 
 
@@ -65,15 +67,19 @@ public:
     graphl.surrnum.resize(N);
     graphl.edgelists.resize(N);
     graphl.edgeweights.resize(N);
+    graphl.blocks.resize(N/blocksize);
 
     graphl.newblockpos=0;
+    graphl.blocknum=0;
 
     graphr.qstorage.resize(ndof*N);
     graphr.surrnum.resize(N);
     graphr.edgelists.resize(N);
     graphr.edgeweights.resize(N);
+    graphr.blocks.resize(N/blocksize);
 
     graphr.newblockpos=0;
+    graphr.blocknum=0;
 
     H=H_;
     D=D_;
@@ -94,10 +100,10 @@ public:
     piterator it = g.map.find(key);
     block *b;
     if(it==g.map.end()){
-      b=&(g.map[key]);
-      if(g.newblockpos>=N) return -1;
+      b=g.map[key]=&(g.blocks[g.blocknum++]);
       b->pos=g.newblockpos;
       g.newblockpos+=blocksize;
+      if(g.newblockpos>N) return -1;
       b->num=0;
     }else{
       b=&(it->second);
@@ -112,11 +118,12 @@ public:
     }
     //surrnum[position]=0;
     if(b->num>=blocksize){
-        b->next=new block;
-        block *bnew=b->next;
-        bnew->pos=g.newblockpos;
-        g.newblockpos+=blocksize;
-        bnew->num=0;
+      block *bnew=&(g.blocks[g.blocknum++]);
+      b->next=bnew;
+      bnew->pos=g.newblockpos;
+      g.newblockpos+=blocksize;
+      if(g.newblockpos>N) return -1;
+      bnew->num=0;
     }
     return position;
   }

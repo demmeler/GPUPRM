@@ -25,4 +25,4 @@ test3: arrayconfigspace
 	g++ -o test3 test3.o arrayconfigspace.o
 
 arrayconfigspace:
-	g++ -c -g -o arrayconfigspace.o lib/arrayconfigspace.cpp
+	g++ -std=c++11 -c -g -o arrayconfigspace.o lib/arrayconfigspace.cpp

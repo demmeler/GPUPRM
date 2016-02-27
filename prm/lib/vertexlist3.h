@@ -89,6 +89,7 @@ public:
     graphl.blocks.assign(N,b);
     graphr.blocks.assign(N,b);
 
+    connection_found=true;
 
     H=H_;
     D=D_;
@@ -269,8 +270,6 @@ public:
     return index[0];
   }
 
-
-
   //! get list of all vertices nearer than D
   //! qlist: buffer to store neighbour candidates, struct of arrays
   //! offset: i-th component of k-th vec in qlist is qlist[i*offset+k]
@@ -287,8 +286,12 @@ public:
       float qnewtemp[ndof];
       do{
         //!choose random block
-        int k=rand()%graphl.blocknum;
-        block *b =&(graphl.blocks[k]);
+        int k;
+        block *b;
+        do{
+            k=rand()%graphl.blocknum;
+            b=&(graphl.blocks[k]);
+        }while(b->num==0);
         //!chose random vertex
         int l=ndof*(b->pos+rand()%b->num);
         for(int i=0;i<ndof;++i){
@@ -297,26 +300,34 @@ public:
           float y=qnew[j+num*i];
           qnewtemp[i]=qnew[j+num*i];
         }
+#ifndef NO_IO
         printvar(l);
         printarr(qnewtemp,ndof);
-      }while(space->indicator(&qnewtemp[j])!=0);
+#endif
+      }while(space->indicator(&qnewtemp[0])!=0);
     }
     //!from right graph
     for(int j=num/2;j<num;++j){
       float qnewtemp2[ndof];
       do{
         //!choose random block
-        int k=rand()%graphr.blocknum;
-        block *b =&(graphr.blocks[k]);
+        int k;
+        block *b;
+        do{
+            k=rand()%graphr.blocknum;
+            b=&(graphr.blocks[k]);
+        }while(b->num==0);
         //!chose random vertex
         int l=ndof*(b->pos+rand()%b->num);
         for(int i=0;i<ndof;++i){
           qnew[j+num*i]=graphr.qstorage[l+i]-D+2*D*((float)rand()/RAND_MAX);
           qnewtemp2[i]=qnew[j+num*i];
         }
+#ifndef NO_IO
         printvar(l);
         printarr(qnewtemp2,ndof);
-      }while(space->indicator(&qnewtemp2[j])!=0);
+#endif
+      }while(space->indicator(&qnewtemp2[0])!=0);
     }
 
 
@@ -352,16 +363,18 @@ public:
 
       int writtenleft=get_near_vertices(&qnew[j],num,qlistp,poslistp,distlistp,nbufrest,offset,graphl);
 
+      numqlistleft[j]=writtenleft;
+
       if(writtenleft>=nbufrest){
         for(int l=j+1;l<num;++l){
           posqlist[l]=nbuf;
           numqlist[l]=0;
+          numqlistleft[l]=0;
         }
         numqlist[j]=writtenleft;
         break;
       }
 
-      numqlistleft[j]=writtenleft;
 
       qlistp+=writtenleft;
       poslistp+=writtenleft;
@@ -375,6 +388,7 @@ public:
         for(int l=j+1;l<num;++l){
           posqlist[l]=nbuf;
           numqlist[l]=0;
+          numqlistleft[l]=0;
         }
         numqlist[j]=writtenleft+writtenright;
         break;
@@ -401,22 +415,23 @@ public:
     //!
     //! calculate which edges exist
     //!
-
+#ifndef NO_IO
     printarr(qnew,ndof*num);
     printvar(num);
     printarr(qlist,ndof*nbuf);
     printarr(posqlist,num);
     printarr(numqlist,num);
+    printarr(numqlistleft,num);
     printvar(offset);
     printarr(distlist,nbuf);
     printarr(poslist,nbuf);
-
+#endif
     //...... --> call indicator function on GPU
     space->indicator2(qnew,num,qlist,resbuf,posqlist,numqlist,offset);
 
-
+#ifndef NO_IO
     printarr(resbuf,nbuf);
-
+#endif
     //!
     //! insert nodes and edges
     //!
@@ -583,19 +598,21 @@ public:
     msg("------------------------");
   }
 
-
   void store_graphs(std::string path){
     std::string pathl=path+"/graphl";
     //system("rm -rf "+pathl);
     system(("mkdir "+pathl).c_str());
-    store_graph(pathl,graphl);
+    store_graph(pathl,graphl,i0l,connection.index_left);
+
     std::string pathr=path+"/graphr";
     //system("rm -rf "+pathr);
     system(("mkdir "+pathr).c_str());
-    store_graph(pathr,graphr);
+    store_graph(pathr,graphr,i0r,connection.index_right);
+
+    write_file(path+"/connection.bin",(int*)&connection_found,1);
   }
 
-  void store_graph(std::string path, graph& g) const {
+  void store_graph(std::string path, graph& g, int start, int end) const {
     write_file(path + "/qstorage.bin",g.qstorage.data(),ndof*g.newblockpos);
     write_file(path + "/surrnum.bin",g.surrnum.data(), g.newblockpos);
 
@@ -659,6 +676,10 @@ public:
     write_file(path + "/blocknum.bin",&(g.blocknum),1);
     write_file(path + "/numc.bin",&numc,1);
 
+
+    write_file(path + "/startc.bin",&(posmapping[start]),1);
+    write_file(path + "/endc.bin",&(posmapping[end]),1);
+
   }
 
 
@@ -684,6 +705,8 @@ private:
     int index_left;  //index of connected node in graphl
     int index_right; //index of connected node in graphr
   }connection;
+
+  bool connection_found;
 
 };
 

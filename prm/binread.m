@@ -1,7 +1,7 @@
 function [ res ] = binread( path, type )
 % read a file
 
-    bufsz=1000000;
+    bufsz=20000000;
 
     fd2= fopen(path,'r');
     res = fread(fd2, bufsz,type);

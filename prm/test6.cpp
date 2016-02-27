@@ -75,6 +75,7 @@ int main()
 
   prm.print();
 
+  system("rm -rf prmoutput");
   system("mkdir prmoutput");
   prm.store_graphs("prmoutput");
 

@@ -49,8 +49,8 @@ class vertexlist{
     std::vector<std::vector<int>> edgelists;     //length N
     std::vector<std::vector<float>> edgeweights; //length N
 
-    int newblockpos;  //number of used blocks
-    int blocknum;
+    int newblockpos;  //position of next block in size-N-arrays
+    int blocknum;     //number of used blocks
   };
 
 
@@ -603,25 +603,61 @@ public:
     std::vector<int> edgesto;
     std::vector<int> edgesweight;
 
-    for(piterator it=g.map.begin();it!=g.map.end();++it){
-      block *b=it->second;
-      bool more=true;
-      while(more){
-        for(int l=b->pos;l<b->pos+b->num;++l){
-          for(int i=0;i<g.edgelists[l].size();++i){
-            edgesfrom.push_back(l);
-            edgesto.push_back(g.edgelists[l][i]);
-            edgesweight.push_back(g.edgeweights[l][i]);
-          }
+    std::vector<int> blockpos;
+    std::vector<int> blocknum;
+
+    //!compressed arrays
+    std::vector<int> edgesfromc;
+    std::vector<int> edgestoc;
+    std::vector<float> qstoragec;
+
+    std::vector<int> posmapping(N,0);
+
+    int index=0;
+    for(int l=0;l<g.blocknum;++l){
+      block *b=&(g.blocks[l]);
+      blockpos.push_back(b->pos);
+      blocknum.push_back(b->num);
+      for(int l=b->pos;l<b->pos+b->num;++l){
+        for(int i=0;i<ndof;++i){
+          qstoragec.push_back(g.qstorage[ndof*l+i]);
         }
-        if(b->num>=blocksize)more=true;
-        b=b->next;
+        posmapping[l]=index;
+        for(int i=0;i<g.edgelists[l].size();++i){
+          edgesfrom.push_back(l);
+          edgesto.push_back(g.edgelists[l][i]);
+          edgesweight.push_back(g.edgeweights[l][i]);
+        }
+        ++index;
+      }
+    }
+    int numc=index;
+
+    for(int l=0;l<g.blocknum;++l){
+      block *b=&(g.blocks[l]);
+      for(int l=b->pos;l<b->pos+b->num;++l){
+        for(int i=0;i<g.edgelists[l].size();++i){
+          edgesfromc.push_back(posmapping[l]);
+          edgestoc.push_back(posmapping[g.edgelists[l][i]]);
+        }
       }
     }
 
     write_file(path + "/edgesfrom.bin",edgesfrom.data(),edgesfrom.size());
     write_file(path + "/edgesto.bin",edgesto.data(),edgesto.size());
+    write_file(path + "/edgesfromc.bin",edgesfromc.data(),edgesfromc.size());
+    write_file(path + "/edgestoc.bin",edgestoc.data(),edgestoc.size());
     write_file(path + "/edgesweight.bin",edgesweight.data(),edgesweight.size());
+
+    write_file(path + "/qstoragec.bin",qstoragec.data(),qstoragec.size());
+
+
+    write_file(path + "/blockpos.bin",blockpos.data(),blockpos.size());
+    write_file(path + "/blocknum.bin",blocknum.data(),blocknum.size());
+
+    write_file(path + "/newblockpos.bin",&(g.newblockpos),1);
+    write_file(path + "/blocknum.bin",&(g.blocknum),1);
+    write_file(path + "/numc.bin",&numc,1);
 
   }
 

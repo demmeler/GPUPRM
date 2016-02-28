@@ -301,12 +301,13 @@ public:
         }while(b->num==0);
         //!chose random vertex
         int m=(b->pos+rand()%b->num);
+        int l;
         int x=1+graphl.surrnum[m];
         int prob=RAND_MAX/(x*x*x);
         if(rand()>prob){
           dismiss=true;
         }else{
-          int l=ndof*m;
+          l=ndof*m;
           for(int i=0;i<ndof;++i){
             qnew[j+num*i]=graphl.qstorage[l+i]-D+2*D*((float)rand()/RAND_MAX);
             qnewtemp[i]=qnew[j+num*i];
@@ -334,14 +335,14 @@ public:
             b=&(graphr.blocks[k]);
         }while(b->num==0);
         //!chose random vertex
-        int l=ndof*(b->pos+rand()%b->num);
         int m=(b->pos+rand()%b->num);
+        int l;
         int x=1+graphl.surrnum[m];
         int prob=RAND_MAX/(x*x*x);
         if(rand()>prob){
           dismiss=true;
         }else{
-          int l=ndof*m;
+          l=ndof*m;
           for(int i=0;i<ndof;++i){
             qnew[j+num*i]=graphr.qstorage[l+i]-D+2*D*((float)rand()/RAND_MAX);
             qnewtemp2[i]=qnew[j+num*i];

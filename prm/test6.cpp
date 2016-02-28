@@ -50,7 +50,7 @@ int main()
   vertexlist<2> prm(0.2,0.2,&space);
 
   float qstart[2]={0.1,0.4};
-  float qend[2]={space.max(0)*0.9,0.4};
+  float qend[2]={space.max(0)*0.9f,0.4};
 
   printvar(space.indicator(&qstart[0]));
   printvar(space.indicator(&qend[0]));

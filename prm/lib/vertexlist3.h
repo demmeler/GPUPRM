@@ -4,7 +4,11 @@
 #include <map>
 #include <vector>
 #include <cmath>
+#include <cfloat>
 #include <stdlib.h>
+
+#include <queue>
+#include <set>
 
 #include "configspace.hpp"
 #include "util.hpp"
@@ -52,7 +56,6 @@ class vertexlist{
     int newblockpos;  //position of next block in size-N-arrays
     int blocknum;     //number of used blocks
   };
-
 
     //! *******************
     //! *      class      *
@@ -485,6 +488,12 @@ public:
             }
             connection.index_left=v->at(minpos);
             connection.index_right=poslist[i];
+
+            int res0=do_dijkstra(graphl,dijkstral,i0l,connection.index_left);
+            int res1=do_dijkstra(graphr,dijkstrar,i0r,connection.index_right);
+            if(res0==0){msg("ERROR: no path found by dijkstra in graphl");}
+            if(res1==0){msg("ERROR: no path found by dijkstra in graphr");}
+
             return 1;
           }
         }
@@ -530,6 +539,12 @@ public:
               }
               connection.index_right=v->at(minpos);
               connection.index_left=poslist[i];
+
+              int res0=do_dijkstra(graphl,dijkstral,i0l,connection.index_left);
+              int res1=do_dijkstra(graphr,dijkstrar,i0r,connection.index_right);
+              if(res0==0){msg("ERROR: no path found by dijkstra in graphl");}
+              if(res1==0){msg("ERROR: no path found by dijkstra in graphr");}
+
               return 1;
             }
           }//for
@@ -543,11 +558,78 @@ public:
 
   }
 
-  inline int calc_key(const float& component){
-    return (int)(component*factor);
+
+
+
+  //!for dijkstra at the end
+  struct dijkstra_result{
+#if 0
+    struct node {float dist; int pos;};
+    struct comp {
+      inline bool operator() (const node& n1, const node& n2) const {
+        return n1.dist>n2.dist;
+      }
+    };
+    std::priority_queue<node,std::vector<node>,comp> queue;
+#endif
+
+    std::vector<int> parent; //length newblockpos
+    std::vector<float> dist; //length newblockpos
+    std::vector<int> path;
+  };
+
+
+
+  int do_dijkstra(graph& g, dijkstra_result& d, int from, int to){
+    d.dist.assign(g.newblockpos,FLT_MAX);
+    d.dist[from]=0.0;
+    d.parent.resize(g.newblockpos,-1);
+    d.parent[from]=from;
+    std::set<std::pair<float,int>> queue;
+
+    queue.insert(std::pair<float,int>(0.0,from));
+
+    while(!queue.empty()){
+      auto it=queue.begin();
+      float dist=it->first;
+      int pos=it->second;
+      queue.erase(it);
+
+      if(pos==to){
+        //!
+        //! fertig
+        //!
+        d.path.assign(1,to);
+        int pos=to;
+        while(pos!=from){
+          pos=d.parent[pos];
+          d.path.push_back(pos);
+        }
+        return 1;
+      }
+
+      for(int i=0;i<g.edgelists[pos].size();++i){
+        int dest=g.edgelists[pos][i];
+        float weight=g.edgeweights[pos][i];
+        if(d.dist[dest]>dist+weight){
+          queue.erase(std::pair<float,int>(d.dist[dest],dest));
+          d.dist[dest]=dist+weight;
+          queue.insert(std::pair<float,int>(d.dist[dest],dest));
+          d.parent[dest]=pos;
+        }
+      }
+
+    }//while
+    return 0; //no path
   }
 
 
+
+
+
+  inline int calc_key(const float& component){
+    return (int)(component*factor);
+  }
 
   void print(){
     msg("-------vertexlist-------");
@@ -683,7 +765,6 @@ public:
   }
 
 
-
 private:
   float H;
   float D;
@@ -698,6 +779,8 @@ private:
 
   graph graphl, graphr;
 
+  dijkstra_result dijkstral, dijkstrar;
+
   int i0l, i0r; //indices of start and goal
 
   struct {
@@ -705,6 +788,7 @@ private:
     int index_left;  //index of connected node in graphl
     int index_right; //index of connected node in graphr
   }connection;
+
 
   bool connection_found;
 

@@ -19,7 +19,7 @@ colltestcuda:
 
 colltest2:
 #	g++ -o colltest2 colltest2.cpp
-	nvcc -g -G -x=cu -arch=$(ARCHITECTURE) -o colltest2 colltest2.cpp
+	nvcc -std=c++11 -g -G -x=cu -arch=$(ARCHITECTURE) -o colltest2 colltest2.cpp
 
 test5:
 	g++ -O3 -std=c++11 -o test5 test5.cpp

@@ -1,6 +1,6 @@
 
 if 1
-    A=imread('labyrinth2.jpg');
+    A=imread('labyrinth3.jpg');
     A=A(:,:,1);
 
     [h,b]=size(A);

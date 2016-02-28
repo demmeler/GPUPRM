@@ -39,6 +39,7 @@ class vertexlist{
     int pos; //! position of first vertex
     int num; //! current number of vertices stored
     block* next; //!if num==blocksize -> pointer to next block
+    float acceptance_prob; //! probability for accepting this block, when chosen by prm alg
   };
 
   typedef std::map<int,block*> pmap;
@@ -134,6 +135,7 @@ public:
       g.newblockpos+=blocksize;
       if(g.newblockpos>N) return -1;
       b->num=0;
+      b->acceptance_prob=1.0;
     }else{
       size=g.newblockpos;
       size2=g.blocknum;
@@ -161,6 +163,7 @@ public:
       g.newblockpos+=blocksize;
       if(g.newblockpos>N) return -1;
       bnew->num=0;
+      bnew->acceptance_prob=b->acceptance_prob/2.0;
     }
     return position;
   }
@@ -287,6 +290,7 @@ public:
     //!from left graph
     for(int j=0;j<num/2;++j){
       float qnewtemp[ndof];
+      bool dismiss;
       do{
         //!choose random block
         int k;
@@ -296,22 +300,31 @@ public:
             b=&(graphl.blocks[k]);
         }while(b->num==0);
         //!chose random vertex
-        int l=ndof*(b->pos+rand()%b->num);
-        for(int i=0;i<ndof;++i){
-          float x=graphl.qstorage[l+i];
-          qnew[j+num*i]=graphl.qstorage[l+i]-D+2*D*((float)rand()/RAND_MAX);
-          float y=qnew[j+num*i];
-          qnewtemp[i]=qnew[j+num*i];
+        int m=(b->pos+rand()%b->num);
+        int x=1+graphl.surrnum[m];
+        int prob=RAND_MAX/(x*x*x);
+        if(rand()>prob){
+          dismiss=true;
+        }else{
+          int l=ndof*m;
+          for(int i=0;i<ndof;++i){
+            qnew[j+num*i]=graphl.qstorage[l+i]-D+2*D*((float)rand()/RAND_MAX);
+            qnewtemp[i]=qnew[j+num*i];
+          }
+
+          dismiss=space->indicator(&qnewtemp[0])!=0;
         }
 #ifndef NO_IO
         printvar(l);
         printarr(qnewtemp,ndof);
+        printvar(dismiss);
 #endif
-      }while(space->indicator(&qnewtemp[0])!=0);
+      }while(dismiss);
     }
     //!from right graph
     for(int j=num/2;j<num;++j){
       float qnewtemp2[ndof];
+      bool dismiss;
       do{
         //!choose random block
         int k;
@@ -322,15 +335,24 @@ public:
         }while(b->num==0);
         //!chose random vertex
         int l=ndof*(b->pos+rand()%b->num);
-        for(int i=0;i<ndof;++i){
-          qnew[j+num*i]=graphr.qstorage[l+i]-D+2*D*((float)rand()/RAND_MAX);
-          qnewtemp2[i]=qnew[j+num*i];
+        int m=(b->pos+rand()%b->num);
+        int x=1+graphl.surrnum[m];
+        int prob=RAND_MAX/(x*x*x);
+        if(rand()>prob){
+          dismiss=true;
+        }else{
+          int l=ndof*m;
+          for(int i=0;i<ndof;++i){
+            qnew[j+num*i]=graphr.qstorage[l+i]-D+2*D*((float)rand()/RAND_MAX);
+            qnewtemp2[i]=qnew[j+num*i];
+          }
+          dismiss=space->indicator(&qnewtemp2[0])!=0;
         }
 #ifndef NO_IO
         printvar(l);
         printarr(qnewtemp2,ndof);
 #endif
-      }while(space->indicator(&qnewtemp2[0])!=0);
+      }while(dismiss);
     }
 
 
@@ -373,6 +395,7 @@ public:
           posqlist[l]=nbuf;
           numqlist[l]=0;
           numqlistleft[l]=0;
+          msg("buffer full");
         }
         numqlist[j]=writtenleft;
         break;
@@ -392,6 +415,7 @@ public:
           posqlist[l]=nbuf;
           numqlist[l]=0;
           numqlistleft[l]=0;
+          msg("buffer full");
         }
         numqlist[j]=writtenleft+writtenright;
         break;
@@ -481,16 +505,19 @@ public:
             //!  Connection found! abort
             //!
             for(int l=0;l<ndof;++l)connection.q[l]=qnew[j+num*l];
+#if 0
             float minnorm=w->at(0);
             int minpos=0;
             for(int j=0;j<w->size();++j){
               if(minnorm>w->at(j)){minnorm=w->at(j);minpos=j;}
             }
             connection.index_left=v->at(minpos);
+#endif
+            connection.index_left=position;
             connection.index_right=poslist[i];
 
             int res0=do_dijkstra(graphl,dijkstral,i0l,connection.index_left);
-            int res1=do_dijkstra(graphr,dijkstrar,i0r,connection.index_right);
+            int res1=do_dijkstra(graphr,dijkstrar,connection.index_right,i0r);
             if(res0==0){msg("ERROR: no path found by dijkstra in graphl");}
             if(res1==0){msg("ERROR: no path found by dijkstra in graphr");}
 
@@ -532,16 +559,19 @@ public:
               //!  Connection found! abort
               //!
               for(int l=0;l<ndof;++l)connection.q[l]=qnew[j+num*l];
+#if 0
               float minnorm=w->at(0);
               int minpos=0;
               for(int j=0;j<w->size();++j){
                 if(minnorm>w->at(j)){minnorm=w->at(j);minpos=j;}
               }
               connection.index_right=v->at(minpos);
+#endif
+              connection.index_right=position;
               connection.index_left=poslist[i];
 
               int res0=do_dijkstra(graphl,dijkstral,i0l,connection.index_left);
-              int res1=do_dijkstra(graphr,dijkstrar,i0r,connection.index_right);
+              int res1=do_dijkstra(graphr,dijkstrar,connection.index_right,i0r);
               if(res0==0){msg("ERROR: no path found by dijkstra in graphl");}
               if(res1==0){msg("ERROR: no path found by dijkstra in graphr");}
 
@@ -617,7 +647,7 @@ public:
           queue.insert(std::pair<float,int>(d.dist[dest],dest));
           d.parent[dest]=pos;
         }
-      }
+      }//for
 
     }//while
     return 0; //no path
@@ -684,17 +714,18 @@ public:
     std::string pathl=path+"/graphl";
     //system("rm -rf "+pathl);
     system(("mkdir "+pathl).c_str());
-    store_graph(pathl,graphl,i0l,connection.index_left);
+    store_graph(pathl,graphl,dijkstral,i0l,connection.index_left);
 
     std::string pathr=path+"/graphr";
     //system("rm -rf "+pathr);
     system(("mkdir "+pathr).c_str());
-    store_graph(pathr,graphr,i0r,connection.index_right);
+    store_graph(pathr,graphr,dijkstrar,connection.index_right,i0r);
 
     write_file(path+"/connection.bin",(int*)&connection_found,1);
+
   }
 
-  void store_graph(std::string path, graph& g, int start, int end) const {
+  void store_graph(std::string path, graph& g, dijkstra_result& d, int start, int end) const {
     write_file(path + "/qstorage.bin",g.qstorage.data(),ndof*g.newblockpos);
     write_file(path + "/surrnum.bin",g.surrnum.data(), g.newblockpos);
 
@@ -762,8 +793,18 @@ public:
     write_file(path + "/startc.bin",&(posmapping[start]),1);
     write_file(path + "/endc.bin",&(posmapping[end]),1);
 
-  }
+    //!plot dijkstra
+    if(connection_found){
+      std::vector<int> pathc;
+      for(int i=0;i<d.path.size();++i){
+        pathc.push_back(posmapping[d.path[i]]);
+      }
 
+      write_file(path +"/path.bin",d.path.data(), d.path.size());
+      write_file(path +"/pathc.bin",pathc.data(), pathc.size());
+    }
+
+  }
 
 private:
   float H;

@@ -1,7 +1,7 @@
 clear all
 
 if 1
-    A=imread('labyrinth2.jpg');
+    A=imread('labyrinth3.jpg');
     A=A(:,:,1);
 
     [h,b]=size(A);
@@ -16,41 +16,54 @@ Ql=[h,0;
 Qr=[h,0;
     0,h]*Qr;
 
-
-
 Elfrom=binread('prmoutput/graphl/edgesfromc.bin','int')'+1;
 Elto=binread('prmoutput/graphl/edgestoc.bin','int')'+1;
+index=Elfrom<Elto;
+Elfrom=Elfrom(index);
+Elto=Elto(index);
+
 Qlfrom=Ql(:,Elfrom);
 Qlto=Ql(:,Elto);
 
 Erfrom=binread('prmoutput/graphr/edgesfromc.bin','int')'+1;
 Erto=binread('prmoutput/graphr/edgestoc.bin','int')'+1;
+index=Erfrom<Erto;
+Erfrom=Erfrom(index);
+Erto=Erto(index);
 Qrfrom=Qr(:,Erfrom);
 Qrto=Qr(:,Erto);
 
-
 conl=binread('prmoutput/graphl/endc.bin','int')+1;
-conr=binread('prmoutput/graphr/endc.bin','int')+1;
+conr=binread('prmoutput/graphr/startc.bin','int')+1;
 
+con=binread('prmoutput/connection.bin','int');
+
+pathl=binread('prmoutput/graphl/pathc.bin','int')'+1;
+pathr=binread('prmoutput/graphr/pathc.bin','int')'+1;
+
+Qpathl=Ql(:,pathl);
+Qpathr=Qr(:,pathr);
+
+close all;
+pause(0.1);
 
 image(A);
 hold on;
 
-for i=1:length(Elfrom)
-    X=[Qlfrom(1,i),Qlto(1,i)];
-    Y=[Qlfrom(2,i),Qlto(2,i)];
-    plot(X,Y,'w-');
-end
-for i=1:length(Erfrom)
-    X=[Qrfrom(1,i),Qrto(1,i)];
-    Y=[Qrfrom(2,i),Qrto(2,i)];
-    plot(X,Y,'w-');
-end
+Gl=graph(Elfrom,Elto);
+pl=plot(Gl,'-w','XData',Ql(1,:),'YData',Ql(2,:),'NodeLabel',{});
+pl.NodeColor='r';
+
+Gr=graph(Erfrom,Erto);
+pr=plot(Gr,'-w','XData',Qr(1,:),'YData',Qr(2,:),'NodeLabel',{});
+pr.NodeColor='g';
+
+plot(Qpathl(1,:),Qpathl(2,:),'r-');
+plot(Qpathr(1,:),Qpathr(2,:),'r-');
 
 X=[Ql(1,conl),Qr(1,conr)];
 Y=[Ql(2,conl),Qr(2,conr)];
-plot(X,Y,'w--');
+plot(X,Y,'r-');
 
-plot(Ql(1,:),Ql(2,:),'r.');
-plot(Qr(1,:),Qr(2,:),'g.');
-
+%plot(Ql(1,:),Ql(2,:),'r.');
+%plot(Qr(1,:),Qr(2,:),'g.');

@@ -47,10 +47,10 @@ int main()
   printarr(res,3);
 
 
-  vertexlist<2> prm(0.2,0.2,&space);
+  vertexlist<2> prm(0.5,0.5,&space);
 
-  float qstart[2]={0.1,0.4};
-  float qend[2]={space.max(0)*0.9f,0.4};
+  float qstart[2]={0.1,0.5};
+  float qend[2]={space.max(0)*0.9f,0.5};
 
   printvar(space.indicator(&qstart[0]));
   printvar(space.indicator(&qend[0]));
@@ -62,7 +62,7 @@ int main()
   int ndof=2;
   int num=4;
   float *qnew=new float[ndof*num];
-  int nbuf=50;
+  int nbuf=500;
   float *qlist=new float[ndof*nbuf];
   int *resbuf=new int[nbuf];
   for(int i=0;i<nbuf;++i){resbuf[i]=27;}
@@ -71,7 +71,7 @@ int main()
   tock(t0);
   tick(t1);
 
-  for(int i=0;i<470;++i){
+  for(int i=0;i<1000;++i){
     int flag=prm.processing_step(qnew,num,qlist,resbuf,nbuf,offset);
     if(flag==1){
       msg("connection found");

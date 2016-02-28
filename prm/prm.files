@@ -27,3 +27,5 @@ lib/vertexlist2.h
 lib/vertexlist3.h
 testvertexlist2.cpp
 test6.cpp
+lib/robotconfigspace.h
+lib/robotconfigspace.cpp

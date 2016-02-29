@@ -12,7 +12,8 @@ ele=1:max(Efrom);
 
 [A,B]=meshgrid(ele,Efrom);
 cnt=sum(A==B,1);
-dsp=cumsum(cnt)-cnt(1);
+dsp=[0,cumsum(cnt)];
+dsp=dsp(1:length(cnt));
 dest=Eto';
 
 end

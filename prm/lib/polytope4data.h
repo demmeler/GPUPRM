@@ -90,7 +90,9 @@ namespace collision4{
             sumn+=n[k];
             summ+=m[k];
             int sys=sys_[k];
-            dspsys[sys]=k;
+            if(k<dspsys[sys]){
+                dspsys[sys]=k;
+            }
             numsys[sys]++;
         }
 

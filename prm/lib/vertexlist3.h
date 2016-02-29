@@ -618,7 +618,7 @@ public:
 
     std::vector<int> parent; //length newblockpos
     std::vector<float> dist; //length newblockpos
-    std::vector<int> path;
+    std::vector<int> path; //computed path
   };
 
 

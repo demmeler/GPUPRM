@@ -22,7 +22,7 @@ test=   [0 0 0;
         1 1 0
         ];
     
-X=simplex;
+X=wurfel;
 
 [dsp cnt dest]=polygen(X)
 

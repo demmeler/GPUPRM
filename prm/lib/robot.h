@@ -2,7 +2,10 @@
 #define ROBOT_H
 
 
-enum jointtype{rotational, prismatic};
+//enum jointtype{rotational=0, prismatic=1};
+const int rotational=0;
+const int prismatic=1;
+
 
 template<int ndof>
 struct Robot{
@@ -11,7 +14,8 @@ struct Robot{
   float q[ndof];
   float d[ndof];
 
-  jointtype types[ndof];
+  //jointtype types[ndof];
+  int types[ndof];
 
   //Robot(int ndof_, float* a_, float* alpha_, float* q_, float* d_):
   //  ndof(ndof_),a(a_),alpha(alpha_),q(q_),d(d_){}

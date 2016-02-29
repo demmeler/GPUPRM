@@ -2,6 +2,7 @@
 #include <iostream>
 
 #define SILENT
+#define NO_IO
 
 #include "lib/util.hpp"
 
@@ -10,7 +11,6 @@
 #include "lib/geo4.h"
 using namespace geo4;
 
-#define NO_IO
 
 #include "lib/vertexlist3.h"
 
@@ -40,12 +40,12 @@ void build_example1(Robot<2>* &robot, polytope4* &polys, int* &sys, int &N){
   N=2;
 
   trafo4 t0(0.0, 0.0, 0.0, 0.0);
-  generate_simplex(polys[0], 1.0, 1.0, 1.0);
+  generate_quader(polys[0], 1.0, 1.0, 1.0);
   transform(polys[0],t0);
   sys[0]=0;
 
   trafo4 t1(0.0, 0.0, 0.0, 0.0);
-  generate_simplex(polys[1], 1.0, 1.0, 1.0);
+  generate_quader(polys[1], 1.0, 1.0, 1.0);
   transform(polys[1],t1);
   sys[1]=2;
 
@@ -55,6 +55,91 @@ void build_example1(Robot<2>* &robot, polytope4* &polys, int* &sys, int &N){
 
 }
 
+template<int ndof>
+int load_config(std::string path, Robot<ndof>* &robot, polytope4* &polys, int* &sys, int &N, bool printmsg=false){
+
+    //! DH params
+
+
+  int ndof_loaded=0;
+  read_file(path+"/ndof.bin",&ndof_loaded,1);
+  if(ndof_loaded!=ndof){
+    msg("error: wrong ndof");
+    return -1;
+  }
+
+  robot=new Robot<ndof>;
+
+  read_file(path+"/dh/a.bin",&(robot->a[0]),ndof);
+  read_file(path+"/dh/alpha.bin",&(robot->alpha[0]),ndof);
+  read_file(path+"/dh/q.bin",&(robot->q[0]),ndof);
+  read_file(path+"/dh/d.bin",&(robot->d[0]),ndof);
+  read_file(path+"/dh/types.bin",(int*)&(robot->types[0]),ndof);
+
+  if(printmsg){
+      printvar(ndof);
+      printarr(robot->a,ndof);
+      printarr(robot->alpha,ndof);
+      printarr(robot->q,ndof);
+      printarr(robot->d,ndof);
+      printarr(robot->types,ndof);
+  }
+
+    //! Polytopes
+
+  read_file(path+"/polys/N.bin",&N,1);
+  if(N<=0){
+    msg("error: N<=0");
+    return -1;
+  }
+
+  sys=new int[N];
+  read_file(path+"/polys/sys.bin",sys,N);
+
+  if(printmsg) printarr(sys,N);
+
+  polys=new polytope4[N];
+  for(int i=0;i<N;++i){
+    std::string polypath=path+"/polys/poly"+std::to_string(i);
+    int size[2];
+    read_file(polypath+"/size.bin",&(size[0]),2);
+    int n,m;
+    n=polys[i].n=size[0];
+    m=polys[i].m=size[1];
+    polys[i].dsp=new int[n];
+    polys[i].cnt=new int[n];
+    polys[i].dest=new int[m];
+    polys[i].vertices=new float4[4*n];
+    float* vertices=new float[3*n];
+    read_file(polypath+"/vertices.bin",vertices,3*n);
+    for(int j=0;j<n;++j){
+        polys[i].vertices[j].x=vertices[3*j];
+        polys[i].vertices[j].y=vertices[3*j+1];
+        polys[i].vertices[j].z=vertices[3*j+2];
+        polys[i].vertices[j].w=1.0;
+    }
+    read_file(polypath+"/dsp.bin",polys[i].dsp,n);
+    read_file(polypath+"/cnt.bin",polys[i].cnt,n);
+    read_file(polypath+"/dest.bin",polys[i].dest,m);
+
+
+    if(printmsg){
+      msg("-----");
+      printvar(i);
+      trafo4 t(0.0,0.0,0.0,0.0);
+      p4print(polys[i],t);
+
+      printvar(n);
+      printvar(m);
+      printarr(polys[i].dsp,n);
+      printarr(polys[i].cnt,n);
+      printarr(polys[i].dest,m);
+    }
+
+  }
+}
+
+
 
 int main()
 {
@@ -63,8 +148,8 @@ int main()
 
   tick(t0);
 
-  float mins[2]={-1.1,-0.1};
-  float maxs[2]={1.5,4.1};
+  float mins[2]={-1.3,-0.3};
+  float maxs[2]={1.3,4.1};
   float dq=0.01;
   int confignbuf=500;
   int numthreadsmax=1024*1024;
@@ -73,7 +158,10 @@ int main()
   polytope4* polys;
   int* sys;
   int N;
-  build_example1(robot, polys, sys, N);
+
+
+  //build_example1(robot, polys, sys, N);
+  load_config<2>("config1",robot,polys,sys,N, true);
 
   RobotConfigspace<2> space(robot,
                             polys, sys, N,
@@ -95,8 +183,8 @@ int main()
   kin.calculate(&qtest[0],1);
 
 
-  p4print(polys[0],kin.trafos[0]);
-  p4print(polys[1],kin.trafos[1]);
+  //p4print(polys[0],kin.trafos[0]);
+  //p4print(polys[1],kin.trafos[1]);
 
 
 
@@ -106,7 +194,7 @@ int main()
                4.0, 0.0, 0.5};
   int res[3]={7,7,7};
 
-  space.indicator2(&qs[0],&qe[0],&res[0],1,3);
+  space.indicator2(&qs[0],&qe[0],&res[0],3,3);
   printarr(res,3);
 
 

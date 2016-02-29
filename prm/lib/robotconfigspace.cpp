@@ -242,9 +242,10 @@ int RobotConfigspace<ndof>::indicator2(const float* qs, const float* qe, int *re
     return -1;
   }
 
-  int BLOCK = 256, GRID = (numthreads + BLOCK - 1)/BLOCK;
 
 #ifdef CUDA_IMPLEMENTATION
+  int BLOCK = 256, GRID = (numthreads + BLOCK - 1)/BLOCK;
+
   for(int i=0;i<ndof;++i){
       //pointer inkrement in cuda??
     cudaMemcpy((void*)(qdevbufferfrom+nbufqfrom*i),(void*)&(qs[offset*i]), N*sizeof(float), cudaMemcpyHostToDevice);

@@ -66,9 +66,9 @@ public:
   //! get functions
 
   //! minimal value of qi, i=0...d-1
-  float min(int i){return maxs[i];}
+  float min(int i){return mins[i];}
   //! maximal value of qi, i=0...d-1
-  float max(int i){return mins[i];}
+  float max(int i){return maxs[i];}
   //! dq used for indicator 2
   float deltaq(){return dq;}
 

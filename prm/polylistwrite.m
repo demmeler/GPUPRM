@@ -4,6 +4,7 @@ function [] = polylistwrite( path, polys, N )
 %      polys{i}.sys
 
     listpath=path;%[path '/polylist'];
+    mkdir(listpath);
     
     sys=zeros(1,N);
     binwrite([listpath '/N.bin'],N,'int');

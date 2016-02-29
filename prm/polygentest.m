@@ -24,7 +24,7 @@ test=   [0 0 0;
     
 X=simplex;
 
-[cnt dsp dest]=polygen(X)
+[dsp cnt dest]=polygen(X)
 
 
 K = convhulln(X);

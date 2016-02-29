@@ -1,4 +1,4 @@
-function [ cnt, dsp, dest ] = binwrite( X )
+function [ dsp, cnt, dest ] = polygen( X )
 % generate polytope edges in crs
    
 K = convhulln(X);

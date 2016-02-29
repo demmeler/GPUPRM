@@ -92,42 +92,42 @@
 ///   **************************
 
 
-void write_file(std::string path, const double* val, int n){
+inline void write_file(std::string path, const double* val, int n){
   std::ofstream outfile;
   outfile.open(path.c_str(), std::ios::out | std::ios::binary);
   outfile.write((char*)val, n*sizeof(double));
   outfile.close();
 }
 
-void write_file(std::string path, const float* val, int n){
+inline void write_file(std::string path, const float* val, int n){
   std::ofstream outfile;
   outfile.open(path.c_str(), std::ios::out | std::ios::binary);
   outfile.write((char*)val, n*sizeof(float));
   outfile.close();
 }
 
-void write_file(std::string path, const int* val, int n){
+inline void write_file(std::string path, const int* val, int n){
   std::ofstream outfile;
   outfile.open(path.c_str(), std::ios::out | std::ios::binary);
   outfile.write((char*)val, n*sizeof(int));
   outfile.close();
 }
 
-void read_file(std::string path, double* val, int n){
+inline void read_file(std::string path, double* val, int n){
   std::ifstream infile;
   infile.open(path.c_str(), std::ios::in | std::ios::binary);
   infile.read((char*)val, n*sizeof(double));
   infile.close();
 }
 
-void read_file(std::string path, float* val, int n){
+inline void read_file(std::string path, float* val, int n){
   std::ifstream infile;
   infile.open(path.c_str(), std::ios::in | std::ios::binary);
   infile.read((char*)val, n*sizeof(float));
   infile.close();
 }
 
-void read_file(std::string path, int* val, int n){
+inline void read_file(std::string path, int* val, int n){
   std::ifstream infile;
   infile.open(path.c_str(), std::ios::in | std::ios::binary);
   infile.read((char*)val, n*sizeof(int));

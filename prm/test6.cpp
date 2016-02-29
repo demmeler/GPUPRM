@@ -63,7 +63,8 @@ int main()
   int num=4;
   float *qnew=new float[ndof*num];
   int nbuf=500;
-  float *qlist=new float[ndof*nbuf];
+  float *qstartlist=new float[ndof*nbuf];
+  float *qendlist=new float[ndof*nbuf];
   int *resbuf=new int[nbuf];
   for(int i=0;i<nbuf;++i){resbuf[i]=27;}
   int offset=nbuf;
@@ -72,7 +73,7 @@ int main()
   tick(t1);
 
   for(int i=0;i<1000;++i){
-    int flag=prm.processing_step(qnew,num,qlist,resbuf,nbuf,offset);
+    int flag=prm.processing_step(qnew,num,qstartlist,qendlist,resbuf,nbuf,offset);
     if(flag==1){
       msg("connection found");
       printvar(i);

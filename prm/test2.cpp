@@ -5,7 +5,7 @@
 
 
 #include "lib/geo4.h"
-#include "lib/robot.h"
+#include "lib/kinematics.h"
 #include "lib/collision4.h"
 
 #include "lib/util.hpp"

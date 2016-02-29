@@ -46,7 +46,7 @@ namespace collision4{
         qualifier int get_numsys(int dof) const{return numsys[dof];}
 
         //! init methods
-        int build(polytope4* polys, int* sys, int N, int ndof_); //! arrays must be sortet w.r.t. dof
+        inline int build(const polytope4* polys, const int* sys, int N, int ndof_); //! arrays must be sortet w.r.t. dof
 #ifdef CUDA_IMPLEMENTATION
         friend int copy_host_to_device(polytope4data& devdata, const polytope4data& hostdata);
         friend int copy_device_to_host(polytope4data& hostdata, const polytope4data& devdata);
@@ -71,7 +71,7 @@ namespace collision4{
 
 
     //! arrays must be sortet w.r.t. dof
-    int polytope4data::build(polytope4* polys_, int* sys_, int N_, int ndof_){
+    inline int polytope4data::build(const polytope4* polys_, const int* sys_, int N_, int ndof_){
         ndof=ndof_;
         N=N_;
         n=new int[N];
@@ -114,7 +114,7 @@ namespace collision4{
     }
 
 #ifdef CUDA_IMPLEMENTATION
-    int copy_host_to_device(polytope4data& devdata, const polytope4data& hostdata){
+    inline int copy_host_to_device(polytope4data& devdata, const polytope4data& hostdata){
         int N=devdata.N=hostdata.N;
         int sumn=devdata.sumn=hostdata.sumn;
         int summ=devdata.summ=hostdata.summ;
@@ -155,7 +155,7 @@ namespace collision4{
         return 0;
     }
 
-    int copy_device_to_host(polytope4data& hostdata, const polytope4data& devdata){
+    inline int copy_device_to_host(polytope4data& hostdata, const polytope4data& devdata){
         msg("error: copy_host_to_device(polytope4data& hostdata, const polytope4data& devdata) not implemented");
         return -1;
     }

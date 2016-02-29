@@ -52,7 +52,7 @@ namespace geo4{
 
     qualifier const float4& translation() const {return col[3];}
 
-    void print(std::ostream& out, const std::string& name="");
+    inline void print(std::ostream& out, const std::string& name="");
 
   };
 
@@ -285,17 +285,17 @@ namespace geo4{
   ///   *    implementations     *
   ///   **************************
 
-  void print(const float4& v, std::ostream& out, const std::string& name=""){
+  inline void print(const float4& v, std::ostream& out, const std::string& name=""){
     out<<std::setprecision(5);
     out<<"float4: "<<name<<"=\n"<<v.x<<"\n"<<v.y<<"\n"<<v.z<<" \n"<<std::endl;
   }
 
-  void print(const float2& v, std::ostream& out, const std::string& name=""){
+  inline void print(const float2& v, std::ostream& out, const std::string& name=""){
     out<<std::setprecision(5);
     out<<"float2: "<<name<<"="<<v.x<<" "<<v.y<<""<<std::endl;
   }
 
-  void trafo4::print(std::ostream& out, const std::string& name){
+  inline void trafo4::print(std::ostream& out, const std::string& name){
     out<<"trafo4: "<<name<<"="<<std::endl;
     out<<std::setprecision(5);
     out<<col[0].x<<"\t"<<col[1].x<<"\t"<<col[2].x<<"\t"<<col[3].x<<std::endl;
@@ -313,8 +313,8 @@ namespace geo4{
                               T.col[0].y,T.col[1].y,T.col[2].y,T.col[3].y,\
                               T.col[0].z,T.col[1].z,T.col[2].z,T.col[3].z);
 #else
-    #define df2print(v) print(v,std::cout, #v);
-    #define df4print(v) print(v,std::cout, #v);
+    #define df2print(v) geo4::print(v,std::cout, #v);
+    #define df4print(v) geo4::print(v,std::cout, #v);
     #define dt4print(T) T.print(std::cout, #T);
 #endif
 #else
@@ -323,8 +323,8 @@ namespace geo4{
     #define dt4print(T)
 #endif
 
-#define f2print(v) print(v,std::cout, #v);
-#define f4print(v) print(v,std::cout, #v);
+#define f2print(v) geo4::print(v,std::cout, #v);
+#define f4print(v) geo4::print(v,std::cout, #v);
 #define t4print(T) T.print(std::cout, #T);
 
 }//namespace geo4

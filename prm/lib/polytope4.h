@@ -115,7 +115,7 @@ namespace collision4{
 #endif
 
   //!delete hostpoly arrays
-  int host_free(polytope4& hostpoly){
+  inline int host_free(polytope4& hostpoly){
     delete hostpoly.vertices;
     delete hostpoly.dsp;
     delete hostpoly.cnt;
@@ -130,14 +130,14 @@ namespace collision4{
   ///   *    implementations     *
   ///   **************************
 
-  void transform(polytope4& P, geo4::trafo4& t){
+  inline void transform(polytope4& P, geo4::trafo4& t){
     for(int i=0;i<P.n;++i){
       t.apply(P.vertices[i]);
     }
   }
 
   //!create simpley (for polytope on host)
-  void generate_simplex(polytope4& P, float lx, float ly, float lz){
+  inline void generate_simplex(polytope4& P, float lx, float ly, float lz){
     P.n=4;
     P.vertices=new float4[P.n];
     P.vertices[0]=geo4::make_float4(0.0, 0.0, 0.0);
@@ -171,7 +171,7 @@ namespace collision4{
   }
 
   //!create quader (for polytope on host)
-  void generate_quader(polytope4& P, float lx, float ly, float lz){
+  inline void generate_quader(polytope4& P, float lx, float ly, float lz){
     P.n=8;
     P.vertices=new float4[P.n];
     P.vertices[0]=geo4::make_float4(0.0, 0.0, 0.0);
@@ -225,7 +225,7 @@ namespace collision4{
   ///   *    implementations     *
   ///   **************************
 
-  void print(const polytope4& p, const geo4::trafo4& t, std::ostream& out, const std::string& name=""){
+  inline void print(const polytope4& p, const geo4::trafo4& t, std::ostream& out, const std::string& name=""){
     out<<"polytope4: "<<name<<std::endl;
     for(int i=0;i<p.n;++i){
       float4 x;

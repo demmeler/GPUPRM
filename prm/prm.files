@@ -29,3 +29,5 @@ testvertexlist2.cpp
 test6.cpp
 lib/robotconfigspace.h
 lib/robotconfigspace.cpp
+test7.cpp
+lib/kinematics.h

@@ -164,7 +164,7 @@ namespace collision4{
     df2print(rb);
     df2print(T);
 
-    normalize(T);
+    normalize(T);  //Achtung: kann nan rauskommen
     M.mult23T(T,w);
 
     df2print(T);

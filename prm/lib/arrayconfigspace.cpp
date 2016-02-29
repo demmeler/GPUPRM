@@ -27,8 +27,8 @@ int ArrayConfigspace::init(){
 //! indicator function of obstacles
 //! q: length d*N, array of structures: q[N*k+i]= k-th component of i-th q-vector
 //! res: length N
-int ArrayConfigspace::indicator(const float* q, int* res, int N){
-  int iy=N;
+int ArrayConfigspace::indicator(const float* q, int* res, const int N, const int offset){
+  int iy=offset;
   for(int ix=0;ix<N;++ix,++iy){
     int x=(int)((q[ix]-mins[0])*factor[0]);
     int y=(int)((q[iy]-mins[1])*factor[1]);
@@ -44,16 +44,16 @@ int ArrayConfigspace::indicator(const float* q, int* res, int N){
 //!case N=1
 int ArrayConfigspace::indicator(const float* q){
   int res=0;
-  indicator(q,&res,1);
+  indicator(q,&res,1,1);
   return res;
 }
 
 //! checks if indicator function = 1 somewhere on the line between qs and qe
 //! res is return value
-int ArrayConfigspace::indicator2(const float* qs, const float* qe, int *res, const int N){
+int ArrayConfigspace::indicator2(const float* qs, const float* qe, int *res, const int N, const int offset){
   for(int k=0;k<N;++k){
-    float qs_[]={qs[k],qs[k+N]};
-    float qe_[]={qe[k],qe[k+N]};
+    float qs_[]={qs[k],qs[k+offset]};
+    float qe_[]={qe[k],qe[k+offset]};
     if(0 != check_boundaries(&qs_[0]) || 0 != check_boundaries(&qe_[0])){
       res[k]=2;
     }else{
@@ -114,8 +114,8 @@ int ArrayConfigspace::indicator2(const float* qs, const int M, const float* qe, 
 
 //! structure like indicator function
 //! returns if lies in boundaries
-int ArrayConfigspace::check_boundaries(const float* q, int* res, int N){
-  int iy=N;
+int ArrayConfigspace::check_boundaries(const float* q, int* res, int N, int offset){
+  int iy=offset;
   for(int ix=0;ix<N;++ix,++iy){
     float xf=q[ix];
     float yf=q[iy];

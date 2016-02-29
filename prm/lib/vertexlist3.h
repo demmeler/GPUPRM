@@ -282,7 +282,7 @@ public:
   //! nbuf: length(qlist)
   //! D: maximal distance
   //! return: 0 - no errors, 1 - connection found
-  inline int processing_step(float* qnew, const int num, float* qlist, int* resbuf, const int nbuf, const int offset){
+  inline int processing_step(float* qnew, const int num, float* qstart, float* qend, int* resbuf, const int nbuf, const int offset){
     //!
     //! create nodes qnew randomly
     //!
@@ -379,7 +379,8 @@ public:
     int *poslist=new int[nbuf];
     float *distlist=new float[nbuf];
     int index=0;
-    float *qlistp=qlist;
+    float *qstartp=qstart;
+    float *qendp=qend;
     int *poslistp=poslist;
     float *distlistp=distlist;
     int nbufrest=nbuf;
@@ -387,9 +388,14 @@ public:
     for(int j=0;j<num;++j){
       posqlist[j]=index;
 
-      int writtenleft=get_near_vertices(&qnew[j],num,qlistp,poslistp,distlistp,nbufrest,offset,graphl);
+      int writtenleft=get_near_vertices(&qnew[j],num,qendp,poslistp,distlistp,nbufrest,offset,graphl);
 
+      for(int i=0;i<ndof;++i)
+      for(int k=0;k<writtenleft;++k){
+        qstartp[k+offset*i]=qnew[j+num*i];
+      }
       numqlistleft[j]=writtenleft;
+      index+=writtenleft;
 
       if(writtenleft>=nbufrest){
         for(int l=j+1;l<num;++l){
@@ -402,14 +408,20 @@ public:
         break;
       }
 
-
-      qlistp+=writtenleft;
+      qstartp+=writtenleft;
+      qendp+=writtenleft;
       poslistp+=writtenleft;
       distlistp+=writtenleft;
       nbufrest-=writtenleft;
-      index+=writtenleft;
 
-      int writtenright=get_near_vertices(&qnew[j],num,qlistp,poslistp,distlistp,nbufrest,offset,graphr);
+      int writtenright=get_near_vertices(&qnew[j],num,qendp,poslistp,distlistp,nbufrest,offset,graphr);
+
+      for(int i=0;i<ndof;++i)
+      for(int k=0;k<writtenright;++k){
+        qstartp[k+offset*i]=qnew[j+num*i];
+      }
+      numqlist[j]=writtenleft+writtenright;
+      index+=writtenright;
 
       if(writtenright>=nbufrest){
         for(int l=j+1;l<num;++l){
@@ -418,17 +430,14 @@ public:
           numqlistleft[l]=0;
           msg("buffer full");
         }
-        numqlist[j]=writtenleft+writtenright;
         break;
       }
 
-      qlistp+=writtenright;
+      qstartp+=writtenright;
+      qendp+=writtenright;
       poslistp+=writtenright;
       distlistp+=writtenright;
       nbufrest-=writtenright;
-      index+=writtenright;
-
-      numqlist[j]=writtenleft+writtenright;
     }
 
     Nqlist=index;
@@ -446,7 +455,9 @@ public:
 #ifndef NO_IO
     printarr(qnew,ndof*num);
     printvar(num);
-    printarr(qlist,ndof*nbuf);
+    printarr(qstart,ndof*nbuf);
+    printarr(qend,ndof*nbuf);
+    printvar(Nqlist);
     printarr(posqlist,num);
     printarr(numqlist,num);
     printarr(numqlistleft,num);
@@ -455,7 +466,8 @@ public:
     printarr(poslist,nbuf);
 #endif
     //...... --> call indicator function on GPU
-    space->indicator2(qnew,num,qlist,resbuf,posqlist,numqlist,offset);
+    //space->indicator2(qnew,num,qlist,resbuf,posqlist,numqlist,offset);
+    space->indicator2(qstart,qend,resbuf,Nqlist,offset);
 
 #ifndef NO_IO
     printarr(resbuf,nbuf);

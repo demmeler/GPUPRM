@@ -11,10 +11,12 @@ Ql=binread('prmoutput/graphl/qstoragec.bin','float');
 Qr=binread('prmoutput/graphr/qstoragec.bin','float');
 Ql=reshape(Ql,2,[]);
 Qr=reshape(Qr,2,[]);
+if 0
 Ql=[h,0;
     0,h]*Ql;
 Qr=[h,0;
     0,h]*Qr;
+end
 
 Elfrom=binread('prmoutput/graphl/edgesfromc.bin','int')'+1;
 Elto=binread('prmoutput/graphl/edgestoc.bin','int')'+1;
@@ -47,15 +49,15 @@ Qpathr=Qr(:,pathr);
 close all;
 pause(0.1);
 
-image(A);
+%image(A);
 hold on;
 
 Gl=graph(Elfrom,Elto);
-pl=plot(Gl,'-w','XData',Ql(1,:),'YData',Ql(2,:),'NodeLabel',{});
+pl=plot(Gl,'-b','XData',Ql(1,:),'YData',Ql(2,:),'NodeLabel',{});
 pl.NodeColor='r';
 
 Gr=graph(Erfrom,Erto);
-pr=plot(Gr,'-w','XData',Qr(1,:),'YData',Qr(2,:),'NodeLabel',{});
+pr=plot(Gr,'-b','XData',Qr(1,:),'YData',Qr(2,:),'NodeLabel',{});
 pr.NodeColor='g';
 
 plot(Qpathl(1,:),Qpathl(2,:),'r-');

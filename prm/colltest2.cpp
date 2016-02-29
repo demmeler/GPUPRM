@@ -8,7 +8,7 @@
 #include "lib/geo4.h"
 #include "lib/collision4.h"
 #include "lib/polytope4data.h"
-#include "lib/robot.h"
+#include "lib/kinematics.h"
 
 using namespace collision4;
 

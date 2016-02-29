@@ -1,8 +1,14 @@
 #include "robotconfigspace.h"
 
 #include "cuda_head.h"
+
+#include "collision4.h"
+#include "polytope4data.h"
+#include "kinematics.h"
+
 #include <vector>
 #include <cmath>
+
 
 //! robot_: Robot Object with Denavit-Hartenberg data
 //! polydata_: Object containing compressed Polytope data of robot arm and surrounding
@@ -10,8 +16,10 @@
 //! maxs[ndof]: minimal   -"-
 //! dq:         edge resolution (stepsize)
 template<int ndof>
-RobotConfigspace<ndof>::RobotConfigspace(const Robot<ndof>* robot_, const collision4::polytope4* polys_, const int* sys_, const int N_, const float* mins_, const float* maxs_, const float dq_, const int nbuf_):
-  kin(robot_)
+RobotConfigspace<ndof>::RobotConfigspace(const Robot<ndof>* robot_,
+                                         const collision4::polytope4* polys_,  const int* sys_, const int N_,
+                                         const float* mins_, const float* maxs_, const float dq_,
+                                         const int nbuf_, const int numthreadsmax_):kin(robot_)
 {
   robot=robot_;
   for(int i=0;i<ndof;++i){
@@ -29,6 +37,8 @@ RobotConfigspace<ndof>::RobotConfigspace(const Robot<ndof>* robot_, const collis
   nbufqfrom=ndof*nbuf_;
   nbuftest=nbuf_;
 
+  numthreadsmax=numthreadsmax_;
+
   devloaded=false;
 
 }
@@ -43,7 +53,9 @@ int RobotConfigspace<ndof>::init()
   }
 
   polydata=new collision4::polytope4data;
-  polydata->build(polylist.polys,polylist.sys,polylist.N);
+  polydata->build(polylist.polys,polylist.sys,polylist.N,ndof);
+
+#ifdef CUDA_IMPLEMENTATION
 
   polydatadev_hostref=new collision4::polytope4data;
 
@@ -61,7 +73,11 @@ int RobotConfigspace<ndof>::init()
   cudaMalloc((void**)&resdevbuffer, nbufres*sizeof(int));
   cudaMalloc((void**)&resdevbufferext, numthreadsmax*sizeof(int));
 
+#else
 
+  resbufferext=new int[numthreadsmax];
+
+#endif
 
   devloaded=true;
 
@@ -81,7 +97,7 @@ int RobotConfigspace<ndof>::clear()
 //! q: length d*N, array of structures: q[N*k+i]= k-th component of i-th q-vector
 //! res: length N
 template<int ndof>
-int RobotConfigspace<ndof>::indicator(const float* q, int* res, int N)
+int RobotConfigspace<ndof>::indicator(const float* q, int* res, const int N, const int offset)
 {
   msg("error: not implemented");
   return -1;
@@ -91,6 +107,7 @@ int RobotConfigspace<ndof>::indicator(const float* q, int* res, int N)
 template<int ndof>
 int RobotConfigspace<ndof>::indicator(const float* q)
 {
+  if(check_boundaries(q)==1) return 1;
   kin.calculate(q,1);
   for(int dof0=0;dof0<=ndof;++dof0) for(int dof1=dof0+1;dof1<=ndof;++dof1){
     int numsys0=polydata->get_numsys(dof0), numsys1=polydata->get_numsys(dof1);
@@ -107,30 +124,58 @@ int RobotConfigspace<ndof>::indicator(const float* q)
   return 0;
 }
 
+
+
+
+
+
+
+
+
 //!
 //! indicator functions on GPU
 //!
 
 
+//! ************************
+//! *                      *
+//! *   collision kernel   *
+//! *                      *
+//! ************************
 
 template<int ndof>
-__global__ void kernel_indicator2(Robot<ndof>* robot, collision4::polytope4data* polydata, float* qs, int offsets, float* qe, int offsete, int* res, int* resext, int* testpos, int* testnum, int N, int numthreads){
+#ifdef CUDA_IMPLEMENTATION
+__global__ void kernel_indicator2(Robot<ndof>* robot,
+                                  collision4::polytope4data* polydata,
+                                  float* qs, int offsets,
+                                  float* qe, int offsete,
+                                  int* res, int* resext,
+                                  int* testpos, int* testnum,
+                                  int N, int numthreads){
   int i = blockDim.x * blockIdx.x + threadIdx.x;
   if(i<numthreads){
-    coll[i]=0;
-    Kinematics<ndof> kin(robot);
+#else
+void kernel_indicator2(const Robot<ndof>* robot,
+                       const collision4::polytope4data* polydata,
+                       const float* qs, int offsets,
+                       const float* qe, int offsete,
+                       int* res, int* resext,
+                       const int* testpos, const int* testnum,
+                       int N, int numthreads){
+  for(int i=0;i<numthreads;++i){
+#endif
 
-    //!calculate q
-    int k; //! index of line in which thread is involved
+    //! determine the line in which thread is involved
+    int k; //! index of the line
            //! line k is handles by threads testpos[k], ...., testpos[k]+numpos[k]
-    for(k=N-1;testpos[k]>i;--k);
+    for(k=N-1;testpos[k]>i;--k); //binaersuche machen?
 
     //! calculate q (convex combination)
     float q[ndof];
     float c1,c2;
     if(testnum[k]>0){
-      c1=(float)(j-testpos[k])/(float)(testnum[k]-1);
-      c2=1.0-c2;
+      c1=(float)(i-testpos[k])/(float)(testnum[k]-1);
+      c2=1.0-c1;
     }else{
       c1=1.0;
       c2=0.0;
@@ -140,22 +185,33 @@ __global__ void kernel_indicator2(Robot<ndof>* robot, collision4::polytope4data*
     }
 
 
+    //! collision algorithm
+    Kinematics<ndof> kin(robot);
+    resext[i]=0;
     kin.calculate(&q[0],1);
     for(int dof0=0;dof0<=ndof;++dof0)
     for(int dof1=dof0+1;dof1<=ndof;++dof1){
       int numsys0=polydata->get_numsys(dof0), numsys1=polydata->get_numsys(dof1);
       for(int k0=0;k0<numsys0;++k0)
       for(int k1=0;k1<numsys1;++k1){
-        polytope4 poly0, poly1;
-        polydata->get_polytope(poly0, dof0,k0);
-        polydata->get_polytope(poly1, dof1,k1);
-        int res=seperating_vector_algorithm(poly0,poly1,kin.trafos[dof0],kin.trafos[dof1]);
-        if(res!=0){
-          coll[i]=res;
+        collision4::polytope4 poly0, poly1;
+        polydata->get_polytope(poly0, dof0, k0);
+        polydata->get_polytope(poly1, dof1, k1);
+        int result=collision4::seperating_vector_algorithm(poly0,poly1,kin.trafos[dof0],kin.trafos[dof1]);
+        if(result!=0){
+          resext[i]=result;
         }
       }
     }
-  }//if
+
+    //!reduce resext to res
+#ifdef CUDA_IMPLEMENTATION
+    //TODO
+#else
+    if(resext[i]!=0 || i==testpos[k]) res[k]=resext[i];
+#endif
+
+  }//if/for
 }
 
 
@@ -188,27 +244,40 @@ int RobotConfigspace<ndof>::indicator2(const float* qs, const float* qe, int *re
 
   int BLOCK = 256, GRID = (numthreads + BLOCK - 1)/BLOCK;
 
+#ifdef CUDA_IMPLEMENTATION
   for(int i=0;i<ndof;++i){
       //pointer inkrement in cuda??
     cudaMemcpy((void*)(qdevbufferfrom+nbufqfrom*i),(void*)&(qs[offset*i]), N*sizeof(float), cudaMemcpyHostToDevice);
     cudaMemcpy((void*)(qdevbufferto+nbufqto*i),(void*)&(qe[offset*i]), N*sizeof(float), cudaMemcpyHostToDevice);
   }
 
-  cudaMemcpy((void*)testposdev,(void*)testpos.data(), M*sizeof(int), cudaMemcpyHostToDevice);
-  cudaMemcpy((void*)testnumdev,(void*)testnum.data(), M*sizeof(int), cudaMemcpyHostToDevice);
+  cudaMemcpy((void*)testposdev,(void*)testpos.data(), N*sizeof(int), cudaMemcpyHostToDevice);
+  cudaMemcpy((void*)testnumdev,(void*)testnum.data(), N*sizeof(int), cudaMemcpyHostToDevice);
 
 
   kernel_indicator2<ndof><<<GRID,BLOCK>>>(robotdev,polydatadev,qdevbufferfrom,nbufqfrom,qdevbufferto,nbufqto,resdevbuffer,resdevbufferext,testposdev,testnumdev,N, numthreads);
 
 
   cudaMemcpy((void*)res,(void*)resdevbuffer,N*sizeof(int), cudaMemcpyDeviceToHost);
+#else
+  kernel_indicator2<ndof>(robot,polydata,qs,offset,qe,offset,res,resbufferext,testpos.data(),testnum.data(),N, numthreads);
+#endif
 
 }
+
+
+
+
+
+
+
+
+
 
 //! same paircheck as above, but with compressed storage:
 //! checks pairs: (qs[i],...) ->  (qe(posqe[i]),...) , ...., (qe[posqe[i]+numqe[i]-1],...) for i=0,...,M-1
 template<int ndof>
-int RobotConfigspace<ndof>::indicator2(const float* qs, const int M, const float* qe, int *res, const int *posqe, const int *numqe, const int N, const int offset)
+int RobotConfigspace<ndof>::indicator2(const float* qs, const int M, const float* qe, int *res, const int *posqe, const int *numqe, const int offset)
 {
 
   msg("this indicator2 is not implemented!");
@@ -222,9 +291,9 @@ int RobotConfigspace<ndof>::indicator2(const float* qs, const int M, const float
 //! structure like indicator function
 //! returns if lies in boundaries
 template<int ndof>
-int RobotConfigspace<ndof>::check_boundaries(const float* q, int* res, int offset, int N)
+int RobotConfigspace<ndof>::check_boundaries(const float* q, int* res, const int N, const int offset)
 {
-  for(int ix=0;ix<N;++ix,++iy){
+  for(int ix=0;ix<N;++ix){
     int resix=0;
     for(int i=0;i<ndof;++i){
       float qi=q[ix+i*offset];
@@ -241,7 +310,7 @@ int RobotConfigspace<ndof>::check_boundaries(const float* q)
 {
   for(int i=0;i<ndof;++i){
     float qi=q[i];
-    if(qi>=mins[i] || qi<maxs[i]){return 1;}
+    if(qi<mins[i] || qi>maxs[i]){return 1;}
   }
   return 0;
 }
@@ -249,8 +318,7 @@ int RobotConfigspace<ndof>::check_boundaries(const float* q)
 
 
 
-
-
+template class RobotConfigspace<2>;
 
 
 

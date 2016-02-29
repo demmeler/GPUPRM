@@ -7,4 +7,4 @@ description/*.synctex.gz
 description/*.out
 prm/build
 *~
-*/*~
+*.o

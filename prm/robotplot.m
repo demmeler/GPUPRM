@@ -7,9 +7,10 @@ close all;
 prmoutput=prmoutputread('prmoutput',ndof);
 
 l=size(prmoutput.Qpath,2);
-Qpathcont=interp1q((1:l)',prmoutput.Qpath',(1:0.1:l)')';
+
+Qpathcont=interp1q((1:l)',prmoutput.Qpath',(1:0.2:l)')';
 
 
-pathplot(dhparams,ndof,polys,N,Qpathcont);
+pathplot(dhparams,ndof,polys,N,Qpathcont, 0.01, true);
 
 

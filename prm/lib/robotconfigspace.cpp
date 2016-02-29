@@ -189,11 +189,9 @@ void kernel_indicator2(const Robot<ndof>* robot,
     Kinematics<ndof> kin(robot);
     resext[i]=0;
     kin.calculate(&q[0],1);
-    for(int dof0=0;dof0<=ndof;++dof0)
-    for(int dof1=dof0+1;dof1<=ndof;++dof1){
+    for(int dof0=0;dof0<=ndof;++dof0) for(int dof1=dof0+1;dof1<=ndof;++dof1){
       int numsys0=polydata->get_numsys(dof0), numsys1=polydata->get_numsys(dof1);
-      for(int k0=0;k0<numsys0;++k0)
-      for(int k1=0;k1<numsys1;++k1){
+      for(int k0=0;k0<numsys0;++k0) for(int k1=0;k1<numsys1;++k1){
         collision4::polytope4 poly0, poly1;
         polydata->get_polytope(poly0, dof0, k0);
         polydata->get_polytope(poly1, dof1, k1);

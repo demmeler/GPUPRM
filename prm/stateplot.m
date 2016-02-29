@@ -5,7 +5,6 @@ function [] = stateplot( dhparams, ndof, polys, N, q )
     
     T=calctrafos(dhparams,ndof,q);
     
-    
     for i=1:N
         V=[polys{i}.vertices,ones(size(polys{i}.vertices,1),1)];
         X=V*T{polys{i}.sys+1}';

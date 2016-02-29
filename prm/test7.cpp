@@ -148,8 +148,8 @@ int main()
 
   tick(t0);
 
-  float mins[2]={-1.3,-0.3};
-  float maxs[2]={1.3,4.1};
+  float mins[2]={-5.0,-5.0};
+  float maxs[2]={5.0,5.0};
   float dq=0.01;
   int confignbuf=500;
   int numthreadsmax=1024*1024;
@@ -177,6 +177,8 @@ int main()
   printvar(space.max(1));
   printvar(space.deltaq());
 
+#if 0
+
   Kinematics<2> kin(robot);
 
   float qtest[2]={3.1415926/2.0,0.0};
@@ -197,7 +199,7 @@ int main()
   space.indicator2(&qs[0],&qe[0],&res[0],3,3);
   printarr(res,3);
 
-
+#endif
 
   vertexlist<2> prm(0.5,0.5,&space);
 
@@ -230,6 +232,8 @@ int main()
       msg("connection found");
       printvar(i);
       break;
+    }else if(i%50==0){
+      printvar(i);
     }
   }
 

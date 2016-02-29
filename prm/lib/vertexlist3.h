@@ -337,7 +337,7 @@ public:
         //!chose random vertex
         int m=(b->pos+rand()%b->num);
         int l;
-        int x=1+graphl.surrnum[m];
+        int x=1+graphr.surrnum[m];
         int prob=RAND_MAX/(x*x*x);
         if(rand()>prob){
           dismiss=true;

@@ -54,7 +54,7 @@ hold on;
 
 Gl=graph(Elfrom,Elto);
 pl=plot(Gl,'-b','XData',Ql(1,:),'YData',Ql(2,:),'NodeLabel',{});
-pl.NodeColor='r';
+pl.NodeColor='y';
 
 Gr=graph(Erfrom,Erto);
 pr=plot(Gr,'-b','XData',Qr(1,:),'YData',Qr(2,:),'NodeLabel',{});

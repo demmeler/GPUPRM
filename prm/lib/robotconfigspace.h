@@ -26,6 +26,15 @@ public:
                    const int N_,
                    const float* mins_, const float* maxs_, const float dq_,
                    const int nbuf_, const int numthreadsmax_);
+  RobotConfigspace(const Robot<ndof>* robot_,
+                   const collision4::polytope4 *polys_,
+                   const int* sys_,
+                   const int N_,
+                   const int *from_, const int *to_,
+                   const int M_,
+                   const float* mins_, const float* maxs_, const float dq_,
+                   const int nbuf_, const int numthreadsmax_);
+
 
   //!initialization function copy polydata to gpu etc..
   int init();
@@ -88,6 +97,8 @@ private:
     const collision4::polytope4* polys;
     const int* sys;
     int N;
+    const int *from, *to;
+    int M;
   }polylist;
 
   collision4::polytope4data* polydata;            //data on host

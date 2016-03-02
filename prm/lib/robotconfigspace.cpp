@@ -19,7 +19,8 @@ template<int ndof>
 RobotConfigspace<ndof>::RobotConfigspace(const Robot<ndof>* robot_,
                                          const collision4::polytope4* polys_,  const int* sys_, const int N_,
                                          const float* mins_, const float* maxs_, const float dq_,
-                                         const int nbuf_, const int numthreadsmax_):kin(robot_)
+                                         const int nbuf_, const int numthreadsmax_):
+    kin(robot_)
 {
   robot=robot_;
   for(int i=0;i<ndof;++i){
@@ -32,6 +33,10 @@ RobotConfigspace<ndof>::RobotConfigspace(const Robot<ndof>* robot_,
   polylist.sys=sys_;
   polylist.N=N_;
 
+  polylist.from=0x0;
+  polylist.to=0x0;
+  polylist.M=0x0;
+
   nbufres=nbuf_;
   nbufqto=ndof*nbuf_;
   nbufqfrom=ndof*nbuf_;
@@ -43,6 +48,20 @@ RobotConfigspace<ndof>::RobotConfigspace(const Robot<ndof>* robot_,
 
 }
 
+template<int ndof>
+RobotConfigspace<ndof>::RobotConfigspace(const Robot<ndof>* robot_,
+                                         const collision4::polytope4* polys_,  const int* sys_, const int N_,
+                                         const int *from_, const int *to_, const int M_,
+                                         const float* mins_, const float* maxs_, const float dq_,
+                                         const int nbuf_, const int numthreadsmax_):
+    RobotConfigspace(robot_, polys_, sys_, N_, mins_, maxs_, dq_, nbuf_, numthreadsmax_)
+{
+    polylist.from=from_;
+    polylist.to=to_;
+    polylist.M=M_;
+}
+
+
 
 //!initialization function copy polytope and robot data to gpu etc..
 template<int ndof>
@@ -53,7 +72,7 @@ int RobotConfigspace<ndof>::init()
   }
 
   polydata=new collision4::polytope4data;
-  polydata->build(polylist.polys,polylist.sys,polylist.N,ndof);
+  polydata->build(polylist.polys,polylist.sys,polylist.N,ndof,polylist.from, polylist.to, polylist.M);
 
 #ifdef CUDA_IMPLEMENTATION
 
@@ -184,11 +203,13 @@ void kernel_indicator2(const Robot<ndof>* robot,
       q[j]=c1*qs[k+offsets*j]+c2*qe[k+offsete*j];
     }
 
-
-    //! collision algorithm
     Kinematics<ndof> kin(robot);
     resext[i]=0;
     kin.calculate(&q[0],1);
+
+#if 0
+
+    //! collision algorithm
     for(int dof0=0;dof0<=ndof;++dof0) for(int dof1=dof0+1;dof1<=ndof;++dof1){
       int numsys0=polydata->get_numsys(dof0), numsys1=polydata->get_numsys(dof1);
       for(int k0=0;k0<numsys0;++k0) for(int k1=0;k1<numsys1;++k1){
@@ -201,6 +222,32 @@ void kernel_indicator2(const Robot<ndof>* robot,
         }
       }
     }
+
+#else
+
+        //new version, only testing specific pairs
+
+
+    //! collision algorithm
+
+    for(int k0=0;k0<polydata->N;++k0){
+      collision4::polytope4 poly0;
+      polydata->get_polytope(poly0, k0);
+      int *dest;
+      int destnum;
+      polydata->get_collision_list(k0,dest,destnum);
+      for(int l=0;l<destnum;++l){
+          int k1=dest[l];
+          collision4::polytope4 poly1;
+          polydata->get_polytope(poly1, k1);
+          int result=collision4::seperating_vector_algorithm(poly0,poly1,kin.trafos[polydata->sys[k0]],kin.trafos[polydata->sys[k1]]);
+          if(result!=0){
+            resext[i]=result;
+          }
+      }
+    }
+
+#endif
 
     //!reduce resext to res
 #ifdef CUDA_IMPLEMENTATION

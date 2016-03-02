@@ -39,6 +39,10 @@ test7: robotconfigspace
 	g++ -g -c -std=c++11 -o test7.o test7.cpp
 	g++ -g -o test7 test7.o robotconfigspace.o
 
+test8: robotconfigspace
+	g++ -g -c -std=c++11 -o test8.o test8.cpp
+	g++ -g -o test8 test8.o robotconfigspace.o
+
 test3: arrayconfigspace
 	g++ -c -o test3.o test3.cpp
 	g++ -o test3 test3.o arrayconfigspace.o

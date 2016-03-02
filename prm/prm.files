@@ -31,3 +31,4 @@ lib/robotconfigspace.h
 lib/robotconfigspace.cpp
 test7.cpp
 lib/kinematics.h
+test8.cpp

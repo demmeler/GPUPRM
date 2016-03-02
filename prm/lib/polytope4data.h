@@ -52,6 +52,8 @@ namespace collision4{
             int *dest;  //length M
         }pairs;
 
+        int *sys;
+
      public:
         //!get methods for kernel
         qualifier void get_polytope(polytope4& poly, int dof, int i) const;
@@ -60,7 +62,7 @@ namespace collision4{
         qualifier int get_numsys(int dof) const{return numsys[dof];}
 
         //! init methods
-        inline int build(const polytope4* polys, const int* sys, int N, int ndof_, int* from_=0x0, int* to_=0x0, int M_=0); //! arrays must be sortet w.r.t. sys
+        inline int build(const polytope4* polys, const int* sys, int N, int ndof_, const int* from_=0x0, const int* to_=0x0, int M_=0); //! arrays must be sortet w.r.t. sys
 
 #ifdef CUDA_IMPLEMENTATION
         friend int copy_host_to_device(polytope4data& devdata, const polytope4data& hostdata, bool withpairs_=false);
@@ -97,12 +99,12 @@ namespace collision4{
 
     qualifier void polytope4data::get_collision_list(int k, int* &dest, int &num) const {
         num=pairs.cnt[k];
-        dest=&(pairs.dest[dsp[k]]);
+        dest=pairs.dest+dsp[k];
     }
 
     //! !! arrays must be sortet w.r.t. sys !!
     //! (from,to) must be sorted w.r.t. from!!
-    inline int polytope4data::build(const polytope4* polys_, const int* sys_, int N_, int ndof_, int* from_, int* to_, int M_){
+    inline int polytope4data::build(const polytope4* polys_, const int* sys_, int N_, int ndof_, const int* from_, const int* to_, int M_){
         ndof=ndof_;
         N=N_;
         n=new int[N];
@@ -159,6 +161,10 @@ namespace collision4{
                 num+=pairs.cnt[k];
             }
             check(num==M_);
+
+            for(int i=0;i<N;++i){
+                sys[i]=sys_[i];
+            }
         }
 
         return 0; //Todo error handling?

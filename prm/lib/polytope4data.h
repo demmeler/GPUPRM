@@ -40,15 +40,30 @@ namespace collision4{
         //!number degrees of freedom
         int ndof;
 
+
+        //! data for pairs
+
+        //! number of pairs (crs graph)
+        //! only
+        struct{
+            int M;
+            int *dsp;   //length N
+            int *cnt;   //length N
+            int *dest;  //length M
+        }pairs;
+
      public:
         //!get methods for kernel
-        qualifier void get_polytope(polytope4& poly, int dof, int k) const;
+        qualifier void get_polytope(polytope4& poly, int dof, int i) const;
+        qualifier void get_polytope(polytope4& poly, int k) const;
+        qualifier void get_collision_list(int k, int* &dest, int &num) const;
         qualifier int get_numsys(int dof) const{return numsys[dof];}
 
         //! init methods
-        inline int build(const polytope4* polys, const int* sys, int N, int ndof_); //! arrays must be sortet w.r.t. dof
+        inline int build(const polytope4* polys, const int* sys, int N, int ndof_, int* from_=0x0, int* to_=0x0, int M_=0); //! arrays must be sortet w.r.t. sys
+
 #ifdef CUDA_IMPLEMENTATION
-        friend int copy_host_to_device(polytope4data& devdata, const polytope4data& hostdata);
+        friend int copy_host_to_device(polytope4data& devdata, const polytope4data& hostdata, bool withpairs_=false);
         friend int copy_device_to_host(polytope4data& hostdata, const polytope4data& devdata);
         //TODO: cudaFree
 #endif
@@ -69,9 +84,25 @@ namespace collision4{
         poly.dest=&dest[km];
     }
 
+    qualifier void polytope4data::get_polytope(polytope4& poly, int k) const {
+        poly.n=n[k];
+        poly.m=m[k];
+        int kn=dspn[k];
+        poly.vertices=&vertices[kn];
+        poly.dsp=&dsp[kn];
+        poly.cnt=&cnt[kn];
+        int km=dspm[k];
+        poly.dest=&dest[km];
+    }
 
-    //! arrays must be sortet w.r.t. dof
-    inline int polytope4data::build(const polytope4* polys_, const int* sys_, int N_, int ndof_){
+    qualifier void polytope4data::get_collision_list(int k, int* &dest, int &num) const {
+        num=pairs.cnt[k];
+        dest=&(pairs.dest[dsp[k]]);
+    }
+
+    //! !! arrays must be sortet w.r.t. sys !!
+    //! (from,to) must be sorted w.r.t. from!!
+    inline int polytope4data::build(const polytope4* polys_, const int* sys_, int N_, int ndof_, int* from_, int* to_, int M_){
         ndof=ndof_;
         N=N_;
         n=new int[N];
@@ -112,11 +143,29 @@ namespace collision4{
                 dest[l]=polys_[k].dest[j];
             }
         }
+
+        if(from_!=0x0 && to_!=0x0){
+            pairs.dest=new int[M_];
+            pairs.dsp=new int[N];
+            pairs.cnt=new int[N]();
+            pairs.M=M_;
+            for(int i=0;i<M_;++i){
+                pairs.dest[i]=to_[i];
+                pairs.cnt[from_[i]]++;
+            }
+            int num=0;
+            for(int k=0;k<N;++k){
+                pairs.dsp[k]=num;
+                num+=pairs.cnt[k];
+            }
+            check(num==M_);
+        }
+
         return 0; //Todo error handling?
     }
 
 #ifdef CUDA_IMPLEMENTATION
-    inline int copy_host_to_device(polytope4data& devdata, const polytope4data& hostdata){
+    inline int copy_host_to_device(polytope4data& devdata, const polytope4data& hostdata, bool withpairs){
         int N=devdata.N=hostdata.N;
         int sumn=devdata.sumn=hostdata.sumn;
         int summ=devdata.summ=hostdata.summ;
@@ -124,7 +173,7 @@ namespace collision4{
 
         //!alloc
 
-        int res[20];
+        int res[26];
         res[0]=cudaMalloc((void**)&(devdata.vertices), sumn * sizeof(float4));
         res[1]=cudaMalloc((void**)&(devdata.dsp), sumn * sizeof(int));
         res[2]=cudaMalloc((void**)&(devdata.cnt), sumn * sizeof(int));
@@ -153,7 +202,20 @@ namespace collision4{
         res[18]=cudaMemcpy((void*)devdata.dspsys, (void*)hostdata.dspsys, (ndof+1) * sizeof(int), cudaMemcpyHostToDevice);
         res[19]=cudaMemcpy((void*)devdata.numsys, (void*)hostdata.numsys, (ndof+1) * sizeof(int), cudaMemcpyHostToDevice);
 
-        for(int i=0;i<20;++i)if(res[i]!=0)return res[i];
+
+        if(withpairs){
+            int M=devdata.pairs.M=hostdata.pairs.M;
+            res[20]=cudaMalloc((void**)&(devdata.pairs.dsp), N * sizeof(int));
+            res[21]=cudaMalloc((void**)&(devdata.pairs.cnt), N * sizeof(int));
+            res[22]=cudaMalloc((void**)&(devdata.pairs.dest), M * sizeof(int));
+
+            res[23]=cudaMemcpy((void*)devdata.pairs.dsp, (void*)hostdata.pairs.dsp, N * sizeof(int), cudaMemcpyHostToDevice);
+            res[24]=cudaMemcpy((void*)devdata.pairs.cnt, (void*)hostdata.pairs.cnt, N * sizeof(int), cudaMemcpyHostToDevice);
+            res[25]=cudaMemcpy((void*)devdata.pairs.dest, (void*)hostdata.pairs.dest, M * sizeof(int), cudaMemcpyHostToDevice);
+        }
+
+
+        for(int i=0;i<26;++i)if(res[i]!=0)return res[i];
         return 0;
     }
 

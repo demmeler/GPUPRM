@@ -97,13 +97,15 @@ int load_config(std::string path, Robot<ndof>* &robot, polytope4* &polys, int* &
   sys=new int[N];
   read_file(path+"/polys/sys.bin",sys,N);
 
-  read_file(path+"/polys/pairs/M.bin",&M, 1);   //--> check machen ob file existiert
+  read_file(path+"/pairs/M.bin",&M, 1);   //--> check machen ob file existiert
   printvar(M);
   check(M>0);
   from=new int[M];
   to=new int[M];
-  read_file(path+"/polys/pairs/from.bin", from, M);
-  read_file(path+"/polys/pairs/to.bin", to, M);
+  read_file(path+"/pairs/from.bin", from, M);
+  read_file(path+"/pairs/to.bin", to, M);
+  printarr(from, M);
+  printarr(to,M);
 
   if(printmsg) printarr(sys,N);
 

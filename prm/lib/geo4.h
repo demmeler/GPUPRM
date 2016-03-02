@@ -160,9 +160,17 @@ namespace geo4{
     res.z=a*u.z+b*v.z;
   }
 
-  qualifier void normalize(float4& u){
-    float factor=1.0/sqrt_(u.x*u.x+u.y*u.y+u.z*u.z);
+  //!returns the norm additionally
+  qualifier float normalize(float4& u){
+    float norm=sqrt_(u.x*u.x+u.y*u.y+u.z*u.z);
+    float factor=1.0/norm;
+    if(factor==INFINITY) factor=0.0;
     u.x*=factor; u.y*=factor; u.z*=factor;
+    return norm;
+  }
+
+  qualifier float normsq(float4& u){
+    return u.x*u.x+u.y*u.y+u.z*u.z;
   }
 
 

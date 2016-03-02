@@ -99,7 +99,7 @@ namespace collision4{
 
     qualifier void polytope4data::get_collision_list(int k, int* &dest, int &num) const {
         num=pairs.cnt[k];
-        dest=pairs.dest+dsp[k];
+        dest=pairs.dest+pairs.dsp[k];
     }
 
     //! !! arrays must be sortet w.r.t. sys !!

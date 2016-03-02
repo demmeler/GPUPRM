@@ -186,14 +186,21 @@ namespace collision4{
     int p=0;
     int q=0;
     float4 S;
-    sub(tq.translation(),tp.translation(),S);
+    //sub(tq.translation(),tp.translation(),S);
+    float4 Pq, Pp;
+    tq.apply(Q.vertices[0],Pq);
+    tp.apply(P.vertices[0],Pp);
+    sub(Pq,Pp,S);
 
     df4print(tp.translation());
     df4print(tq.translation());
     df4print(S);
 
-    normalize(S);
-    //TODO: get better starting values
+    float norm=normalize(S);
+    if(norm<collision_eps){
+      S.x=1.0;
+    }
+
     float4 Sp,Sq,p0,q0,w;
     float4 R[max_for_loop];
     int combsp[max_for_loop];

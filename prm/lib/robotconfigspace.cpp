@@ -128,6 +128,8 @@ int RobotConfigspace<ndof>::indicator(const float* q)
 {
   if(check_boundaries(q)==1) return 1;
   kin.calculate(q,1);
+
+#if 0
   for(int dof0=0;dof0<=ndof;++dof0) for(int dof1=dof0+1;dof1<=ndof;++dof1){
     int numsys0=polydata->get_numsys(dof0), numsys1=polydata->get_numsys(dof1);
     for(int k0=0;k0<numsys0;++k0) for(int k1=0;k1<numsys1;++k1){
@@ -140,6 +142,38 @@ int RobotConfigspace<ndof>::indicator(const float* q)
       }
     }
   }
+#else
+
+        //new version, only testing specific pairs
+
+
+    //! collision algorithm
+
+    for(int k0=0;k0<polydata->N;++k0){
+      collision4::polytope4 poly0;
+      polydata->get_polytope(poly0, k0);
+      int *dest;
+      int destnum;
+      polydata->get_collision_list(k0,dest,destnum);
+      for(int l=0;l<destnum;++l){
+          int k1=dest[l];
+          collision4::polytope4 poly1;
+          polydata->get_polytope(poly1, k1);
+
+          dprintarr(dest,destnum);
+          dprintvard(polydata->sys[k0]);
+          dprintvard(polydata->sys[k1]);
+          dt4print(kin.trafos[polydata->sys[k0]]);
+          dt4print(kin.trafos[polydata->sys[k1]]);
+
+          int result=collision4::seperating_vector_algorithm(poly0,poly1,kin.trafos[polydata->sys[k0]],kin.trafos[polydata->sys[k1]]);
+          if(result!=0){
+            return result;
+          }
+      }
+    }
+
+#endif
   return 0;
 }
 

@@ -1,6 +1,6 @@
 clear all
 
-if 1
+if 0
     A=imread('labyrinth3.jpg');
     A=A(:,:,1);
 

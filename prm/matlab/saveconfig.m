@@ -37,7 +37,7 @@ body2 = [wurfel*0.5;
 addpath('lib');
 
 ndof=2;
-if 0
+if 1
     dhparams.a=[1.1, 0];
     dhparams.alpha=[pi/2, 0];
     dhparams.q=[0, 0];

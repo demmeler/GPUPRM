@@ -44,6 +44,11 @@ test8: robotconfigspace
 	g++ -g -c -std=c++11 -o test8.o $(SRC)/test8.cpp
 	g++ -g -o test8 test8.o robotconfigspace.o
 
+test8cuda: robotconfigspacecuda
+	nvcc -std=c++11 -g -G -x=cu -arch=$(ARCHITECTURE) -c -o test8cuda.o $(SRC)/test8cuda.cpp
+#	nvcc -std=c++11 -g -G -x=cu -arch=$(ARCHITECTURE) -o test8cuda test8cuda.o robotconfigspacecuda.o
+	g++ -g -o test8cuda test8cuda.o robotconfigspacecuda.o -L"/usr/local/cuda-7.5"/lib64 -lcudart
+
 test3: arrayconfigspace
 	g++ -c -o test3.o $(SRC)/test3.cpp
 	g++ -o test3 test3.o arrayconfigspace.o
@@ -53,3 +58,12 @@ arrayconfigspace:
 
 robotconfigspace:
 	g++ -std=c++11 -c -g -o robotconfigspace.o $(SRC)/lib/robotconfigspace.cpp
+
+robotconfigspacecuda:
+	nvcc -std=c++11 -g -G -x=cu -arch=$(ARCHITECTURE) -c -o robotconfigspacecuda.o $(SRC)/lib/robotconfigspace.cpp
+
+
+
+
+
+

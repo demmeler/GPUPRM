@@ -1,3 +1,5 @@
+#include "config.h"
+
 #include "robotconfigspace.h"
 
 #include "cuda_head.h"
@@ -79,8 +81,8 @@ int RobotConfigspace<ndof>::init()
   polydatadev_hostref=new collision4::polytope4data;
 
   collision4::copy_host_to_device(*polydatadev_hostref,*polydata);
-  cudaMalloc((void**)&polydatadev, sizeof(polytope4data));
-  cudaMemcpy((void*)polydatadev, (void*)polydatadev_hostref, sizeof(polytope4data), cudaMemcpyHostToDevice);
+  cudaMalloc((void**)&polydatadev, sizeof(collision4::polytope4data));
+  cudaMemcpy((void*)polydatadev, (void*)polydatadev_hostref, sizeof(collision4::polytope4data), cudaMemcpyHostToDevice);
 
   cudaMalloc((void**)&robotdev, sizeof(Robot<ndof>));
   cudaMemcpy((void*)robotdev,(void*)robot, sizeof(Robot<ndof>), cudaMemcpyHostToDevice);
@@ -100,12 +102,16 @@ int RobotConfigspace<ndof>::init()
 
   devloaded=true;
 
+  return 0; //TODO: errorhandling?
+
 }
 
 template<int ndof>
 int RobotConfigspace<ndof>::clear()
 {
   // TODO
+    msg("error: RobotConfigspace<ndof>::clear() not implemented");
+    return -1;
 }
 
 //!

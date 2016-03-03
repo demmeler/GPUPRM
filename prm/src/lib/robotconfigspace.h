@@ -1,10 +1,6 @@
 #ifndef ROBOTCONFIGSPACE_H
 #define ROBOTCONFIGSPACE_H
 
-
-#define SILENT
-//#define CUDA_IMPLEMENTATION
-
 #include "configspace.hpp"
 #include "kinematics.h"
 #include "polytope4data.h"

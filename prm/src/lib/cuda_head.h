@@ -4,8 +4,8 @@
 #undef qualifier
 #ifdef CUDA_IMPLEMENTATION
   #include <cuda.h>
-  #define qualifier __host__ __device__
-  #define qualifierd __host__ __device__
+  #define qualifier __host__ __device__ inline
+  #define qualifierd __host__ __device__ inline
   #define cudaonly(x) x
   #define hostonly(x)
 #else

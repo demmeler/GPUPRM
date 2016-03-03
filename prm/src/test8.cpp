@@ -1,9 +1,6 @@
-
-
 #include <iostream>
 
-#define SILENT
-#define NO_IO
+#include "lib/config.h"
 
 #include "lib/util.hpp"
 

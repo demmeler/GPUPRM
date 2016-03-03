@@ -146,7 +146,7 @@ namespace collision4{
             }
         }
 
-        if(from_!=0x0 && to_!=0x0){
+        if(from_!=0x0 && to_!=0x0 && M_>0){
             pairs.dest=new int[M_];
             pairs.dsp=new int[N];
             pairs.cnt=new int[N]();

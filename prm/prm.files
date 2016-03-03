@@ -48,8 +48,6 @@ src/lib/robokin_alt.hpp
 src/lib/robot.h
 src/lib/robotconfigspace.cpp
 src/lib/robotconfigspace.h
-src/lib/ssv.cpp
-src/lib/ssv.hpp
 src/lib/trafo.cpp
 src/lib/trafo.hpp
 src/lib/util.hpp
@@ -72,3 +70,4 @@ src/test8.cpp
 src/test8cuda.cpp
 src/testvertexlist.cpp
 src/testvertexlist2.cpp
+src/lib/config.h

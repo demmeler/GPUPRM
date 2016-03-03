@@ -7,8 +7,8 @@ if 0
     [h,b]=size(A);
 end
 
-Ql=binread('prmoutput/graphl/qstoragec.bin','float');
-Qr=binread('prmoutput/graphr/qstoragec.bin','float');
+Ql=binread('../prmoutput/graphl/qstoragec.bin','float');
+Qr=binread('../prmoutput/graphr/qstoragec.bin','float');
 Ql=reshape(Ql,2,[]);
 Qr=reshape(Qr,2,[]);
 if 0
@@ -18,8 +18,8 @@ Qr=[h,0;
     0,h]*Qr;
 end
 
-Elfrom=binread('prmoutput/graphl/edgesfromc.bin','int')'+1;
-Elto=binread('prmoutput/graphl/edgestoc.bin','int')'+1;
+Elfrom=binread('../prmoutput/graphl/edgesfromc.bin','int')'+1;
+Elto=binread('../prmoutput/graphl/edgestoc.bin','int')'+1;
 index=Elfrom<Elto;
 Elfrom=Elfrom(index);
 Elto=Elto(index);
@@ -27,21 +27,21 @@ Elto=Elto(index);
 Qlfrom=Ql(:,Elfrom);
 Qlto=Ql(:,Elto);
 
-Erfrom=binread('prmoutput/graphr/edgesfromc.bin','int')'+1;
-Erto=binread('prmoutput/graphr/edgestoc.bin','int')'+1;
+Erfrom=binread('../prmoutput/graphr/edgesfromc.bin','int')'+1;
+Erto=binread('../prmoutput/graphr/edgestoc.bin','int')'+1;
 index=Erfrom<Erto;
 Erfrom=Erfrom(index);
 Erto=Erto(index);
 Qrfrom=Qr(:,Erfrom);
 Qrto=Qr(:,Erto);
 
-conl=binread('prmoutput/graphl/endc.bin','int')+1;
-conr=binread('prmoutput/graphr/startc.bin','int')+1;
+conl=binread('../prmoutput/graphl/endc.bin','int')+1;
+conr=binread('../prmoutput/graphr/startc.bin','int')+1;
 
-con=binread('prmoutput/connection.bin','int');
+con=binread('../prmoutput/connection.bin','int');
 
-pathl=binread('prmoutput/graphl/pathc.bin','int')'+1;
-pathr=binread('prmoutput/graphr/pathc.bin','int')'+1;
+pathl=binread('../prmoutput/graphl/pathc.bin','int')'+1;
+pathr=binread('../prmoutput/graphr/pathc.bin','int')'+1;
 
 Qpathl=Ql(:,pathl);
 Qpathr=Qr(:,pathr);

@@ -34,8 +34,10 @@ body2 = [wurfel*0.5;
 
 % DH params
 
+addpath('lib');
+
 ndof=2;
-if 1
+if 0
     dhparams.a=[1.1, 0];
     dhparams.alpha=[pi/2, 0];
     dhparams.q=[0, 0];
@@ -72,7 +74,7 @@ N=length(polys);
 
 %%% write files %%%
 
-configpath='config1';
+configpath='../config1';
 configwrite(configpath,dhparams,ndof,polys,N, pairs);
 
 

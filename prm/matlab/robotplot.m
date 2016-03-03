@@ -1,10 +1,12 @@
+addpath('lib');
+
 clear all;
 close all;
 
-[dhparams, ndof, polys, N]=configread('config1');
+[dhparams, ndof, polys, N]=configread('../config1');
 
 
-prmoutput=prmoutputread('prmoutput',ndof);
+prmoutput=prmoutputread('../prmoutput',ndof);
 
 l=size(prmoutput.Qpath,2);
 

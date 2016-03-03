@@ -10,8 +10,6 @@ function [dhparams, ndof, polys, N, pairs] = configread( configpath )
     [ polys, N]=polylistread(listpath);
     dhparams=dhread(dhpath);
     
-    
-    mkdir(pairspath);
     from=binread([pairspath '/from.bin'], 'int')+1;
     to=binread([pairspath '/to.bin'], 'int')+1;
     pairs=[reshape(from,[],1),reshape(to,[],1)];

@@ -157,15 +157,19 @@ int main()
   tick(t0);
 
 
-  const int ndof=2;
+  const int ndof=3;
+  const int pi=3.1415926535897;
 
-  float mins[2]={-5.0,-5.0};
-  float maxs[2]={5.0,5.0};
+  float mins[ndof];
+  float maxs[ndof];
+  for(int i=0;i<ndof;++i){
+    mins[i]=-pi; maxs[i]=1.5*pi;
+  }
   float dq=0.01;
   int confignbuf=500;
   int numthreadsmax=1024*1024;
 
-  Robot<2>* robot;
+  Robot<ndof>* robot;
   polytope4* polys;
   int* sys;
   int N;
@@ -174,9 +178,9 @@ int main()
   int M;
 
   //build_example1(robot, polys, sys, N);
-  load_config<2>("config1",robot,polys,sys,N,from, to, M, true);
+  load_config<ndof>("config1",robot,polys,sys,N,from, to, M, true);
 
-  RobotConfigspace<2> space(robot,
+  RobotConfigspace<ndof> space(robot,
                             polys, sys, N,
                             from, to, M,
                             mins, maxs, dq,
@@ -185,40 +189,21 @@ int main()
   space.init();
 
   printvar(space.dim());
-  printvar(space.min(0));
-  printvar(space.max(0));
-  printvar(space.min(1));
-  printvar(space.max(1));
+  for(int dof=0;dof<ndof;++dof){
+    printvar(dof);
+    printvar(space.min(dof));
+    printvar(space.max(dof));
+  }
   printvar(space.deltaq());
 
-#if 0
+  vertexlist<ndof> prm(0.5,0.5,&space);
 
-  Kinematics<2> kin(robot);
-
-  float qtest[2]={3.1415926/2.0,0.0};
-  kin.calculate(&qtest[0],1);
-
-
-  //p4print(polys[0],kin.trafos[0]);
-  //p4print(polys[1],kin.trafos[1]);
-
-
-
-  float qs[6]={0.0, 0.0, 0.0,
-               0.0, 0.0, 0.0};
-  float qe[6]={0.0, 1.0, 1.0,
-               4.0, 0.0, 0.5};
-  int res[3]={7,7,7};
-
-  space.indicator2(&qs[0],&qe[0],&res[0],3,3);
-  printarr(res,3);
-
-#endif
-
-  vertexlist<2> prm(0.5,0.5,&space);
-
-  float qstart[2]={0.0,0.0};
-  float qend[2]={0.0,4.0};
+  float qstart[ndof];
+  float qend[ndof];
+  for(int dof=0;dof<ndof;++dof){
+    qstart[dof]=0.0;
+    qend[dof]=pi;
+  }
 
   printvar(space.indicator(&qstart[0]));
   printvar(space.indicator(&qend[0]));

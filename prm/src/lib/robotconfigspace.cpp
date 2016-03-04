@@ -405,6 +405,7 @@ int RobotConfigspace<ndof>::check_boundaries(const float* q)
 
 
 template class RobotConfigspace<2>;
+template class RobotConfigspace<3>;
 
 
 

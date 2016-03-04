@@ -44,6 +44,10 @@ test8: robotconfigspace
 	g++ -g -c -std=c++11 -o test8.o $(SRC)/test8.cpp
 	g++ -g -o test8 test8.o robotconfigspace.o
 
+test9: robotconfigspace
+	g++ -g -c -std=c++11 -o test9.o $(SRC)/test9.cpp
+	g++ -g -o test9 test9.o robotconfigspace.o
+
 test8cuda: robotconfigspacecuda
 	nvcc -std=c++11 -g -G -x=cu -arch=$(ARCHITECTURE) -c -o test8cuda.o $(SRC)/test8cuda.cpp
 #	nvcc -std=c++11 -g -G -x=cu -arch=$(ARCHITECTURE) -o test8cuda test8cuda.o robotconfigspacecuda.o

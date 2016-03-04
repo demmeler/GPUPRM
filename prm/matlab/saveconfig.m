@@ -112,8 +112,11 @@ if 1
     Pe1.vertices=quader(-3,2,0,1,1,2);
     Pe1.sys=0;
     
-    polys={P0,P1,P2,P3,P4,Pe1};
-    pairs=[1,3;1,4;1,5;2,4;2,5;3,5;6,4;6,5];
+    Pe2.vertices=quader(-3,-3,0,1,1,2);
+    Pe2.sys=0;
+    
+    polys={P0,P1,P2,P3,P4,Pe1,Pe2};
+    pairs=[1,3;1,4;1,5;2,4;2,5;3,5;6,4;6,5;7,4;7,5];
     
 end
 

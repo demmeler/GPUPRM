@@ -109,14 +109,17 @@ if 1
     P4.vertices=quaderm(1,0,0,3,1,1);
     P4.sys=3;
     
-    Pe1.vertices=quader(-3,2,0,1,1,2);
+    Pe1.vertices=quader(-3,2,0,1,1,3);
     Pe1.sys=0;
     
     Pe2.vertices=quader(-3,-3,0,1,1,2);
     Pe2.sys=0;
     
-    polys={P0,P1,P2,P3,P4,Pe1,Pe2};
-    pairs=[1,3;1,4;1,5;2,4;2,5;3,5;6,4;6,5;7,4;7,5];
+    Pe3.vertices=quader(-4,0,6,5,1,1);
+    Pe3.sys=0;
+    
+    polys={P0,P1,P2,P3,P4,Pe1,Pe2,Pe3};
+    pairs=[1,3;1,4;1,5;2,4;2,5;3,5;6,4;6,5;7,4;7,5;8,3;8,4;8,5];
     
 end
 

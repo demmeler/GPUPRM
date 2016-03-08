@@ -67,7 +67,7 @@ namespace collision4{
 #ifdef CUDA_IMPLEMENTATION
         friend int copy_host_to_device(polytope4data& devdata, const polytope4data& hostdata, bool withpairs_=false);
         friend int copy_device_to_host(polytope4data& hostdata, const polytope4data& devdata);
-        //TODO: cudaFree
+        //TODO: free memory
 #endif
 
     };
@@ -162,6 +162,7 @@ namespace collision4{
             }
             check(num==M_);
 
+            sys=new int[N];
             for(int i=0;i<N;++i){
                 sys[i]=sys_[i];
             }

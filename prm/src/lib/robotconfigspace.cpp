@@ -224,9 +224,9 @@ void kernel_indicator2(const Robot<ndof>* robot,
   for(int i=0;i<numthreads;++i){
 #endif
 
-    //! determine the line in which thread is involved
+    //! determine the line in which the thread is involved
     int k; //! index of the line
-           //! line k is handles by threads testpos[k], ...., testpos[k]+numpos[k]
+           //! line k is handled by threads testpos[k], ...., testpos[k]+numpos[k]
     for(k=N-1;testpos[k]>i;--k); //binaersuche machen?
 
     //! calculate q (convex combination)
@@ -289,9 +289,10 @@ void kernel_indicator2(const Robot<ndof>* robot,
 
 #endif
 
-    //!reduce resext to res
-#ifdef CUDA_IMPLEMENTATION
+    //! reduce resext to res with ||
+#if 1//def CUDA_IMPLEMENTATION
     //TODO
+    if(resext[i]!=0) res[k]=resext[k];
 #else
     if(resext[i]!=0 || i==testpos[k]) res[k]=resext[i];
 #endif
@@ -327,6 +328,9 @@ int RobotConfigspace<ndof>::indicator2(const float* qs, const float* qe, int *re
     return -1;
   }
 
+  for(int k=0;k<N;++k){
+    res[k]=0; //-> kernel?
+  }
 
 #ifdef CUDA_IMPLEMENTATION
   int BLOCK = 256, GRID = (numthreads + BLOCK - 1)/BLOCK;
@@ -406,6 +410,7 @@ int RobotConfigspace<ndof>::check_boundaries(const float* q)
 
 template class RobotConfigspace<2>;
 template class RobotConfigspace<3>;
+template class RobotConfigspace<4>;
 
 
 

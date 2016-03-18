@@ -157,7 +157,7 @@ int main()
   tick(t0);
 
 
-  const int ndof=3;
+  const int ndof=4;
   const int pi=3.1415926535897;
 
   float mins[ndof];
@@ -224,7 +224,7 @@ int main()
   tock(t0);
   tick(t1);
 
-  for(int i=0;i<1000;++i){
+  for(int i=0;i<10000;++i){
     int flag=prm.processing_step(qnew,num,qstartlist,qendlist,resbuf,nbuf,offset);
     if(flag==1){
       msg("connection found");

@@ -6,52 +6,14 @@
 
 #include "lib/configspace.hpp"
 #include "lib/robotconfigspace.h"
-#include "lib/geo4.h"
-using namespace geo4;
+
 #include "lib/polytope4.h"
+using namespace collision4;
 
 #include "lib/vertexlist3.h"
 
 using namespace std;
-using namespace collision4;
 
-
-//void build_example1(Robot<1>* &robot, polytope4data* &polydata)
-void build_example1(Robot<2>* &robot, polytope4* &polys, int* &sys, int &N){
-  robot=new Robot<2>;
-
-  robot->a[0]=1.1;
-  robot->alpha[0]=0.0;
-  robot->q[0]=0.0;
-  robot->d[0]=0.0;
-  robot->types[0]=prismatic;
-
-  robot->a[1]=0.0;
-  robot->alpha[1]=0.0;
-  robot->q[1]=0.0;
-  robot->d[1]=0.0;
-  robot->types[1]=rotational;
-
-
-  polys=new polytope4[2];
-  sys=new int[2];
-  N=2;
-
-  trafo4 t0(0.0, 0.0, 0.0, 0.0);
-  generate_quader(polys[0], 1.0, 1.0, 1.0);
-  transform(polys[0],t0);
-  sys[0]=0;
-
-  trafo4 t1(0.0, 0.0, 0.0, 0.0);
-  generate_quader(polys[1], 1.0, 1.0, 1.0);
-  transform(polys[1],t1);
-  sys[1]=2;
-
-  //trafo4 t2(0.0, -pi/2.0, 0.0, 0.0);
-  //generate_quader(P[2], 1.0, 1.0, 1.0);
-  //transform(P[2],t2);
-
-}
 
 template<int ndof>
 int load_config(std::string path, Robot<ndof>* &robot, polytope4* &polys, int* &sys, int &N, int* &from, int* &to, int& M, bool printmsg=false){
@@ -134,7 +96,7 @@ int load_config(std::string path, Robot<ndof>* &robot, polytope4* &polys, int* &
     if(printmsg){
       msg("-----");
       printvar(i);
-      trafo4 t(0.0,0.0,0.0,0.0);
+      geo4::trafo4 t(0.0,0.0,0.0,0.0);
       p4print(polys[i],t);
 
       printvar(n);

@@ -3,7 +3,11 @@
 
 #include "cuda_head.h"
 #include "polytope4.h"
+#include "polytope.h"
 #include "util.hpp"
+
+#include "polytope4data.h"
+
 
 namespace collision4{
 
@@ -63,6 +67,7 @@ namespace collision4{
 
         //! init methods
         inline int build(const polytope4* polys, const int* sys, int N, int ndof_, const int* from_=0x0, const int* to_=0x0, int M_=0); //! arrays must be sortet w.r.t. sys
+        inline int build(const polytope* polys, const int* sys, int N, int ndof_, const int* from_=0x0, const int* to_=0x0, int M_=0); //! arrays must be sortet w.r.t. sys
 
 #ifdef CUDA_IMPLEMENTATION
         friend int copy_host_to_device(polytope4data& devdata, const polytope4data& hostdata, bool withpairs_=false);
@@ -137,6 +142,79 @@ namespace collision4{
             for(int i=0;i<n[k];++i){
                 int l=dspn[k]+i;
                 vertices[l]=polys_[k].vertices[i];
+                dsp[l]=polys_[k].dsp[i];
+                cnt[l]=polys_[k].cnt[i];
+            }
+            for(int j=0;j<m[k];++j){
+                int l=dspm[k]+j;
+                dest[l]=polys_[k].dest[j];
+            }
+        }
+
+        if(from_!=0x0 && to_!=0x0 && M_>0){
+            pairs.dest=new int[M_];
+            pairs.dsp=new int[N];
+            pairs.cnt=new int[N]();
+            pairs.M=M_;
+            for(int i=0;i<M_;++i){
+                pairs.dest[i]=to_[i];
+                pairs.cnt[from_[i]]++;
+            }
+            int num=0;
+            for(int k=0;k<N;++k){
+                pairs.dsp[k]=num;
+                num+=pairs.cnt[k];
+            }
+            check(num==M_);
+
+            sys=new int[N];
+            for(int i=0;i<N;++i){
+                sys[i]=sys_[i];
+            }
+        }
+
+        return 0; //Todo error handling?
+    }
+
+
+    //! !! arrays must be sortet w.r.t. sys !!
+    //! (from,to) must be sorted w.r.t. from!!
+    inline int polytope4data::build(const polytope* polys_, const int* sys_, int N_, int ndof_, const int* from_, const int* to_, int M_){
+        ndof=ndof_;
+        N=N_;
+        n=new int[N];
+        m=new int[N];
+        dspn=new int[N];
+        dspm=new int[N];
+        dspsys=new int[ndof+1];
+        for(int dof=0;dof<ndof+1;++dof){dspsys[dof]=N;}
+        numsys=new int[ndof+1]();
+        sumn=summ=0;
+        for(int k=0;k<N;++k){
+            n[k]=polys_[k].n;
+            m[k]=polys_[k].m;
+            dspn[k]=sumn;
+            dspm[k]=summ;
+            sumn+=n[k];
+            summ+=m[k];
+            int sys=sys_[k];
+            if(k<dspsys[sys]){
+                dspsys[sys]=k;
+            }
+            numsys[sys]++;
+        }
+
+        vertices=new float4[sumn];
+        dsp=new int[sumn];
+        cnt=new int[sumn];
+        dest=new int[summ];
+        for(int k=0;k<N;++k){
+            for(int i=0;i<n[k];++i){
+                int l=dspn[k]+i;
+                vertices[l].x=polys_[k].vertices[i].x;
+                vertices[l].y=polys_[k].vertices[i].y;
+                vertices[l].z=polys_[k].vertices[i].z;
+                vertices[l].w=polys_[k].vertices[i].w;
                 dsp[l]=polys_[k].dsp[i];
                 cnt[l]=polys_[k].cnt[i];
             }

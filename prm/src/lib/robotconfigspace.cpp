@@ -21,10 +21,10 @@ template<int ndof>
 RobotConfigspace<ndof>::RobotConfigspace(const Robot<ndof>* robot_,
                                          const collision4::polytope4* polys_,  const int* sys_, const int N_,
                                          const float* mins_, const float* maxs_, const float dq_,
-                                         const int nbuf_, const int numthreadsmax_):
-    kin(robot_)
+                                         const int nbuf_, const int numthreadsmax_)
 {
   robot=robot_;
+  kin=new Kinematics<ndof>(robot);
   for(int i=0;i<ndof;++i){
     mins[i]=mins_[i];
     maxs[i]=maxs_[i];
@@ -133,7 +133,7 @@ template<int ndof>
 int RobotConfigspace<ndof>::indicator(const float* q)
 {
   if(check_boundaries(q)==1) return 1;
-  kin.calculate(q,1);
+  kin->calculate(q,1);
 
 #if 0
   for(int dof0=0;dof0<=ndof;++dof0) for(int dof1=dof0+1;dof1<=ndof;++dof1){
@@ -142,7 +142,7 @@ int RobotConfigspace<ndof>::indicator(const float* q)
       collision4::polytope4 poly0, poly1;
       polydata->get_polytope(poly0, dof0,k0);
       polydata->get_polytope(poly1, dof1,k1);
-      int res=seperating_vector_algorithm(poly0,poly1,kin.trafos[dof0],kin.trafos[dof1]);
+      int res=seperating_vector_algorithm(poly0,poly1,kin->trafos[dof0],kin->trafos[dof1]);
       if(res!=0){
         return res;
       }
@@ -169,10 +169,10 @@ int RobotConfigspace<ndof>::indicator(const float* q)
           dprintarr(dest,destnum);
           dprintvard(polydata->sys[k0]);
           dprintvard(polydata->sys[k1]);
-          dt4print(kin.trafos[polydata->sys[k0]]);
-          dt4print(kin.trafos[polydata->sys[k1]]);
+          dt4print(kin->trafos[polydata->sys[k0]]);
+          dt4print(kin->trafos[polydata->sys[k1]]);
 
-          int result=collision4::seperating_vector_algorithm(poly0,poly1,kin.trafos[polydata->sys[k0]],kin.trafos[polydata->sys[k1]]);
+          int result=collision4::seperating_vector_algorithm(poly0,poly1,kin->trafos[polydata->sys[k0]],kin->trafos[polydata->sys[k1]]);
           if(result!=0){
             return result;
           }

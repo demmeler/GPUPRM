@@ -2,10 +2,14 @@
 #define ROBOTCONFIGSPACE_H
 
 #include "configspace.hpp"
-#include "kinematics.h"
-#include "polytope4data.h"
+#include "robot.h"
 
+template<int ndof> class Kinematics;
 
+namespace collision4{
+  class polytope4;
+  class polytope4data;
+}
 
 template<int ndof>
 class RobotConfigspace : public Configspace<ndof>
@@ -82,7 +86,7 @@ public:
 
 private:
 
-  Kinematics<ndof> kin;
+  Kinematics<ndof>* kin;
 
   //! robot data
   const Robot<ndof>* robot; //host

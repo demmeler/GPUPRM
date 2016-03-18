@@ -8,7 +8,7 @@
 #include "lib/robotconfigspace.h"
 #include "lib/geo4.h"
 using namespace geo4;
-
+#include "lib/polytope4.h"
 
 #include "lib/vertexlist3.h"
 

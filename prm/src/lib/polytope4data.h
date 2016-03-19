@@ -300,7 +300,7 @@ namespace collision4{
         }
 
 
-        for(int i=0;i<26;++i)if(res[i]!=0)return res[i];
+        for(int i=0;i<26;++i)if(res[i]!=0){printvar(i);printvar(res[i]); return 1000+i;}
         return 0;
     }
 

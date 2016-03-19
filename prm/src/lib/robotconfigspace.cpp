@@ -1,6 +1,9 @@
+#define CUDA_IMPLEMENTATION
+
 #include "config.h"
 
 #include "robotconfigspace.h"
+
 
 #include "cuda_head.h"
 
@@ -12,17 +15,13 @@
 #include <cmath>
 
 
-//! robot_: Robot Object with Denavit-Hartenberg data
-//! polydata_: Object containing compressed Polytope data of robot arm and surrounding
-//! mins[ndof]: maximal q values
-//! maxs[ndof]: minimal   -"-
-//! dq:         edge resolution (stepsize)
 template<int ndof>
-RobotConfigspace<ndof>::RobotConfigspace(const Robot<ndof>* robot_,
-                                         const collision4::polytope4* polys_,  const int* sys_, const int N_,
-                                         const float* mins_, const float* maxs_, const float dq_,
-                                         const int nbuf_, const int numthreadsmax_)
-{
+void RobotConfigspace<ndof>::construct(const Robot<ndof>* robot_,
+                 const polytope *polys_,
+                 const int* sys_,
+                 const int N_,
+                 const float* mins_, const float* maxs_, const float dq_,
+                 const int nbuf_, const int numthreadsmax_){
   robot=robot_;
   kin=new Kinematics<ndof>(robot);
   for(int i=0;i<ndof;++i){
@@ -47,17 +46,30 @@ RobotConfigspace<ndof>::RobotConfigspace(const Robot<ndof>* robot_,
   numthreadsmax=numthreadsmax_;
 
   devloaded=false;
+}
 
+//! robot_: Robot Object with Denavit-Hartenberg data
+//! polydata_: Object containing compressed Polytope data of robot arm and surrounding
+//! mins[ndof]: maximal q values
+//! maxs[ndof]: minimal   -"-
+//! dq:         edge resolution (stepsize)
+template<int ndof>
+RobotConfigspace<ndof>::RobotConfigspace(const Robot<ndof>* robot_,
+                                         const polytope* polys_,  const int* sys_, const int N_,
+                                         const float* mins_, const float* maxs_, const float dq_,
+                                         const int nbuf_, const int numthreadsmax_)
+{
+  construct(robot_, polys_, sys_, N_, mins_, maxs_, dq_, nbuf_, numthreadsmax_);
 }
 
 template<int ndof>
 RobotConfigspace<ndof>::RobotConfigspace(const Robot<ndof>* robot_,
-                                         const collision4::polytope4* polys_,  const int* sys_, const int N_,
+                                         const polytope* polys_,  const int* sys_, const int N_,
                                          const int *from_, const int *to_, const int M_,
                                          const float* mins_, const float* maxs_, const float dq_,
-                                         const int nbuf_, const int numthreadsmax_):
-    RobotConfigspace(robot_, polys_, sys_, N_, mins_, maxs_, dq_, nbuf_, numthreadsmax_)
+                                         const int nbuf_, const int numthreadsmax_)
 {
+    construct(robot_, polys_, sys_, N_, mins_, maxs_, dq_, nbuf_, numthreadsmax_);
     polylist.from=from_;
     polylist.to=to_;
     polylist.M=M_;
@@ -333,6 +345,7 @@ int RobotConfigspace<ndof>::indicator2(const float* qs, const float* qe, int *re
   }
 
 #ifdef CUDA_IMPLEMENTATION
+#warning ("using kernel")
   int BLOCK = 256, GRID = (numthreads + BLOCK - 1)/BLOCK;
 
   for(int i=0;i<ndof;++i){
@@ -344,7 +357,7 @@ int RobotConfigspace<ndof>::indicator2(const float* qs, const float* qe, int *re
   cudaMemcpy((void*)testposdev,(void*)testpos.data(), N*sizeof(int), cudaMemcpyHostToDevice);
   cudaMemcpy((void*)testnumdev,(void*)testnum.data(), N*sizeof(int), cudaMemcpyHostToDevice);
 
-
+  printvar(numthreads);
   kernel_indicator2<ndof><<<GRID,BLOCK>>>(robotdev,polydatadev,qdevbufferfrom,nbufqfrom,qdevbufferto,nbufqto,resdevbuffer,resdevbufferext,testposdev,testnumdev,N, numthreads);
 
 
@@ -353,6 +366,7 @@ int RobotConfigspace<ndof>::indicator2(const float* qs, const float* qe, int *re
   kernel_indicator2<ndof>(robot,polydata,qs,offset,qe,offset,res,resbufferext,testpos.data(),testnum.data(),N, numthreads);
 #endif
 
+  return 0; //TODO error handling?
 }
 
 

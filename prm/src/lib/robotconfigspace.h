@@ -3,6 +3,7 @@
 
 #include "configspace.hpp"
 #include "robot.h"
+#include "polytope.h"
 
 template<int ndof> class Kinematics;
 
@@ -21,20 +22,27 @@ public:
   //! maxs[ndof]: minimal   -"-
   //! dq:         edge resolution (stepsize)
   RobotConfigspace(const Robot<ndof>* robot_,
-                   const collision4::polytope4 *polys_,
+                   const polytope *polys_,
                    const int* sys_,
                    const int N_,
                    const float* mins_, const float* maxs_, const float dq_,
                    const int nbuf_, const int numthreadsmax_);
   RobotConfigspace(const Robot<ndof>* robot_,
-                   const collision4::polytope4 *polys_,
+                   const polytope *polys_,
                    const int* sys_,
                    const int N_,
                    const int *from_, const int *to_,
                    const int M_,
                    const float* mins_, const float* maxs_, const float dq_,
                    const int nbuf_, const int numthreadsmax_);
-
+private:
+  void construct(const Robot<ndof>* robot_,
+                 const polytope *polys_,
+                 const int* sys_,
+                 const int N_,
+                 const float* mins_, const float* maxs_, const float dq_,
+                 const int nbuf_, const int numthreadsmax_);
+public:
 
   //!initialization function copy polydata to gpu etc..
   int init();
@@ -94,7 +102,7 @@ private:
 
   //!polytope data
   struct{
-    const collision4::polytope4* polys;
+    const polytope* polys;
     const int* sys;
     int N;
     const int *from, *to;

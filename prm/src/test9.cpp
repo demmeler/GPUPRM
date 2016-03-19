@@ -3,12 +3,12 @@
 #include "lib/config.h"
 
 #include "lib/util.hpp"
+#include "lib/tictoc.h"
 
 #include "lib/configspace.hpp"
 #include "lib/robotconfigspace.h"
 
-#include "lib/polytope4.h"
-using namespace collision4;
+#include "lib/polytope.h"
 
 #include "lib/vertexlist3.h"
 
@@ -16,7 +16,7 @@ using namespace std;
 
 
 template<int ndof>
-int load_config(std::string path, Robot<ndof>* &robot, polytope4* &polys, int* &sys, int &N, int* &from, int* &to, int& M, bool printmsg=false){
+int load_config(std::string path, Robot<ndof>* &robot, polytope* &polys, int* &sys, int &N, int* &from, int* &to, int& M, bool printmsg=false){
 
     //! DH params
 
@@ -68,7 +68,7 @@ int load_config(std::string path, Robot<ndof>* &robot, polytope4* &polys, int* &
 
   if(printmsg) printarr(sys,N);
 
-  polys=new polytope4[N];
+  polys=new polytope[N];
   for(int i=0;i<N;++i){
     std::string polypath=path+"/polys/poly"+std::to_string(i);
     int size[2];
@@ -79,7 +79,7 @@ int load_config(std::string path, Robot<ndof>* &robot, polytope4* &polys, int* &
     polys[i].dsp=new int[n];
     polys[i].cnt=new int[n];
     polys[i].dest=new int[m];
-    polys[i].vertices=new float4[4*n];
+    polys[i].vertices=new polytope::vec4[4*n];
     float* vertices=new float[3*n];
     read_file(polypath+"/vertices.bin",vertices,3*n);
     for(int j=0;j<n;++j){
@@ -96,8 +96,8 @@ int load_config(std::string path, Robot<ndof>* &robot, polytope4* &polys, int* &
     if(printmsg){
       msg("-----");
       printvar(i);
-      geo4::trafo4 t(0.0,0.0,0.0,0.0);
-      p4print(polys[i],t);
+      //geo4::trafo4 t(0.0,0.0,0.0,0.0);
+      //p4print(polys[i],t);
 
       printvar(n);
       printvar(m);
@@ -132,7 +132,7 @@ int main()
   int numthreadsmax=1024*1024;
 
   Robot<ndof>* robot;
-  polytope4* polys;
+  polytope* polys;
   int* sys;
   int N;
 
@@ -203,8 +203,8 @@ int main()
 
   tick(t2);
 
-  system("rm -rf prmoutput");
-  system("mkdir prmoutput");
+  int ret1=system("rm -rf prmoutput");
+  int ret2=system("mkdir prmoutput");
   prm.store_graphs("prmoutput");
 
   tock(t2);

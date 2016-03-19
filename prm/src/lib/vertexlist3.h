@@ -726,12 +726,12 @@ public:
   void store_graphs(std::string path){
     std::string pathl=path+"/graphl";
     //system("rm -rf "+pathl);
-    system(("mkdir "+pathl).c_str());
+    int ret1=system(("mkdir "+pathl).c_str());
     store_graph(pathl,graphl,dijkstral,i0l,connection.index_left);
 
     std::string pathr=path+"/graphr";
     //system("rm -rf "+pathr);
-    system(("mkdir "+pathr).c_str());
+    int ret2=system(("mkdir "+pathr).c_str());
     store_graph(pathr,graphr,dijkstrar,connection.index_right,i0r);
 
     write_file(path+"/connection.bin",(int*)&connection_found,1);

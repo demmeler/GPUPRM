@@ -101,7 +101,7 @@ int RobotConfigspace<ndof>::init()
 
   polydatadev_hostref=new collision4::polytope4data;
 
-  assert(0==collision4::copy_host_to_device(*polydatadev_hostref,*polydata));
+  assert(0==collision4::copy_host_to_device(*polydatadev_hostref,*polydata,true));
   cudaassert(cudaMalloc((void**)&polydatadev, sizeof(collision4::polytope4data)));
   cudaassert(cudaMemcpy((void*)polydatadev, (void*)polydatadev_hostref, sizeof(collision4::polytope4data), cudaMemcpyHostToDevice));
 

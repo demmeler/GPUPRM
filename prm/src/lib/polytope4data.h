@@ -288,7 +288,7 @@ namespace collision4{
         res[19]=cudaMemcpy((void*)devdata.numsys, (void*)hostdata.numsys, (ndof+1) * sizeof(int), cudaMemcpyHostToDevice);
 
 
-        if(withpairs){
+        if(withpairs){ //TODO: weglassen
             int M=devdata.pairs.M=hostdata.pairs.M;
             res[20]=cudaMalloc((void**)&(devdata.pairs.dsp), N * sizeof(int));
             res[21]=cudaMalloc((void**)&(devdata.pairs.cnt), N * sizeof(int));

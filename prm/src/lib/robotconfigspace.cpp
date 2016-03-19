@@ -90,6 +90,15 @@ int RobotConfigspace<ndof>::init()
 
 #ifdef CUDA_IMPLEMENTATION
 
+  int device = 0;
+  cudaSetDevice(device);
+
+  cudaDeviceProp p;
+  cudaGetDeviceProperties(&p, device);
+  std::cout << "Device: " << p.name << std::endl;
+  std::cout << "MP: " << p.multiProcessorCount << std::endl;
+  std::cout << "Compute: " << p.major << "." << p.minor << std::endl;
+
   polydatadev_hostref=new collision4::polytope4data;
 
   collision4::copy_host_to_device(*polydatadev_hostref,*polydata);
@@ -355,7 +364,9 @@ int RobotConfigspace<ndof>::indicator2(const float* qs, const float* qe, int *re
 
   cudaMemcpy((void*)testposdev,(void*)testpos.data(), N*sizeof(int), cudaMemcpyHostToDevice);
   cudaMemcpy((void*)testnumdev,(void*)testnum.data(), N*sizeof(int), cudaMemcpyHostToDevice);
-#warning ("TODO: resdefbuffer init missing")
+
+
+  cudaMemcpy((void*)resdevbuffer,(void*)res,N*sizeof(int), cudaMemcpyHostToDevice);
 
   printvar(numthreads);
   kernel_indicator2<ndof><<<GRID,BLOCK>>>(robotdev,polydatadev,qdevbufferfrom,nbufqfrom,qdevbufferto,nbufqto,resdevbuffer,resdevbufferext,testposdev,testnumdev,N, numthreads);

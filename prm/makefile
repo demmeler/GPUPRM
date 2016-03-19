@@ -51,8 +51,8 @@ test9: robotconfigspace
 	g++ -g -o test9 test9.o robotconfigspace.o
 
 test9cuda: robotconfigspacecuda
-	g++ -O3 -g -c -std=c++11 -o test9.o $(SRC)/test9.cpp
-	g++ -g -o test9cuda test9.o robotconfigspacecuda.o $(CUDA_INCLUDE)
+	g++-4.4 -O3 -g -c -std=c++0x -o test9.o $(SRC)/test9.cpp
+	g++-4.4 -g -o test9cuda test9.o robotconfigspacecuda.o $(CUDA_INCLUDE)
 
 test8cuda: robotconfigspacecuda
 	nvcc -std=c++11 -g -G -x=cu -arch=$(ARCHITECTURE) -c -o test8cuda.o $(SRC)/test8cuda.cpp

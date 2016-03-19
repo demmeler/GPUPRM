@@ -13,6 +13,13 @@
 #include "configspace.hpp"
 #include "util.hpp"
 
+
+
+#define VERTEXLIST_N 1024*1024
+#define VERTEXLIST_BLOCK 256
+
+
+
 template<int ndof>
 class vertexlist{
 
@@ -66,7 +73,10 @@ class vertexlist{
 public:
 
   vertexlist(float H_, float D_, Configspace<ndof> *space_=0x0)
+    :N(VERTEXLIST_N),
+    blocksize(VERTEXLIST_BLOCK)
   {
+
     graphl.qstorage.resize(ndof*N);
     graphl.surrnum.resize(N);
     graphl.edgelists.resize(N);
@@ -828,8 +838,8 @@ private:
   Configspace<ndof> *space;
 
 
-  const int N=1024*1024;   //whole capacity: how many nodes can be stored
-  const int blocksize=256; //size of blocks
+  const int N;          //whole capacity: how many nodes can be stored
+  const int blocksize;  //size of blocks
 
   graph graphl, graphr;
 

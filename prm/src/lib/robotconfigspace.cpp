@@ -1,4 +1,4 @@
-#define CUDA_IMPLEMENTATION
+//#define CUDA_IMPLEMENTATION
 
 #include "config.h"
 
@@ -345,7 +345,6 @@ int RobotConfigspace<ndof>::indicator2(const float* qs, const float* qe, int *re
   }
 
 #ifdef CUDA_IMPLEMENTATION
-#warning ("using kernel")
   int BLOCK = 256, GRID = (numthreads + BLOCK - 1)/BLOCK;
 
   for(int i=0;i<ndof;++i){
@@ -356,6 +355,7 @@ int RobotConfigspace<ndof>::indicator2(const float* qs, const float* qe, int *re
 
   cudaMemcpy((void*)testposdev,(void*)testpos.data(), N*sizeof(int), cudaMemcpyHostToDevice);
   cudaMemcpy((void*)testnumdev,(void*)testnum.data(), N*sizeof(int), cudaMemcpyHostToDevice);
+#warning ("TODO: resdefbuffer init missing")
 
   printvar(numthreads);
   kernel_indicator2<ndof><<<GRID,BLOCK>>>(robotdev,polydatadev,qdevbufferfrom,nbufqfrom,qdevbufferto,nbufqto,resdevbuffer,resdevbufferext,testposdev,testnumdev,N, numthreads);

@@ -368,11 +368,14 @@ int RobotConfigspace<ndof>::indicator2(const float* qs, const float* qe, int *re
 
   cudaMemcpy((void*)resdevbuffer,(void*)res,N*sizeof(int), cudaMemcpyHostToDevice);
 
-  printvar(numthreads);
+  //printvar(numthreads);
   kernel_indicator2<ndof><<<GRID,BLOCK>>>(robotdev,polydatadev,qdevbufferfrom,nbufqfrom,qdevbufferto,nbufqto,resdevbuffer,resdevbufferext,testposdev,testnumdev,N, numthreads);
 
 
   cudaMemcpy((void*)res,(void*)resdevbuffer,N*sizeof(int), cudaMemcpyDeviceToHost);
+
+  printarr(res,N);
+
 #else
   kernel_indicator2<ndof>(robot,polydata,qs,offset,qe,offset,res,resbufferext,testpos.data(),testnum.data(),N, numthreads);
 #endif

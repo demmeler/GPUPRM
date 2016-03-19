@@ -101,19 +101,19 @@ int RobotConfigspace<ndof>::init()
 
   polydatadev_hostref=new collision4::polytope4data;
 
-  collision4::copy_host_to_device(*polydatadev_hostref,*polydata);
-  cudaMalloc((void**)&polydatadev, sizeof(collision4::polytope4data));
-  cudaMemcpy((void*)polydatadev, (void*)polydatadev_hostref, sizeof(collision4::polytope4data), cudaMemcpyHostToDevice);
+  assert(0==collision4::copy_host_to_device(*polydatadev_hostref,*polydata));
+  cudaassert(cudaMalloc((void**)&polydatadev, sizeof(collision4::polytope4data)));
+  cudaassert(cudaMemcpy((void*)polydatadev, (void*)polydatadev_hostref, sizeof(collision4::polytope4data), cudaMemcpyHostToDevice));
 
-  cudaMalloc((void**)&robotdev, sizeof(Robot<ndof>));
-  cudaMemcpy((void*)robotdev,(void*)robot, sizeof(Robot<ndof>), cudaMemcpyHostToDevice);
+  cudaassert(cudaMalloc((void**)&robotdev, sizeof(Robot<ndof>)));
+  cudaassert(cudaMemcpy((void*)robotdev,(void*)robot, sizeof(Robot<ndof>), cudaMemcpyHostToDevice));
 
-  cudaMalloc((void**)&qdevbufferfrom, nbufqfrom*sizeof(float));
-  cudaMalloc((void**)&testnumdev, nbuftest*sizeof(int));
-  cudaMalloc((void**)&testposdev, nbuftest*sizeof(int));
-  cudaMalloc((void**)&qdevbufferto, nbufqto*sizeof(float));
-  cudaMalloc((void**)&resdevbuffer, nbufres*sizeof(int));
-  cudaMalloc((void**)&resdevbufferext, numthreadsmax*sizeof(int));
+  cudaassert(cudaMalloc((void**)&qdevbufferfrom, nbufqfrom*sizeof(float)));
+  cudaassert(cudaMalloc((void**)&testnumdev, nbuftest*sizeof(int)));
+  cudaassert(cudaMalloc((void**)&testposdev, nbuftest*sizeof(int)));
+  cudaassert(cudaMalloc((void**)&qdevbufferto, nbufqto*sizeof(float)));
+  cudaassert(cudaMalloc((void**)&resdevbuffer, nbufres*sizeof(int)));
+  cudaassert(cudaMalloc((void**)&resdevbufferext, numthreadsmax*sizeof(int)));
 
 #else
 

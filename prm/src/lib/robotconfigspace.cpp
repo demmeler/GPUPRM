@@ -1,4 +1,4 @@
-#define CUDA_IMPLEMENTATION
+//#define CUDA_IMPLEMENTATION
 
 #include "config.h"
 
@@ -90,21 +90,30 @@ int RobotConfigspace<ndof>::init()
 
 #ifdef CUDA_IMPLEMENTATION
 
+  int device = 0;
+  cudaSetDevice(device);
+
+  cudaDeviceProp p;
+  cudaGetDeviceProperties(&p, device);
+  std::cout << "Device: " << p.name << std::endl;
+  std::cout << "MP: " << p.multiProcessorCount << std::endl;
+  std::cout << "Compute: " << p.major << "." << p.minor << std::endl;
+
   polydatadev_hostref=new collision4::polytope4data;
 
-  collision4::copy_host_to_device(*polydatadev_hostref,*polydata);
-  cudaMalloc((void**)&polydatadev, sizeof(collision4::polytope4data));
-  cudaMemcpy((void*)polydatadev, (void*)polydatadev_hostref, sizeof(collision4::polytope4data), cudaMemcpyHostToDevice);
+  assert(0==collision4::copy_host_to_device(*polydatadev_hostref,*polydata,true));
+  cudaassert(cudaMalloc((void**)&polydatadev, sizeof(collision4::polytope4data)));
+  cudaassert(cudaMemcpy((void*)polydatadev, (void*)polydatadev_hostref, sizeof(collision4::polytope4data), cudaMemcpyHostToDevice));
 
-  cudaMalloc((void**)&robotdev, sizeof(Robot<ndof>));
-  cudaMemcpy((void*)robotdev,(void*)robot, sizeof(Robot<ndof>), cudaMemcpyHostToDevice);
+  cudaassert(cudaMalloc((void**)&robotdev, sizeof(Robot<ndof>)));
+  cudaassert(cudaMemcpy((void*)robotdev,(void*)robot, sizeof(Robot<ndof>), cudaMemcpyHostToDevice));
 
-  cudaMalloc((void**)&qdevbufferfrom, ndof*nbufqfrom*sizeof(float));
-  cudaMalloc((void**)&qdevbufferto, ndof*nbufqto*sizeof(float));
-  cudaMalloc((void**)&testnumdev, nbuftest*sizeof(int));
-  cudaMalloc((void**)&testposdev, nbuftest*sizeof(int));
-  cudaMalloc((void**)&resdevbuffer, nbufres*sizeof(int));
-  cudaMalloc((void**)&resdevbufferext, numthreadsmax*sizeof(int));
+  cudaassert(cudaMalloc((void**)&qdevbufferfrom, nbufqfrom*sizeof(float)));
+  cudaassert(cudaMalloc((void**)&testnumdev, nbuftest*sizeof(int)));
+  cudaassert(cudaMalloc((void**)&testposdev, nbuftest*sizeof(int)));
+  cudaassert(cudaMalloc((void**)&qdevbufferto, nbufqto*sizeof(float)));
+  cudaassert(cudaMalloc((void**)&resdevbuffer, nbufres*sizeof(int)));
+  cudaassert(cudaMalloc((void**)&resdevbufferext, numthreadsmax*sizeof(int)));
 
 #else
 
@@ -345,23 +354,28 @@ int RobotConfigspace<ndof>::indicator2(const float* qs, const float* qe, int *re
   }
 
 #ifdef CUDA_IMPLEMENTATION
-#warning ("using kernel")
   int BLOCK = 256, GRID = (numthreads + BLOCK - 1)/BLOCK;
 
   for(int i=0;i<ndof;++i){
-    //pointer inkrement in cuda??
-    cudaMemcpy((void*)(qdevbufferfrom+nbufqfrom*i),(void*)&(qs[offset*i]), N*sizeof(float), cudaMemcpyHostToDevice);
-    cudaMemcpy((void*)(qdevbufferto+nbufqto*i),(void*)&(qe[offset*i]), N*sizeof(float), cudaMemcpyHostToDevice);
+      //pointer inkrement in cuda??
+    cudaassert(cudaMemcpy((void*)(qdevbufferfrom+nbufqfrom*i),(void*)&(qs[offset*i]), N*sizeof(float), cudaMemcpyHostToDevice));
+    cudaassert(cudaMemcpy((void*)(qdevbufferto+nbufqto*i),(void*)&(qe[offset*i]), N*sizeof(float), cudaMemcpyHostToDevice));
   }
 
-  cudaMemcpy((void*)testposdev,(void*)testpos.data(), N*sizeof(int), cudaMemcpyHostToDevice);
-  cudaMemcpy((void*)testnumdev,(void*)testnum.data(), N*sizeof(int), cudaMemcpyHostToDevice);
+  cudaassert(cudaMemcpy((void*)testposdev,(void*)testpos.data(), N*sizeof(int), cudaMemcpyHostToDevice));
+  cudaassert(cudaMemcpy((void*)testnumdev,(void*)testnum.data(), N*sizeof(int), cudaMemcpyHostToDevice));
 
-  printvar(numthreads);
+
+  cudaassert(cudaMemcpy((void*)resdevbuffer,(void*)res,N*sizeof(int), cudaMemcpyHostToDevice));
+
+  //printvar(numthreads);
   kernel_indicator2<ndof><<<GRID,BLOCK>>>(robotdev,polydatadev,qdevbufferfrom,nbufqfrom,qdevbufferto,nbufqto,resdevbuffer,resdevbufferext,testposdev,testnumdev,N, numthreads);
 
 
-  cudaMemcpy((void*)res,(void*)resdevbuffer,N*sizeof(int), cudaMemcpyDeviceToHost);
+  cudaassert(cudaMemcpy((void*)res,(void*)resdevbuffer,N*sizeof(int), cudaMemcpyDeviceToHost));
+
+  printarr(res,N);
+
 #else
   kernel_indicator2<ndof>(robot,polydata,qs,offset,qe,offset,res,resbufferext,testpos.data(),testnum.data(),N, numthreads);
 #endif

@@ -70,7 +70,9 @@ int load_config(std::string path, Robot<ndof>* &robot, polytope* &polys, int* &s
 
   polys=new polytope[N];
   for(int i=0;i<N;++i){
-    std::string polypath=path+"/polys/poly"+std::to_string(i);
+    std::stringstream polypathstream;
+    polypathstream<<path<<"/polys/poly"<<i;
+    std::string polypath=polypathstream.str();
     int size[2];
     read_file(polypath+"/size.bin",&(size[0]),2);
     int n,m;

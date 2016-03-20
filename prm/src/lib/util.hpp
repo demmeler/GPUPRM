@@ -19,7 +19,10 @@
 #define printarr(x,n) std::cout<<#x<<"=";for(int index___=0;index___<n;++index___){std::cout<<x[index___]<<" ";}std::cout<<std::endl;
 #define msg(x) std::cout<<x<<std::endl;
 
-
+#if 1//def CUDA_IMPLEMENTATION
+  #include <assert.h>
+  #define cudaassert(x) {if(x!=cudaSuccess){printvar(x); msg(cudaGetErrorString(x)); }  assert(x==cudaSuccess);}
+#endif
 
 
 ///   **************************

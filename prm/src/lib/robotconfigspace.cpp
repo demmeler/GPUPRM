@@ -186,13 +186,13 @@ int RobotConfigspace<ndof>::indicator(const float* q)
           collision4::polytope4 poly1;
           polydata->get_polytope(poly1, k1);
 
-          dprintarr(dest,destnum);
+          /*dprintarr(dest,destnum);
           dprintvard(polydata->sys[k0]);
           dprintvard(polydata->sys[k1]);
           dt4print(kin->trafos[polydata->sys[k0]]);
           dt4print(kin->trafos[polydata->sys[k1]]);
-
-          int result=collision4::seperating_vector_algorithm(poly0,poly1,kin->trafos[polydata->sys[k0]],kin->trafos[polydata->sys[k1]]);
+*/
+          int result=0;//collision4::seperating_vector_algorithm(poly0,poly1,kin->trafos[polydata->sys[k0]],kin->trafos[polydata->sys[k1]]);
           if(result!=0){
             return result;
           }

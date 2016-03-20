@@ -310,7 +310,7 @@ void kernel_indicator2(const Robot<ndof>* robot,
       }
     }
 
-    printf("resext[i]=%d\n",resext[i]);
+    //printf("resext[i]=%d\n",resext[i]);
 
 #endif
 
@@ -387,6 +387,7 @@ int RobotConfigspace<ndof>::indicator2(const float* qs, const float* qe, int *re
 #endif
 
   printarr(res,N);
+  printvar(numthreads);
 
   return 0; //TODO error handling?
 }

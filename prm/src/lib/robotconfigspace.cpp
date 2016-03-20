@@ -309,7 +309,7 @@ void kernel_indicator2(const Robot<ndof>* robot,
       }
     }
 
-    printf("resext[i]=%d\n",resext[i]);
+    //printf("resext[i]=%d\n",resext[i]);
 
 #endif
 

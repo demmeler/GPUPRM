@@ -214,5 +214,6 @@ int main()
   //printarr(array,3000);
 
   //printarr(array,n);
+  printvar(clock());
   printvar(rand());
 }

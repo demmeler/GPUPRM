@@ -1,7 +1,8 @@
 ARCHITECTURE=sm_20
 SRC=src
 #CUDA_PATH=/usr/lib/nvidia-cuda-toolkit
-CUDA_PATH=/share/apps/cuda-5.5
+CUDA_PATH=/usr/local/cuda-7.5
+#CUDA_PATH=/share/apps/cuda-5.5
 CUDA_INCLUDE= -L$(CUDA_PATH)/lib64 -lcudart
 
 test:
@@ -47,13 +48,22 @@ test8: robotconfigspace
 	g++ -g -c -std=c++11 -o test8.o $(SRC)/test8.cpp
 	g++ -g -o test8 test8.o robotconfigspace.o
 
-test9: robotconfigspace
-	g++ -g -c -std=c++11 -o test9.o $(SRC)/test9.cpp
+test9o:
+	g++ -O3 -g -c -std=c++0x -o test9.o $(SRC)/test9.cpp
+
+
+test9: robotconfigspace test9.o
+#	g++ -g -c -std=c++11 -o test9.o $(SRC)/test9.cpp
 	g++ -g -o test9 test9.o robotconfigspace.o
 
-test9cuda: robotconfigspacecuda
-	g++ -O3 -g -c -std=c++0x -o test9.o $(SRC)/test9.cpp
+test9cuda: robotconfigspacecuda test9.o
+#	g++ -O3 -g -c -std=c++0x -o test9.o $(SRC)/test9.cpp
 	g++ -g -o test9cuda test9.o robotconfigspacecuda.o $(CUDA_INCLUDE)
+
+test9cuda0: robotconfigspacecuda0 test9o
+#	g++ -O3 -g -c -std=c++0x -o test9.o $(SRC)/test9.cpp
+	g++ -g -o test9cuda0 test9.o robotconfigspacecuda0.o $(CUDA_INCLUDE)
+	
 
 test8cuda: robotconfigspacecuda
 	nvcc -std=c++11 -g -G -x=cu -arch=$(ARCHITECTURE) -c -o test8cuda.o $(SRC)/test8cuda.cpp
@@ -75,4 +85,5 @@ robotconfigspacecuda:
 #	nvcc -O3 -g -G -x=cu -arch=$(ARCHITECTURE) -c -o robotconfigspacecuda.o $(SRC)/lib/robotconfigspace.cpp
 	nvcc -g -G -x=cu -arch=$(ARCHITECTURE) -c -o robotconfigspacecuda.o $(SRC)/lib/robotconfigspace.cpp -D CUDA_IMPLEMENTATION
 
-
+robotconfigspacecuda0:
+	nvcc -O3 -g -G -x=cu -arch=$(ARCHITECTURE) -c -o robotconfigspacecuda0.o $(SRC)/lib/robotconfigspace.cpp

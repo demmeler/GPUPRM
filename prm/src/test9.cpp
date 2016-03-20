@@ -116,8 +116,9 @@ int load_config(std::string path, Robot<ndof>* &robot, polytope* &polys, int* &s
 int main()
 {
 
-  srand(time(NULL));
+  //srand(time(NULL));
   //srand(clock());
+  srand(0);
 
   tick(t0);
 

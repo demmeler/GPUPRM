@@ -233,7 +233,6 @@ __global__ void kernel_indicator2(Robot<ndof>* robot,
                                   int N, int numthreads){
   int i = blockDim.x * blockIdx.x + threadIdx.x;
   if(i<numthreads){
-      printf("1");
 #else
 void kernel_indicator2(const Robot<ndof>* robot,
                        const collision4::polytope4data* polydata,
@@ -264,25 +263,10 @@ void kernel_indicator2(const Robot<ndof>* robot,
       q[j]=c1*qs[k+offsets*j]+c2*qe[k+offsete*j];
     }
 
-    printf("2");
 
     Kinematics<ndof> kin(robot);
     resext[i]=0;
     kin.calculate(&q[0],1);
-
-    printf("3");
-    printf("3");
-    printf("3");
-    printf("3");
-    printf("3");
-    printf("3");
-    printf("3");
-    printf("3");
-    printf("3");
-    printf("3");
-    printf("3");
-    printf("3");
-    printf("3x");
 
 
 #if 0
@@ -309,28 +293,21 @@ void kernel_indicator2(const Robot<ndof>* robot,
     //! collision algorithm
 
     for(int k0=0;k0<polydata->N;++k0){
-      printf("31.");
       collision4::polytope4 poly0;
       polydata->get_polytope(poly0, k0);
-      printf("32.");
       int *dest;
       int destnum;
       polydata->get_collision_list(k0,dest,destnum);
-      printf("33.");
       for(int l=0;l<destnum;++l){
           int k1=dest[l];
           collision4::polytope4 poly1;
           polydata->get_polytope(poly1, k1);
-          printf("34.");
           int result=collision4::seperating_vector_algorithm(poly0,poly1,kin.trafos[polydata->sys[k0]],kin.trafos[polydata->sys[k1]]);
-          printf("35.");
           if(result!=0){
             resext[i]=result;
           }
       }
     }
-
-    printf("4");
 
 #endif
 

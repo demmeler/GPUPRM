@@ -1,4 +1,3 @@
-//#define CUDA_IMPLEMENTATION
 
 #include "config.h"
 
@@ -233,6 +232,7 @@ __global__ void kernel_indicator2(Robot<ndof>* robot,
                                   int* testpos, int* testnum,
                                   int N, int numthreads){
   int i = blockDim.x * blockIdx.x + threadIdx.x;
+  printf("1");
   if(i<numthreads){
 #else
 void kernel_indicator2(const Robot<ndof>* robot,
@@ -264,9 +264,13 @@ void kernel_indicator2(const Robot<ndof>* robot,
       q[j]=c1*qs[k+offsets*j]+c2*qe[k+offsete*j];
     }
 
+    printf("2");
+
     Kinematics<ndof> kin(robot);
     resext[i]=0;
     kin.calculate(&q[0],1);
+
+    printf("3");
 
 #if 0
 
@@ -308,6 +312,8 @@ void kernel_indicator2(const Robot<ndof>* robot,
       }
     }
 
+    printf("3");
+
 #endif
 
     //! reduce resext to res with ||
@@ -328,6 +334,9 @@ void kernel_indicator2(const Robot<ndof>* robot,
 template<int ndof>
 int RobotConfigspace<ndof>::indicator2(const float* qs, const float* qe, int *res, const int N, const int offset)
 {
+  assert(N<=nbuftest);
+  assert(N<=nbufres);
+
   //! calculate number of threads needed
   std::vector<int> testnum(N,0);
   std::vector<int> testpos(N,0);

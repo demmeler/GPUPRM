@@ -151,7 +151,7 @@ if 1
     Pe2.vertices=quader(-3,-3,0,1,1,2);
     Pe2.sys=0;
     
-    Pe3.vertices=quader(-6,0,6,8,1,1);
+    Pe3.vertices=quader(-6,0,2,8,1,1);
     Pe3.sys=0;
     
     polys={P0,P1,P2,P3,P4,Pe1,Pe2,Pe3,P5,P6};

@@ -1,4 +1,4 @@
-//#define CUDA_IMPLEMENTATION
+#define CUDA_IMPLEMENTATION
 
 #include "config.h"
 

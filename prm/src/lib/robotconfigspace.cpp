@@ -108,10 +108,10 @@ int RobotConfigspace<ndof>::init()
   cudaassert(cudaMalloc((void**)&robotdev, sizeof(Robot<ndof>)));
   cudaassert(cudaMemcpy((void*)robotdev,(void*)robot, sizeof(Robot<ndof>), cudaMemcpyHostToDevice));
 
-  cudaassert(cudaMalloc((void**)&qdevbufferfrom, nbufqfrom*sizeof(float)));
+  cudaassert(cudaMalloc((void**)&qdevbufferfrom, ndof*nbufqfrom*sizeof(float)));
+  cudaassert(cudaMalloc((void**)&qdevbufferto, ndof*nbufqto*sizeof(float)));
   cudaassert(cudaMalloc((void**)&testnumdev, nbuftest*sizeof(int)));
   cudaassert(cudaMalloc((void**)&testposdev, nbuftest*sizeof(int)));
-  cudaassert(cudaMalloc((void**)&qdevbufferto, nbufqto*sizeof(float)));
   cudaassert(cudaMalloc((void**)&resdevbuffer, nbufres*sizeof(int)));
   cudaassert(cudaMalloc((void**)&resdevbufferext, numthreadsmax*sizeof(int)));
 

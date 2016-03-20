@@ -145,13 +145,13 @@ if 1
     P6.vertices=quaderm(0,0,-0.5+0.15,1,1,0.3);
     P6.sys=4;
     
-    Pe1.vertices=quader(-3,2,0,1,1,3);
+    Pe1.vertices=quader(0,3.7,0,1,1,3);
     Pe1.sys=0;
     
     Pe2.vertices=quader(-3,-3,0,1,1,2);
     Pe2.sys=0;
     
-    Pe3.vertices=quader(-6,0.6,2,8,1,1);
+    Pe3.vertices=quader(-6,0.6,5,8,1,1);
     Pe3.sys=0;
     
     polys={P0,P1,P2,P3,P4,Pe1,Pe2,Pe3,P5,P6};

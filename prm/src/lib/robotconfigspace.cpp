@@ -232,8 +232,8 @@ __global__ void kernel_indicator2(Robot<ndof>* robot,
                                   int* testpos, int* testnum,
                                   int N, int numthreads){
   int i = blockDim.x * blockIdx.x + threadIdx.x;
-  printf("1");
   if(i<numthreads){
+      printf("1");
 #else
 void kernel_indicator2(const Robot<ndof>* robot,
                        const collision4::polytope4data* polydata,
@@ -271,6 +271,19 @@ void kernel_indicator2(const Robot<ndof>* robot,
     kin.calculate(&q[0],1);
 
     printf("3");
+    printf("3");
+    printf("3");
+    printf("3");
+    printf("3");
+    printf("3");
+    printf("3");
+    printf("3");
+    printf("3");
+    printf("3");
+    printf("3");
+    printf("3");
+    printf("3x");
+
 
 #if 0
 

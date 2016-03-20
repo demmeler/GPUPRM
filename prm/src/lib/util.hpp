@@ -21,7 +21,7 @@
 
 #if 1//def CUDA_IMPLEMENTATION
   #include <assert.h>
-  #define cudaassert(x) assert(x==cudaSuccess);
+  #define cudaassert(x) {if(x!=cudaSuccess){printvar(x); msg(cudaGetErrorString(x)); }  assert(x==cudaSuccess);}
 #endif
 
 

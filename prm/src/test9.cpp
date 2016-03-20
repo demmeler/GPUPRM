@@ -119,6 +119,7 @@ int main()
   //srand(time(NULL));
   //srand(clock());
   srand(0);
+  int firstrand=rand();
 
   tick(t0);
 
@@ -216,6 +217,6 @@ int main()
   //printarr(array,3000);
 
   //printarr(array,n);
-  printvar(clock());
   printvar(rand());
+  printvar(firstrand);
 }

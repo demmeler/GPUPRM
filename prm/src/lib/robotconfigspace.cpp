@@ -232,7 +232,7 @@ __global__ void kernel_indicator2(Robot<ndof>* robot,
                                   int* testpos, int* testnum,
                                   int N, int numthreads){
   int i = blockDim.x * blockIdx.x + threadIdx.x;
-  if(i<numthreads){
+  if(i<1){//numthreads){
 #else
 void kernel_indicator2(const Robot<ndof>* robot,
                        const collision4::polytope4data* polydata,

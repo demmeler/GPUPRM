@@ -310,14 +310,14 @@ void kernel_indicator2(const Robot<ndof>* robot,
       }
     }
 
-    //printf("resext[i]=%d\n",resext[i]);
+    printf("resext[i]=%d\n",resext[i]);
 
 #endif
 
     //! reduce resext to res with ||
 #if 1//def CUDA_IMPLEMENTATION
     //TODO
-    if(resext[i]!=0) res[k]=resext[k];
+    if(resext[i]!=0) res[k]=resext[i];
 #else
     if(resext[i]!=0 || i==testpos[k]) res[k]=resext[i];
 #endif
@@ -381,11 +381,12 @@ int RobotConfigspace<ndof>::indicator2(const float* qs, const float* qe, int *re
 
   cudaassert(cudaMemcpy((void*)res,(void*)resdevbuffer,N*sizeof(int), cudaMemcpyDeviceToHost));
 
-  printarr(res,N);
 
 #else
   kernel_indicator2<ndof>(robot,polydata,qs,offset,qe,offset,res,resbufferext,testpos.data(),testnum.data(),N, numthreads);
 #endif
+
+  printarr(res,N);
 
   return 0; //TODO error handling?
 }

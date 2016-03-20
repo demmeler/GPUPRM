@@ -99,10 +99,10 @@ int RobotConfigspace<ndof>::init()
   cudaMalloc((void**)&robotdev, sizeof(Robot<ndof>));
   cudaMemcpy((void*)robotdev,(void*)robot, sizeof(Robot<ndof>), cudaMemcpyHostToDevice);
 
-  cudaMalloc((void**)&qdevbufferfrom, nbufqfrom*sizeof(float));
+  cudaMalloc((void**)&qdevbufferfrom, ndof*nbufqfrom*sizeof(float));
+  cudaMalloc((void**)&qdevbufferto, ndof*nbufqto*sizeof(float));
   cudaMalloc((void**)&testnumdev, nbuftest*sizeof(int));
   cudaMalloc((void**)&testposdev, nbuftest*sizeof(int));
-  cudaMalloc((void**)&qdevbufferto, nbufqto*sizeof(float));
   cudaMalloc((void**)&resdevbuffer, nbufres*sizeof(int));
   cudaMalloc((void**)&resdevbufferext, numthreadsmax*sizeof(int));
 
@@ -349,7 +349,7 @@ int RobotConfigspace<ndof>::indicator2(const float* qs, const float* qe, int *re
   int BLOCK = 256, GRID = (numthreads + BLOCK - 1)/BLOCK;
 
   for(int i=0;i<ndof;++i){
-      //pointer inkrement in cuda??
+    //pointer inkrement in cuda??
     cudaMemcpy((void*)(qdevbufferfrom+nbufqfrom*i),(void*)&(qs[offset*i]), N*sizeof(float), cudaMemcpyHostToDevice);
     cudaMemcpy((void*)(qdevbufferto+nbufqto*i),(void*)&(qe[offset*i]), N*sizeof(float), cudaMemcpyHostToDevice);
   }

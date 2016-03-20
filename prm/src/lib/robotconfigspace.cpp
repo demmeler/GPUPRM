@@ -312,7 +312,7 @@ void kernel_indicator2(const Robot<ndof>* robot,
       }
     }
 
-    printf("3");
+    printf("4");
 
 #endif
 

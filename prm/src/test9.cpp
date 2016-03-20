@@ -1,5 +1,5 @@
 #include <iostream>
-
+#include <time.h>
 #include "lib/config.h"
 
 #include "lib/util.hpp"
@@ -116,7 +116,8 @@ int load_config(std::string path, Robot<ndof>* &robot, polytope* &polys, int* &s
 int main()
 {
 
-  srand(clock());
+  srand(time(NULL));
+  //srand(clock());
 
   tick(t0);
 

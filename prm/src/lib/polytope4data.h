@@ -258,7 +258,7 @@ namespace collision4{
 
         //!alloc
 
-        int res[26];
+        int res[28];
         res[0]=cudaMalloc((void**)&(devdata.vertices), sumn * sizeof(float4));
         res[1]=cudaMalloc((void**)&(devdata.dsp), sumn * sizeof(int));
         res[2]=cudaMalloc((void**)&(devdata.cnt), sumn * sizeof(int));
@@ -297,10 +297,13 @@ namespace collision4{
             res[23]=cudaMemcpy((void*)devdata.pairs.dsp, (void*)hostdata.pairs.dsp, N * sizeof(int), cudaMemcpyHostToDevice);
             res[24]=cudaMemcpy((void*)devdata.pairs.cnt, (void*)hostdata.pairs.cnt, N * sizeof(int), cudaMemcpyHostToDevice);
             res[25]=cudaMemcpy((void*)devdata.pairs.dest, (void*)hostdata.pairs.dest, M * sizeof(int), cudaMemcpyHostToDevice);
+
+            res[26]=cudaMalloc((void**)&(devdata.sys), N * sizeof(int));
+            res[27]=cudaMemcpy((void*)devdata.sys, (void*)hostdata.sys, N * sizeof(int), cudaMemcpyHostToDevice);
         }
 
 
-        for(int i=0;i<26;++i)if(res[i]!=0){printvar(i);printvar(res[i]); return 1000+i;}
+        for(int i=0;i<28;++i)if(res[i]!=0){printvar(i);printvar(res[i]); return 1000+i;}
         return 0;
     }
 

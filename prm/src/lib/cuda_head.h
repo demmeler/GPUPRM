@@ -1,6 +1,8 @@
 #ifndef CUDA_HEAD_H
 #define CUDA_HEAD_H
 
+#define CUDA_IMPLEMENTATION
+
 #undef qualifier
 #ifdef CUDA_IMPLEMENTATION
   #include <cuda.h>

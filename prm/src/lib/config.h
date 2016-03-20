@@ -2,8 +2,7 @@
 #define CONFIG_H
 
 
-
-#define SILENT
+//#define SILENT
 #define NO_IO
 //#define CUDA_IMPLEMENTATION
 

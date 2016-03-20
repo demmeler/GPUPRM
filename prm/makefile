@@ -73,6 +73,6 @@ robotconfigspace:
 robotconfigspacecuda:
 #	nvcc -std=c++11 -g -G -x=cu -arch=$(ARCHITECTURE) -c -o robotconfigspacecuda.o $(SRC)/lib/robotconfigspace.cpp
 #	nvcc -O3 -g -G -x=cu -arch=$(ARCHITECTURE) -c -o robotconfigspacecuda.o $(SRC)/lib/robotconfigspace.cpp
-	nvcc -O3 -g -G -x=cu -arch=$(ARCHITECTURE) -c -o robotconfigspacecuda.o $(SRC)/lib/robotconfigspace.cpp -D CUDA_IMPLEMENTATION
+	nvcc -g -G -x=cu -arch=$(ARCHITECTURE) -c -o robotconfigspacecuda.o $(SRC)/lib/robotconfigspace.cpp -D CUDA_IMPLEMENTATION
 
 

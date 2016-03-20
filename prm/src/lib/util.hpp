@@ -56,7 +56,7 @@
     #define dprintvard(v) printf( "%s=%d\n",  #v, v);
     #define dprintarr(x,n) { printf("%s=",#x);                              \
                              for(int i=0;i<n;++i){printf("%d ",x[i]);}      \
-                             printf("\n");
+                             printf("\n"); }
     #define dmsg(x) printf("%s\n",  x);
 #endif
 

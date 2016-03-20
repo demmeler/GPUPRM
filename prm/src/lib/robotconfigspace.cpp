@@ -1,4 +1,3 @@
-#define CUDA_IMPLEMENTATION
 
 #include "config.h"
 
@@ -108,10 +107,10 @@ int RobotConfigspace<ndof>::init()
   cudaassert(cudaMalloc((void**)&robotdev, sizeof(Robot<ndof>)));
   cudaassert(cudaMemcpy((void*)robotdev,(void*)robot, sizeof(Robot<ndof>), cudaMemcpyHostToDevice));
 
-  cudaassert(cudaMalloc((void**)&qdevbufferfrom, nbufqfrom*sizeof(float)));
+  cudaassert(cudaMalloc((void**)&qdevbufferfrom, ndof*nbufqfrom*sizeof(float)));
+  cudaassert(cudaMalloc((void**)&qdevbufferto, ndof*nbufqto*sizeof(float)));
   cudaassert(cudaMalloc((void**)&testnumdev, nbuftest*sizeof(int)));
   cudaassert(cudaMalloc((void**)&testposdev, nbuftest*sizeof(int)));
-  cudaassert(cudaMalloc((void**)&qdevbufferto, nbufqto*sizeof(float)));
   cudaassert(cudaMalloc((void**)&resdevbuffer, nbufres*sizeof(int)));
   cudaassert(cudaMalloc((void**)&resdevbufferext, numthreadsmax*sizeof(int)));
 
@@ -187,13 +186,13 @@ int RobotConfigspace<ndof>::indicator(const float* q)
           collision4::polytope4 poly1;
           polydata->get_polytope(poly1, k1);
 
-          dprintarr(dest,destnum);
+          /*dprintarr(dest,destnum);
           dprintvard(polydata->sys[k0]);
           dprintvard(polydata->sys[k1]);
           dt4print(kin->trafos[polydata->sys[k0]]);
           dt4print(kin->trafos[polydata->sys[k1]]);
-
-          int result=collision4::seperating_vector_algorithm(poly0,poly1,kin->trafos[polydata->sys[k0]],kin->trafos[polydata->sys[k1]]);
+*/
+          int result=0;//collision4::seperating_vector_algorithm(poly0,poly1,kin->trafos[polydata->sys[k0]],kin->trafos[polydata->sys[k1]]);
           if(result!=0){
             return result;
           }
@@ -233,7 +232,7 @@ __global__ void kernel_indicator2(Robot<ndof>* robot,
                                   int* testpos, int* testnum,
                                   int N, int numthreads){
   int i = blockDim.x * blockIdx.x + threadIdx.x;
-  if(i<numthreads){
+  if(i<1){//numthreads){
 #else
 void kernel_indicator2(const Robot<ndof>* robot,
                        const collision4::polytope4data* polydata,
@@ -264,9 +263,11 @@ void kernel_indicator2(const Robot<ndof>* robot,
       q[j]=c1*qs[k+offsets*j]+c2*qe[k+offsete*j];
     }
 
+
     Kinematics<ndof> kin(robot);
     resext[i]=0;
     kin.calculate(&q[0],1);
+
 
 #if 0
 
@@ -305,6 +306,7 @@ void kernel_indicator2(const Robot<ndof>* robot,
           if(result!=0){
             resext[i]=result;
           }
+          printf("result=%d\n",result);
       }
     }
 
@@ -328,6 +330,9 @@ void kernel_indicator2(const Robot<ndof>* robot,
 template<int ndof>
 int RobotConfigspace<ndof>::indicator2(const float* qs, const float* qe, int *res, const int N, const int offset)
 {
+  assert(N<=nbuftest);
+  assert(N<=nbufres);
+
   //! calculate number of threads needed
   std::vector<int> testnum(N,0);
   std::vector<int> testpos(N,0);

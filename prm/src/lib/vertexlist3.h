@@ -455,6 +455,11 @@ public:
     //!
     //! calculate which edges exist
     //!
+    //...... --> call indicator function on GPU
+    //space->indicator2(qnew,num,qlist,resbuf,posqlist,numqlist,offset);
+    space->indicator2(qstart,qend,resbuf,Nqlist,offset);
+
+
 #ifndef NO_IO
     printarr(qnew,ndof*num);
     printvar(num);
@@ -467,12 +472,6 @@ public:
     printvar(offset);
     printarr(distlist,nbuf);
     printarr(poslist,nbuf);
-#endif
-    //...... --> call indicator function on GPU
-    //space->indicator2(qnew,num,qlist,resbuf,posqlist,numqlist,offset);
-    space->indicator2(qstart,qend,resbuf,Nqlist,offset);
-
-#ifndef NO_IO
     printarr(resbuf,nbuf);
 #endif
 

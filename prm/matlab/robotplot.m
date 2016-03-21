@@ -10,7 +10,7 @@ prmoutput=prmoutputread('../prmoutput',ndof);
 
 l=size(prmoutput.Qpath,2);
 
-part=0:0.01:0.9;
+part=0:0.05:0.9;
 seg=3*part.^2-2*part.^3;
 t=repmat(seg, 1, l)+repelem(1:l,length(seg));
 

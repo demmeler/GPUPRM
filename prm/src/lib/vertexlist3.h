@@ -362,18 +362,11 @@ public:
 #ifndef NO_IO
         printvar(l);
         printarr(qnewtemp2,ndof);
+        printvar(dismiss);
 #endif
       }while(dismiss);
     }
 
-
-
-    //!
-    //! check if qnew is free
-    //!
-
-    // ....... --> call indicator function on cpu, wait
-    //no, already done in set_nodes_randomly
 
     //!
     //! make list of potential neighbours for all new nodes
@@ -482,6 +475,9 @@ public:
 #ifndef NO_IO
     printarr(resbuf,nbuf);
 #endif
+
+
+
     //!
     //! insert nodes and edges
     //!
@@ -501,14 +497,23 @@ public:
           break;
         }
       }
+      bool rightconn=false;
+      for(int i=maxleft;i<max;++i){
+        if(resbuf[i]==0){
+          rightconn=true;
+          break;
+        }
+      }
+
+      int positionl=0;
       if(leftconn){
         //!
         //! connection to left graph exists -> insert in left graph
         //!
-        int position=insert(&qnew[j],num,graphl);
+        positionl=insert(&qnew[j],num,graphl);
         int surrnump=0;
-        std::vector<int> *v=&(graphl.edgelists[position]);
-        std::vector<float> *w=&(graphl.edgeweights[position]);
+        std::vector<int> *v=&(graphl.edgelists[positionl]);
+        std::vector<float> *w=&(graphl.edgeweights[positionl]);
         for(int i=min;i<maxleft;++i){
           if(resbuf[i]==0){
             int goalpos=poslist[i];
@@ -517,92 +522,53 @@ public:
             v->push_back(goalpos);
             w->push_back(dist);
             ++(graphl.surrnum[goalpos]);
-            graphl.edgelists[goalpos].push_back(position);
+            graphl.edgelists[goalpos].push_back(positionl);
             graphl.edgeweights[goalpos].push_back(dist);
           }
         }
-        graphl.surrnum[position]+=surrnump;
-        for(int i=maxleft;i<max;++i){
-          if(resbuf[i]==0){
-            //!
-            //!  Connection found! abort
-            //!
-            for(int l=0;l<ndof;++l)connection.q[l]=qnew[j+num*l];
-#if 0
-            float minnorm=w->at(0);
-            int minpos=0;
-            for(int j=0;j<w->size();++j){
-              if(minnorm>w->at(j)){minnorm=w->at(j);minpos=j;}
-            }
-            connection.index_left=v->at(minpos);
-#endif
-            connection.index_left=position;
-            connection.index_right=poslist[i];
-
-            int res0=do_dijkstra(graphl,dijkstral,i0l,connection.index_left);
-            int res1=do_dijkstra(graphr,dijkstrar,connection.index_right,i0r);
-            if(res0==0){msg("ERROR: no path found by dijkstra in graphl");}
-            if(res1==0){msg("ERROR: no path found by dijkstra in graphr");}
-
-            return 1;
-          }
-        }
-      }else{
-        bool rightconn=false;
-        for(int i=maxleft;i<max;++i){
-          if(resbuf[i]==0){
-            rightconn=true;
-            break;
-          }
-        }
-        if(rightconn){
-          //!
-          //! connection to right graph exists -> insert in right graph
-          //!
-          int position=insert(&qnew[j],num,graphr);
-          int surrnump=0;
-          std::vector<int> *v=&(graphr.edgelists[position]);
-          std::vector<float> *w=&(graphr.edgeweights[position]);
-          for(int i=maxleft;i<max;++i){
-            if(resbuf[i]==0){
-              int goalpos=poslist[i];
-              float dist=distlist[i];
-              ++surrnump;
-              v->push_back(goalpos);
-              w->push_back(dist);
-              ++(graphr.surrnum[goalpos]);
-              graphr.edgelists[goalpos].push_back(position);
-              graphr.edgeweights[goalpos].push_back(dist);
-            }
-          }
-          graphr.surrnum[position]+=surrnump;
-          for(int i=min;i<maxleft;++i){
-            if(resbuf[i]==0){
-              //!
-              //!  Connection found! abort
-              //!
-              for(int l=0;l<ndof;++l)connection.q[l]=qnew[j+num*l];
-#if 0
-              float minnorm=w->at(0);
-              int minpos=0;
-              for(int j=0;j<w->size();++j){
-                if(minnorm>w->at(j)){minnorm=w->at(j);minpos=j;}
-              }
-              connection.index_right=v->at(minpos);
-#endif
-              connection.index_right=position;
-              connection.index_left=poslist[i];
-
-              int res0=do_dijkstra(graphl,dijkstral,i0l,connection.index_left);
-              int res1=do_dijkstra(graphr,dijkstrar,connection.index_right,i0r);
-              if(res0==0){msg("ERROR: no path found by dijkstra in graphl");}
-              if(res1==0){msg("ERROR: no path found by dijkstra in graphr");}
-
-              return 1;
-            }
-          }//for
-        }
+        graphl.surrnum[positionl]+=surrnump;
       }
+
+      int positionr=0;
+      if(rightconn){
+         //!
+         //! connection to right graph exists -> insert in right graph
+         //!
+         positionr=insert(&qnew[j],num,graphr);
+         int surrnump=0;
+         std::vector<int> *v=&(graphr.edgelists[positionr]);
+         std::vector<float> *w=&(graphr.edgeweights[positionr]);
+         for(int i=maxleft;i<max;++i){
+           if(resbuf[i]==0){
+             int goalpos=poslist[i];
+             float dist=distlist[i];
+             ++surrnump;
+             v->push_back(goalpos);
+             w->push_back(dist);
+             ++(graphr.surrnum[goalpos]);
+             graphr.edgelists[goalpos].push_back(positionr);
+             graphr.edgeweights[goalpos].push_back(dist);
+           }
+         }
+         graphr.surrnum[positionr]+=surrnump;
+       }
+
+       if(leftconn && rightconn){
+         //!
+         //!  Connection found! abort
+         //!
+         for(int l=0;l<ndof;++l)connection.q[l]=qnew[j+num*l];
+
+         connection.index_left=positionl;
+         connection.index_right=positionr;
+
+         int res0=do_dijkstra(graphl,dijkstral,i0l,connection.index_left);
+         int res1=do_dijkstra(graphr,dijkstrar,connection.index_right,i0r);
+         if(res0==0){msg("ERROR: no path found by dijkstra in graphl");}
+         if(res1==0){msg("ERROR: no path found by dijkstra in graphr");}
+
+         return 1;
+       }
 
     }//for
 

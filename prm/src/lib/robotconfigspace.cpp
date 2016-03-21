@@ -216,6 +216,17 @@ int RobotConfigspace<ndof>::indicator(const float* q)
 //! indicator functions on GPU
 //!
 
+//!help kernels
+
+#ifdef CUDA_IMPLEMENTATION
+template<class T>
+__global__ void set_kernel(T *array, T val, int n){
+    int i = blockDim.x * blockIdx.x + threadIdx.x;
+    if(i<n){
+        array[i]=val;
+    }
+}
+#endif
 
 //! ************************
 //! *                      *
@@ -356,10 +367,6 @@ int RobotConfigspace<ndof>::indicator2(const float* qs, const float* qe, int *re
     return -1;
   }
 
-  for(int k=0;k<N;++k){
-    res[k]=0; //-> kernel?
-  }
-
 #ifdef CUDA_IMPLEMENTATION
   int BLOCK = 256, GRID = (numthreads + BLOCK - 1)/BLOCK;
 
@@ -373,7 +380,9 @@ int RobotConfigspace<ndof>::indicator2(const float* qs, const float* qe, int *re
   cudaassert(cudaMemcpy((void*)testnumdev,(void*)testnum.data(), N*sizeof(int), cudaMemcpyHostToDevice));
 
 
-  cudaassert(cudaMemcpy((void*)resdevbuffer,(void*)res,N*sizeof(int), cudaMemcpyHostToDevice));
+  //cudaassert(cudaMemcpy((void*)resdevbuffer,(void*)res,N*sizeof(int), cudaMemcpyHostToDevice));
+  int GRIDN=(N + BLOCK - 1)/BLOCK;
+  set_kernel<int><<<GRIDN,BLOCK>>>(resdevbuffer,0,N);
 
   //printvar(numthreads);
   kernel_indicator2<ndof><<<GRID,BLOCK>>>(robotdev,polydatadev,qdevbufferfrom,nbufqfrom,qdevbufferto,nbufqto,resdevbuffer,resdevbufferext,testposdev,testnumdev,N, numthreads);
@@ -383,6 +392,10 @@ int RobotConfigspace<ndof>::indicator2(const float* qs, const float* qe, int *re
 
 
 #else
+  for(int k=0;k<N;++k){
+    res[k]=0; //-> kernel?
+  }
+
   kernel_indicator2<ndof>(robot,polydata,qs,offset,qe,offset,res,resbufferext,testpos.data(),testnum.data(),N, numthreads);
 #endif
 

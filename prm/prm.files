@@ -62,3 +62,4 @@ src/test8cuda.cpp
 src/lib/config.h
 src/test9.cpp
 src/lib/tictoc.h
+src/test10.cpp

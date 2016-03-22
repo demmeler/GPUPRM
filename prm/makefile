@@ -5,86 +5,50 @@ CUDA_PATH=/usr/local/cuda-7.5
 CUDA_PATH2=/share/apps/cuda-5.5
 CUDA_INCLUDE= -L$(CUDA_PATH)/lib64 -L$(CUDA_PATH2)/lib64 -lcudart
 
-test:
-	g++ -o test $(SRC)/test.cpp
 
-test2:
-#	g++ -o test2 $(SRC)/test2.cpp
-	nvcc -O3 -x=cu -arch=$(ARCHITECTURE) -o test2 $(SRC)/test2.cpp
+all: test10 test10cuda
 
-test4:
-	nvcc -O3 -x=cu -arch=$(ARCHITECTURE) -o test4 $(SRC)/test4.cpp
-
-colltest:
-	g++ -o colltest $(SRC)/colltest.cpp
-
-colltestcuda:
-	nvcc -O3 -x=cu -arch=$(ARCHITECTURE) -o colltestcuda $(SRC)/colltestcuda.cpp
-#	nvcc -g -G -x=cu -arch=$(ARCHITECTURE) -o colltestcuda $(SRC)/colltestcuda.cpp
-
-colltest2:
-#	g++ -o colltest2 $(SRC)/colltest2.cpp
-	nvcc -std=c++11 -g -G -x=cu -arch=$(ARCHITECTURE) -o colltest2 $(SRC)/colltest2.cpp
-
-test5:
-	g++ -O3 -std=c++11 -o test5 $(SRC)/test5.cpp
-
-testvertexlist:
-	g++ -g -O3 -std=c++11 -o testvertexlist $(SRC)/testvertexlist.cpp
-#	g++ -g -std=c++11 -o testvertexlist $(SRC)/testvertexlist.cpp
-testvertexlist2:
-	g++ -g -O3 -std=c++11 -o testvertexlist2 $(SRC)/testvertexlist2.cpp
-#	g++ -g -std=c++11 -o testvertexlist2 $(SRC)/testvertexlist2.cpp
 
 test6: arrayconfigspace
 	g++ -g -c -std=c++11 -o test6.o $(SRC)/test6.cpp
 	g++ -g -o test6 test6.o arrayconfigspace.o
 
-test7: robotconfigspace
-	g++ -g -c -std=c++11 -o test7.o $(SRC)/test7.cpp
-	g++ -g -o test7 test7.o robotconfigspace.o
-
-test8: robotconfigspace
-	g++ -g -c -std=c++11 -o test8.o $(SRC)/test8.cpp
-	g++ -g -o test8 test8.o robotconfigspace.o
-
 test9o:
 	g++ -O3 -g -c -std=c++0x -o test9.o $(SRC)/test9.cpp
 
-
-test9: robotconfigspace test9o
-#	g++ -g -c -std=c++11 -o test9.o $(SRC)/test9.cpp
-	g++ -g -o test9 test9.o robotconfigspace.o
-
-test9cuda: robotconfigspacecuda test9o
+test9cuda: robotconfigspacecuda.o test9o
 	g++ -g -o test9cuda test9.o robotconfigspacecuda.o $(CUDA_INCLUDE)
 
-test9cuda0: robotconfigspacecuda0 test9o
-	g++ -g -o test9cuda0 test9.o robotconfigspacecuda0.o $(CUDA_INCLUDE)
+test9: robotconfigspacecuda0.o test9o
+	g++ -g -o test9 test9.o robotconfigspacecuda0.o $(CUDA_INCLUDE)
 
 
-test8cuda: robotconfigspacecuda
-	nvcc -std=c++11 -g -G -x=cu -arch=$(ARCHITECTURE) -c -o test8cuda.o $(SRC)/test8cuda.cpp
-#	nvcc -std=c++11 -g -G -x=cu -arch=$(ARCHITECTURE) -o test8cuda test8cuda.o robotconfigspacecuda.o
-	g++ -g -o test8cuda test8cuda.o robotconfigspacecuda.o -L"/usr/local/cuda-7.5"/lib64 -lcudart
+test10o:
+	mpicxx -O3 -g -c -std=c++0x -o test10.o $(SRC)/test10.cpp
 
-test3: arrayconfigspace
-	g++ -c -o test3.o $(SRC)/test3.cpp
-	g++ -o test3 test3.o arrayconfigspace.o
+test10cuda: robotconfigspacecuda test10o
+	mpicxx -g -o test10cuda test10.o robotconfigspacecuda.o $(CUDA_INCLUDE)
+
+test10: robotconfigspacecuda0 test10o
+	mpicxx -g -o test10 test10.o robotconfigspacecuda0.o $(CUDA_INCLUDE)
+
+
+
+# configspaces
+
 
 arrayconfigspace:
 	g++ -std=c++11 -c -g -o arrayconfigspace.o $(SRC)/lib/arrayconfigspace.cpp
 
-robotconfigspace:
-	g++ -std=c++11 -c -g -o robotconfigspace.o $(SRC)/lib/robotconfigspace.cpp
 
-robotconfigspacecuda:
-#	nvcc -std=c++11 -g -G -x=cu -arch=$(ARCHITECTURE) -c -o robotconfigspacecuda.o $(SRC)/lib/robotconfigspace.cpp
-#	nvcc -O3 -g -G -x=cu -arch=$(ARCHITECTURE) -c -o robotconfigspacecuda.o $(SRC)/lib/robotconfigspace.cpp
+robo: robotconfigspacecuda robotconfigspacecuda0
+
+#robotconfigspace:
+#	g++ -std=c++11 -c -g -o robotconfigspace.o $(SRC)/lib/robotconfigspace.cpp
+
+robotconfigspacecuda: $(SRC)/lib/robotconfigspace.cpp
 	nvcc -O3 -g -G -x=cu -arch=$(ARCHITECTURE) -c -o robotconfigspacecuda.o $(SRC)/lib/robotconfigspace.cpp -D CUDA_IMPLEMENTATION
 
-robotconfigspacecuda0:
+robotconfigspacecuda0: $(SRC)/lib/robotconfigspace.cpp
 	nvcc -O3 -g -G -x=cu -arch=$(ARCHITECTURE) -c -o robotconfigspacecuda0.o $(SRC)/lib/robotconfigspace.cpp
-
-
 

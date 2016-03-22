@@ -1,6 +1,8 @@
 #ifndef VERTEXLIST3_H
 #define VERTEXLIST3_H
 
+#include <mpi.h>
+
 #include <map>
 #include <vector>
 #include <cmath>
@@ -303,6 +305,38 @@ public:
   //! ***********************
 
 
+  int process_mpi(int num, const int nbuf, const int maxsteps){
+    int rank=0, size=1;
+    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+    MPI_Comm_size(MPI_COMM_WORLD, &size);
+
+    printvar(rank);
+    printvar(size);
+
+    float *qnew=new float[num*ndof*size];
+    float *qstartlist=new float[ndof*nbuf];
+    float *qendlist=new float[ndof*nbuf];
+    int *resbuf=new int[nbuf];
+    int offset=nbuf;
+
+    for(int i=0;i<maxsteps;++i){
+      int flag=processing_step(rank,size,
+                               qnew,num,0,num,
+                               qstartlist,qendlist,resbuf,nbuf,offset);
+      if(flag==1){
+        msg("connection found");
+        printvar(i);
+        break;
+      }else if(i%50==0){
+        printvar(i);
+      }
+    }
+
+    delete[] qnew, qstartlist,qendlist, resbuf;
+
+    return 0;
+  }
+
 
   //! get list of all vertices nearer than D
   //! qlist: buffer to store neighbour candidates, struct of arrays
@@ -310,7 +344,9 @@ public:
   //! nbuf: length(qlist)
   //! D: maximal distance
   //! return: 0 - no errors, 1 - connection found
-  inline int processing_step(float* qnew, const int num, float* qstart, float* qend, int* resbuf, const int nbuf, const int offset){
+  inline int processing_step(const int mpirank, const int mpisize,
+                             float* qnew, const int num, const int dsp, const int cnt,
+                             float* qstart, float* qend, int* resbuf, const int nbuf, const int offset){
     //!
     //! create nodes qnew randomly
     //!
@@ -634,16 +670,6 @@ public:
 
   //!for dijkstra at the end
   struct dijkstra_result{
-#if 0
-    struct node {float dist; int pos;};
-    struct comp {
-      inline bool operator() (const node& n1, const node& n2) const {
-        return n1.dist>n2.dist;
-      }
-    };
-    std::priority_queue<node,std::vector<node>,comp> queue;
-#endif
-
     std::vector<int> parent; //length newblockpos
     std::vector<float> dist; //length newblockpos
     std::vector<int> path; //computed path

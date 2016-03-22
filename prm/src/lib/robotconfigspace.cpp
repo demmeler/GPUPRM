@@ -384,7 +384,6 @@ int RobotConfigspace<ndof>::indicator2(const float* qs, const float* qe, int *re
   int GRIDN=(N + BLOCK - 1)/BLOCK;
   set_kernel<int><<<GRIDN,BLOCK>>>(resdevbuffer,0,N);
 
-  //printvar(numthreads);
   kernel_indicator2<ndof><<<GRID,BLOCK>>>(robotdev,polydatadev,qdevbufferfrom,nbufqfrom,qdevbufferto,nbufqto,resdevbuffer,resdevbufferext,testposdev,testnumdev,N, numthreads);
 
 
@@ -399,7 +398,7 @@ int RobotConfigspace<ndof>::indicator2(const float* qs, const float* qe, int *re
   kernel_indicator2<ndof>(robot,polydata,qs,offset,qe,offset,res,resbufferext,testpos.data(),testnum.data(),N, numthreads);
 #endif
 
-  printarr(res,N);
+  //printarr(res,N);
   printvar(numthreads);
 
   return 0; //TODO error handling?

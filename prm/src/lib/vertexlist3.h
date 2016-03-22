@@ -481,6 +481,10 @@ public:
     //! insert nodes and edges
     //!
 
+
+    bool *leftconn=new bool[num]();
+    bool *rightconn=new bool[num]();
+
     for(int j=0;j<num;++j){
 
       //! left:  min,...,maxleft-1
@@ -489,23 +493,36 @@ public:
       int maxleft=min+numqlistleft[j];
       int max=min+numqlist[j];
 
-      bool leftconn=false;
       for(int i=min;i<maxleft;++i){
         if(resbuf[i]==0){
-          leftconn=true;
+          leftconn[j]=true;
           break;
         }
       }
-      bool rightconn=false;
       for(int i=maxleft;i<max;++i){
         if(resbuf[i]==0){
-          rightconn=true;
+          rightconn[j]=true;
           break;
         }
       }
 
-      int positionl=0;
-      if(leftconn){
+    }
+
+
+    // --> send, recieve nodes and rightconn, leftconn here
+
+
+    // insert all nodes of previous processes
+
+
+    for(int j=0;j<num;++j){
+
+      int min=posqlist[j];
+      int maxleft=min+numqlistleft[j];
+      int max=min+numqlist[j];
+
+      int positionl;
+      if(leftconn[j]){
         //!
         //! connection to left graph exists -> insert in left graph
         //!
@@ -528,8 +545,8 @@ public:
         graphl.surrnum[positionl]+=surrnump;
       }
 
-      int positionr=0;
-      if(rightconn){
+      int positionr;
+      if(rightconn[j]){
          //!
          //! connection to right graph exists -> insert in right graph
          //!
@@ -552,7 +569,7 @@ public:
          graphr.surrnum[positionr]+=surrnump;
        }
 
-       if(leftconn && rightconn){
+       if(leftconn[j] && rightconn[j]){
          //!
          //!  Connection found! abort
          //!
@@ -566,12 +583,16 @@ public:
          if(res0==0){msg("ERROR: no path found by dijkstra in graphl");}
          if(res1==0){msg("ERROR: no path found by dijkstra in graphr");}
 
+         delete[] poslist, distlist, leftconn, rightconn;
          return 1;
        }
 
     }//for
 
+    //insert all nodes of following processes
 
+
+    delete[] poslist, distlist, leftconn, rightconn;
     return 0;
 
   }

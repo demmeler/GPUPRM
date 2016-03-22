@@ -163,7 +163,7 @@ int main()
   }
   printvar(space.deltaq());
 
-  vertexlist<ndof> prm(3.0,3.0,&space);
+  vertexlist<ndof> prm(1.0,1.0,&space);
 
   float qstart[ndof];
   float qend[ndof];
@@ -179,7 +179,7 @@ int main()
 
   //prm.print();
 
-  int num=4;
+  int num=20;
   float *qnew=new float[ndof*num];
   int nbuf=500;
   float *qstartlist=new float[ndof*nbuf];

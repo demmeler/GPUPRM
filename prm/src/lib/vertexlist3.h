@@ -286,6 +286,24 @@ public:
     return index[0];
   }
 
+
+
+
+
+
+
+
+
+
+
+  //! ***********************
+  //! *                     *
+  //! *   processing step   *
+  //! *                     *
+  //! ***********************
+
+
+
   //! get list of all vertices nearer than D
   //! qlist: buffer to store neighbour candidates, struct of arrays
   //! offset: i-th component of k-th vec in qlist is qlist[i*offset+k]
@@ -366,6 +384,19 @@ public:
 #endif
       }while(dismiss);
     }
+
+
+
+
+
+
+
+    // --> start sending and recieving nodes (async)
+
+
+
+
+
 
 
     //!
@@ -509,7 +540,8 @@ public:
     }
 
 
-    // --> send, recieve nodes and rightconn, leftconn here
+    // --> finish send, recieve nodes
+    // --> send rightconn, leftconn here
 
 
     // insert all nodes of previous processes

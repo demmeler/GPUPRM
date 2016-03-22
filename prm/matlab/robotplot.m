@@ -14,8 +14,8 @@ part=0:0.05:0.9;
 seg=3*part.^2-2*part.^3;
 t=repmat(seg, 1, l)+repelem(1:l,length(seg));
 
-%Qpathcont=interp1q((1:l)',prmoutput.Qpath',(1:0.2:l)')';
-Qpathcont=interp1q((1:l)',prmoutput.Qpath',t')';
+Qpathcont=interp1q((1:l)',prmoutput.Qpath',(1:0.2:l)')';
+%Qpathcont=interp1q((1:l)',prmoutput.Qpath',t')';
 
 
 

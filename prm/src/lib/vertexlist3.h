@@ -1,7 +1,7 @@
 #ifndef VERTEXLIST3_H
 #define VERTEXLIST3_H
 
-#include <mpi.h>
+#include <mpi/mpi.h>
 
 #include <map>
 #include <vector>
@@ -298,11 +298,11 @@ public:
 
 
 
-  //! ***********************
-  //! *                     *
-  //! *   processing step   *
-  //! *                     *
-  //! ***********************
+  //! **************************
+  //! *                        *
+  //! *   processing routine   *
+  //! *                        *
+  //! **************************
 
 
   int process_mpi(int num, const int nbuf, const int maxsteps){
@@ -312,16 +312,29 @@ public:
 
     printvar(rank);
     printvar(size);
+    printvar(num);
+    assert(num%size==0);
 
-    float *qnew=new float[num*ndof*size];
+    int cnt=num/size;
+    int dsp=cnt*rank;
+
+
+    float *qnew=new float[cnt*ndof*size];
+    float *qnewall=new float[num*ndof*size];
     float *qstartlist=new float[ndof*nbuf];
     float *qendlist=new float[ndof*nbuf];
     int *resbuf=new int[nbuf];
     int offset=nbuf;
 
+    int *leftconn=new int[cnt];
+    int *rightconn=new int[cnt];
+    int *leftconnall=new int[num];
+    int *rightconnall=new int[num];
+
     for(int i=0;i<maxsteps;++i){
       int flag=processing_step(rank,size,
-                               qnew,num,0,num,
+                               qnew, qnewall,num,dsp,cnt,
+                               leftconn, leftconnall,rightconn, rightconnall,
                                qstartlist,qendlist,resbuf,nbuf,offset);
       if(flag==1){
         msg("connection found");
@@ -332,7 +345,7 @@ public:
       }
     }
 
-    delete[] qnew, qstartlist,qendlist, resbuf;
+    delete[] qnewall, qstartlist,qendlist, resbuf;
 
     return 0;
   }
@@ -345,15 +358,17 @@ public:
   //! D: maximal distance
   //! return: 0 - no errors, 1 - connection found
   inline int processing_step(const int mpirank, const int mpisize,
-                             float* qnew, const int num, const int dsp, const int cnt,
+                             float* qnew, float* qnewall, const int num, const int dsp, const int cnt,
+                             int* leftconn, int *leftconnall, int *rightconn, int *rightconnall,
                              float* qstart, float* qend, int* resbuf, const int nbuf, const int offset){
+    //float* qnew=qnewall+ndof*dsp;
+
     //!
     //! create nodes qnew randomly
     //!
 
     //!from left graph
-    for(int j=0;j<num/2;++j){
-      float qnewtemp[ndof];
+    for(int j=0;j<cnt/2;++j){
       bool dismiss;
       do{
         //!choose random block
@@ -373,22 +388,20 @@ public:
         }else{
           l=ndof*m;
           for(int i=0;i<ndof;++i){
-            qnew[j+num*i]=graphl.qstorage[l+i]-D+2*D*((float)rand()/RAND_MAX);
-            qnewtemp[i]=qnew[j+num*i];
+            qnew[ndof*j+i]=graphl.qstorage[l+i]-D+2*D*((float)rand()/RAND_MAX);
           }
 
-          dismiss=space->indicator(&qnewtemp[0])!=0;
+          dismiss=space->indicator(&qnew[ndof*j])!=0;
         }
 #ifndef NO_IO
         printvar(l);
-        printarr(qnewtemp,ndof);
+        printarr(&qnew[ndof*j],ndof);
         printvar(dismiss);
 #endif
       }while(dismiss);
     }
     //!from right graph
-    for(int j=num/2;j<num;++j){
-      float qnewtemp2[ndof];
+    for(int j=cnt/2;j<cnt;++j){
       bool dismiss;
       do{
         //!choose random block
@@ -408,30 +421,23 @@ public:
         }else{
           l=ndof*m;
           for(int i=0;i<ndof;++i){
-            qnew[j+num*i]=graphr.qstorage[l+i]-D+2*D*((float)rand()/RAND_MAX);
-            qnewtemp2[i]=qnew[j+num*i];
+            qnew[ndof*j+i]=graphr.qstorage[l+i]-D+2*D*((float)rand()/RAND_MAX);
           }
-          dismiss=space->indicator(&qnewtemp2[0])!=0;
+          dismiss=space->indicator(&qnew[ndof*j])!=0;
         }
 #ifndef NO_IO
         printvar(l);
-        printarr(qnewtemp2,ndof);
+        printarr(&qnew[ndof*j],ndof);
         printvar(dismiss);
 #endif
       }while(dismiss);
     }
 
+    // --> start sending and recieving new nodes (async)
 
-
-
-
-
-
-    // --> start sending and recieving nodes (async)
-
-
-
-
+    //MPI_Allgather(snd.data(), snd.size(), MPI_DOUBLE, rcv.data(), rcv.size()/size, MPI_DOUBLE, MPI_COMM_WORLD);
+    MPI_Request qnewrequest;
+    MPI_Iallgather(qnew, ndof*cnt, MPI_CXX_BOOL, qnewall, ndof*cnt, MPI_CXX_BOOL, MPI_COMM_WORLD,&qnewrequest);
 
 
 
@@ -441,9 +447,9 @@ public:
 
 
     //!posqlist[i]: position in qlist buffer, at which neighbours of qnew[i] start
-    int posqlist[num];
-    int numqlist[num];
-    int numqlistleft[num];
+    int posqlist[cnt];
+    int numqlist[cnt];
+    int numqlistleft[cnt];
     int Nqlist;             //sum(numqlist)
 
     int *poslist=new int[nbuf];
@@ -455,20 +461,20 @@ public:
     float *distlistp=distlist;
     int nbufrest=nbuf;
 
-    for(int j=0;j<num;++j){
+    for(int j=0;j<cnt;++j){
       posqlist[j]=index;
 
-      int writtenleft=get_near_vertices(&qnew[j],num,qendp,poslistp,distlistp,nbufrest,offset,graphl);
+      int writtenleft=get_near_vertices(&qnew[ndof*j],1,qendp,poslistp,distlistp,nbufrest,offset,graphl);
 
       for(int i=0;i<ndof;++i)
       for(int k=0;k<writtenleft;++k){
-        qstartp[k+offset*i]=qnew[j+num*i];
+        qstartp[k+offset*i]=qnew[ndof*j+i];
       }
       numqlistleft[j]=writtenleft;
       index+=writtenleft;
 
       if(writtenleft>=nbufrest){
-        for(int l=j+1;l<num;++l){
+        for(int l=j+1;l<cnt;++l){
           posqlist[l]=nbuf;
           numqlist[l]=0;
           numqlistleft[l]=0;
@@ -484,17 +490,17 @@ public:
       distlistp+=writtenleft;
       nbufrest-=writtenleft;
 
-      int writtenright=get_near_vertices(&qnew[j],num,qendp,poslistp,distlistp,nbufrest,offset,graphr);
+      int writtenright=get_near_vertices(&qnew[ndof*j],1,qendp,poslistp,distlistp,nbufrest,offset,graphr);
 
       for(int i=0;i<ndof;++i)
       for(int k=0;k<writtenright;++k){
-        qstartp[k+offset*i]=qnew[j+num*i];
+        qstartp[k+offset*i]=qnew[ndof*j+i];
       }
       numqlist[j]=writtenleft+writtenright;
       index+=writtenright;
 
       if(writtenright>=nbufrest){
-        for(int l=j+1;l<num;++l){
+        for(int l=j+1;l<cnt;++l){
           posqlist[l]=nbuf;
           numqlist[l]=0;
           numqlistleft[l]=0;
@@ -528,14 +534,15 @@ public:
 
 
 #ifndef NO_IO
-    printarr(qnew,ndof*num);
+    printarr(qnew,ndof*cnt);
+    printvar(cnt);
     printvar(num);
     printarr(qstart,ndof*nbuf);
     printarr(qend,ndof*nbuf);
     printvar(Nqlist);
-    printarr(posqlist,num);
-    printarr(numqlist,num);
-    printarr(numqlistleft,num);
+    printarr(posqlist,cnt);
+    printarr(numqlist,cnt);
+    printarr(numqlistleft,cnt);
     printvar(offset);
     printarr(distlist,nbuf);
     printarr(poslist,nbuf);
@@ -543,16 +550,15 @@ public:
 #endif
 
 
-
     //!
     //! insert nodes and edges
     //!
 
+    //calculate connectivities
 
-    bool *leftconn=new bool[num]();
-    bool *rightconn=new bool[num]();
-
-    for(int j=0;j<num;++j){
+    //int *leftconn=leftconnall+dsp;
+    //int *rightconn=rightconnall+dsp;
+    for(int j=0;j<cnt;++j){
 
       //! left:  min,...,maxleft-1
       //! right: maxleft,...,max-1
@@ -560,15 +566,17 @@ public:
       int maxleft=min+numqlistleft[j];
       int max=min+numqlist[j];
 
+      leftconn[j]=0;
       for(int i=min;i<maxleft;++i){
         if(resbuf[i]==0){
-          leftconn[j]=true;
+          leftconn[j]=1;
           break;
         }
       }
+      rightconn[j]=0;
       for(int i=maxleft;i<max;++i){
         if(resbuf[i]==0){
-          rightconn[j]=true;
+          rightconn[j]=1;
           break;
         }
       }
@@ -577,13 +585,22 @@ public:
 
 
     // --> finish send, recieve nodes
-    // --> send rightconn, leftconn here
+    MPI_Status qnewstatus;
+    MPI_Wait(&qnewrequest,&qnewstatus);
 
+    // --> send rightconn, leftconn here
+    MPI_Allgather(leftconn,cnt,MPI_INT,leftconnall,cnt,MPI_INT,MPI_COMM_WORLD);
+    MPI_Allgather(rightconn,cnt,MPI_INT,rightconnall,cnt,MPI_INT,MPI_COMM_WORLD);
 
     // insert all nodes of previous processes
+    for(int j=0;j<dsp;++j){
+      if(leftconnall[j])insert(&qnewall[ndof*j],1,graphl);
+      if(rightconnall[j])insert(&qnewall[ndof*j],1,graphr);
+    }
 
+    int connected=mpisize;
 
-    for(int j=0;j<num;++j){
+    for(int j=0;j<cnt;++j){
 
       int min=posqlist[j];
       int maxleft=min+numqlistleft[j];
@@ -594,23 +611,22 @@ public:
         //!
         //! connection to left graph exists -> insert in left graph
         //!
-        positionl=insert(&qnew[j],num,graphl);
-        int surrnump=0;
+        positionl=insert(&qnew[ndof*j],1,graphl);
         std::vector<int> *v=&(graphl.edgelists[positionl]);
         std::vector<float> *w=&(graphl.edgeweights[positionl]);
+        int surrnump=maxleft-min;
+        graphl.surrnum[positionl]+=surrnump;
         for(int i=min;i<maxleft;++i){
+          int goalpos=poslist[i];
+          ++(graphl.surrnum[goalpos]);
           if(resbuf[i]==0){
-            int goalpos=poslist[i];
             float dist=distlist[i];
-            ++surrnump;
             v->push_back(goalpos);
             w->push_back(dist);
-            ++(graphl.surrnum[goalpos]);
             graphl.edgelists[goalpos].push_back(positionl);
             graphl.edgeweights[goalpos].push_back(dist);
           }
         }
-        graphl.surrnum[positionl]+=surrnump;
       }
 
       int positionr;
@@ -618,49 +634,68 @@ public:
          //!
          //! connection to right graph exists -> insert in right graph
          //!
-         positionr=insert(&qnew[j],num,graphr);
-         int surrnump=0;
+         positionr=insert(&qnew[ndof*j],1,graphr);
+
          std::vector<int> *v=&(graphr.edgelists[positionr]);
          std::vector<float> *w=&(graphr.edgeweights[positionr]);
+         int surrnump=max-maxleft;
+         graphr.surrnum[positionr]+=surrnump;
          for(int i=maxleft;i<max;++i){
+           int goalpos=poslist[i];
+           ++(graphr.surrnum[goalpos]);
            if(resbuf[i]==0){
-             int goalpos=poslist[i];
              float dist=distlist[i];
-             ++surrnump;
              v->push_back(goalpos);
              w->push_back(dist);
-             ++(graphr.surrnum[goalpos]);
              graphr.edgelists[goalpos].push_back(positionr);
              graphr.edgeweights[goalpos].push_back(dist);
            }
          }
-         graphr.surrnum[positionr]+=surrnump;
        }
 
-       if(leftconn[j] && rightconn[j]){
+       if(leftconn[j] && rightconn[j] && connected==mpisize){
          //!
          //!  Connection found! abort
          //!
-         for(int l=0;l<ndof;++l)connection.q[l]=qnew[j+num*l];
+         for(int l=0;l<ndof;++l)connection.q[l]=qnew[ndof*j+l];
 
          connection.index_left=positionl;
          connection.index_right=positionr;
 
-         int res0=do_dijkstra(graphl,dijkstral,i0l,connection.index_left);
-         int res1=do_dijkstra(graphr,dijkstrar,connection.index_right,i0r);
-         if(res0==0){msg("ERROR: no path found by dijkstra in graphl");}
-         if(res1==0){msg("ERROR: no path found by dijkstra in graphr");}
-
-         delete[] poslist, distlist, leftconn, rightconn;
-         return 1;
+         connected=mpirank;
        }
 
     }//for
 
     //insert all nodes of following processes
+    for(int j=dsp+cnt;j<num;++j){
+      if(leftconnall[j])insert(&qnewall[ndof*j],1,graphl);
+      if(rightconnall[j])insert(&qnewall[ndof*j],1,graphr);
+    }
 
 
-    delete[] poslist, distlist, leftconn, rightconn;
+
+    //check if any process found a connection
+    int connectedany=mpisize;
+    //MPI_Allreduce(snd.data(), rcv.data(), snd.size(), MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
+    MPI_Allreduce(&connected,&connectedany,1,MPI_INT,MPI_MIN,MPI_COMM_WORLD);
+
+    printvar(connected);
+    printvar(connectedany);
+
+
+    if(connectedany<mpisize){
+
+      msg("gathering edges not yet implemented!");
+
+      int res0=do_dijkstra(graphl,dijkstral,i0l,connection.index_left);
+      if(res0==0){msg("ERROR: no path found by dijkstra in graphl");}
+      int res1=do_dijkstra(graphr,dijkstrar,connection.index_right,i0r);
+      if(res1==0){msg("ERROR: no path found by dijkstra in graphr");}
+      return 1;
+    }
+
+    delete[] poslist, distlist;
     return 0;
 
   }

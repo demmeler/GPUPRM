@@ -1,6 +1,6 @@
 #include <iostream>
 #include <time.h>
-#include <mpi.h>
+#include <mpi/mpi.h>
 
 #include "lib/config.h"
 #include "lib/util.hpp"
@@ -202,4 +202,7 @@ int main(int argc, char** argv)
 
   printvar(rand());
   printvar(firstrand);
+
+
+  MPI_Finalize();
 }

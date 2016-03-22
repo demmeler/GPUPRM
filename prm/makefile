@@ -29,7 +29,7 @@ test10o:
 test10cuda: robotconfigspacecuda test10o
 	mpicxx -g -o test10cuda test10.o robotconfigspacecuda.o $(CUDA_INCLUDE)
 
-test10: robotconfigspacecuda0 test10o
+test10: robotconfigspacecuda0.o test10o
 	mpicxx -g -o test10 test10.o robotconfigspacecuda0.o $(CUDA_INCLUDE)
 
 

@@ -2,6 +2,7 @@
 #define VERTEXLIST3_H
 
 #include <mpi.h>
+#include <omp.h>
 
 #include <map>
 #include <vector>
@@ -320,7 +321,7 @@ public:
 
   //! *******************
   //! *                 *
-  //! *    process 3    *
+  //! *    process 1    *
   //! *                 *
   //! *******************
 
@@ -788,6 +789,41 @@ public:
 
   }
 
+  void build_edges(graph &g, int mpirank, int mpisize, int root){
+      int numedges=g.from.size();
+      int numedgesall;
+
+      MPI_Reduce(&numedges, &numedgesall, 1, MPI_INT, MPI_SUM, root, MPI_COMM_WORLD);
+
+      std::vector<int> numedgesvec(mpisize,0);
+      MPI_Gather(&numedges, 1, MPI_FLOAT, numedgesvec.data(), 1, MPI_FLOAT, root, MPI_COMM_WORLD);
+
+      if(mpirank==root){
+        std::vector<int> fromall(numedgesall);
+        std::vector<int> toall(numedgesall);
+        std::vector<float> weightsall(numedgesall);
+        std::vector<int> dsps(mpisize);
+        dsps[0]=0;
+        for(int i=0;i<mpisize-1;++i) dsps[i+1]=dsps[i]+numedgesvec[i];
+        MPI_Gatherv(g.from.data(),numedges,MPI_INT,fromall.data(),numedgesvec.data(),dsps.data(),MPI_INT,root,MPI_COMM_WORLD);
+        MPI_Gatherv(g.to.data(),numedges,MPI_INT,toall.data(),numedgesvec.data(),dsps.data(),MPI_INT,root,MPI_COMM_WORLD);
+        MPI_Gatherv(g.weights.data(),numedges,MPI_INT,weightsall.data(),numedgesvec.data(),dsps.data(),MPI_INT,root,MPI_COMM_WORLD);
+
+        for(int i=0;i<numedgesall;++i){
+          int f=fromall[i];
+          int t=toall[i];
+          float w=weightsall[i];
+          g.edgelists[f].push_back(t);
+          g.edgeweights[f].push_back(w);
+          g.edgelists[t].push_back(f);
+          g.edgeweights[t].push_back(w);
+        }
+      }else{
+        MPI_Gatherv(g.from.data(),numedges,MPI_INT,0x0,0x0,0x0,MPI_INT,root,MPI_COMM_WORLD);
+        MPI_Gatherv(g.to.data(),numedges,MPI_INT,0x0,0x0,0x0,MPI_INT,root,MPI_COMM_WORLD);
+        MPI_Gatherv(g.weights.data(),numedges,MPI_INT,0x0,0x0,0x0,MPI_INT,root,MPI_COMM_WORLD);
+      }
+  }
 
 
 
@@ -801,7 +837,7 @@ public:
 
   //! *******************
   //! *                 *
-  //! *    process 3    *
+  //! *    process 2    *
   //! *                 *
   //! *******************
 
@@ -1572,41 +1608,7 @@ public:
 
 
 
-  void build_edges(graph &g, int mpirank, int mpisize, int root){
-      int numedges=g.from.size();
-      int numedgesall;
 
-      MPI_Reduce(&numedges, &numedgesall, 1, MPI_INT, MPI_SUM, root, MPI_COMM_WORLD);
-
-      std::vector<int> numedgesvec(mpisize,0);
-      MPI_Gather(&numedges, 1, MPI_FLOAT, numedgesvec.data(), 1, MPI_FLOAT, root, MPI_COMM_WORLD);
-
-      if(mpirank==root){
-        std::vector<int> fromall(numedgesall);
-        std::vector<int> toall(numedgesall);
-        std::vector<float> weightsall(numedgesall);
-        std::vector<int> dsps(mpisize);
-        dsps[0]=0;
-        for(int i=0;i<mpisize-1;++i) dsps[i+1]=dsps[i]+numedgesvec[i];
-        MPI_Gatherv(g.from.data(),numedges,MPI_INT,fromall.data(),numedgesvec.data(),dsps.data(),MPI_INT,root,MPI_COMM_WORLD);
-        MPI_Gatherv(g.to.data(),numedges,MPI_INT,toall.data(),numedgesvec.data(),dsps.data(),MPI_INT,root,MPI_COMM_WORLD);
-        MPI_Gatherv(g.weights.data(),numedges,MPI_INT,weightsall.data(),numedgesvec.data(),dsps.data(),MPI_INT,root,MPI_COMM_WORLD);
-
-        for(int i=0;i<numedgesall;++i){
-          int f=fromall[i];
-          int t=toall[i];
-          float w=weightsall[i];
-          g.edgelists[f].push_back(t);
-          g.edgeweights[f].push_back(w);
-          g.edgelists[t].push_back(f);
-          g.edgeweights[t].push_back(w);
-        }
-      }else{
-        MPI_Gatherv(g.from.data(),numedges,MPI_INT,0x0,0x0,0x0,MPI_INT,root,MPI_COMM_WORLD);
-        MPI_Gatherv(g.to.data(),numedges,MPI_INT,0x0,0x0,0x0,MPI_INT,root,MPI_COMM_WORLD);
-        MPI_Gatherv(g.weights.data(),numedges,MPI_INT,0x0,0x0,0x0,MPI_INT,root,MPI_COMM_WORLD);
-      }
-  }
 
 
 

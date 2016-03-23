@@ -10,7 +10,7 @@ public:
   ~ArrayConfigspace();
 
   //!initialization function
-  int init();
+  int init(const int ressource_rank=0, const int ressource_size=1);
   //! indicator function of obstacles
   //! q: length d*N, array of structures: q[N*k+i]= k-th component of i-th q-vector
   //! res: length N

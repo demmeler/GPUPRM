@@ -45,7 +45,7 @@ private:
 public:
 
   //!initialization function copy polydata to gpu etc..
-  int init();
+  int init(const int ressource_rank=0, const int ressource_size=1);
   int clear();
 
   //!

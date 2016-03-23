@@ -78,7 +78,7 @@ RobotConfigspace<ndof>::RobotConfigspace(const Robot<ndof>* robot_,
 
 //!initialization function copy polytope and robot data to gpu etc..
 template<int ndof>
-int RobotConfigspace<ndof>::init()
+int RobotConfigspace<ndof>::init(const int ressource_rank, const int ressource_size)
 {
   if(devloaded){
     clear();
@@ -88,9 +88,15 @@ int RobotConfigspace<ndof>::init()
   polydata->build(polylist.polys,polylist.sys,polylist.N,ndof,polylist.from, polylist.to, polylist.M);
 
 #ifdef CUDA_IMPLEMENTATION
+  int devcount;
+  cudaGetDeviceCount(&devcount);
 
-  int device = 0;
+  int device = (ressource_rank*devcount)/ressource_size;
   cudaSetDevice(device);
+
+  std::stringstream stream;
+  stream<<"ressource_rank="<<ressource_rank<<"/"<<ressource_size<<" device="<<device<<"/"<<devcount<<std::endl;
+  std::cout<<stream.str();
 
   cudaDeviceProp p;
   cudaGetDeviceProperties(&p, device);
@@ -130,7 +136,7 @@ template<int ndof>
 int RobotConfigspace<ndof>::clear()
 {
   // TODO
-    msg("error: RobotConfigspace<ndof>::clear() not implemented");
+    msg("error: RobotConfigspace<ndof>::clear() not yet implemented");
     return -1;
 }
 

@@ -165,7 +165,7 @@ int main(int argc, char** argv)
                             mins, maxs, dq,
                             confignbuf, numthreadsmax);
 
-  space.init();
+  space.init(rank,size);
 
   printvar(space.dim());
   for(int dof=0;dof<ndof;++dof){

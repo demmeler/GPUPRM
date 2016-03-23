@@ -21,7 +21,7 @@ ArrayConfigspace::~ArrayConfigspace(){
 }
 
 //!initialization function
-int ArrayConfigspace::init(){
+int ArrayConfigspace::init(const int ressource_rank, const int ressource_size){
   return 0;
 }
 //! indicator function of obstacles

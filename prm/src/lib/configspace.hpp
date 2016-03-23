@@ -7,7 +7,7 @@ class Configspace
 public:
 
   //!initialization function
-  virtual int init()=0;
+  virtual int init(const int ressource_rank=0, const int ressource_size=1)=0;
   //! indicator function of obstacles
   //! q: length d*N, array of structures: q[N*k+i]= k-th component of i-th q-vector
   //! res: length N

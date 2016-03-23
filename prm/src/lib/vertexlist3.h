@@ -794,12 +794,13 @@ public:
 
     MPI_Barrier(MPI_COMM_WORLD);
 
+    /*
     printvar(seed);
     printvar(rank);
     printvar(size);
     printvar(num);
+    */
     assert(num%size==0);
-
 
     float *qnew=new float[num*ndof];
     float *qstartlist=new float[ndof*nbuf];

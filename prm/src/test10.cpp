@@ -188,8 +188,10 @@ int main(int argc, char** argv)
     qend[dof]=pi;
   }
 
-  printvar(space.indicator(&qstart[0]));
-  printvar(space.indicator(&qend[0]));
+  if(rank==0){
+    printvar(space.indicator(&qstart[0]));
+    printvar(space.indicator(&qend[0]));
+  }
 
   prm.init(&qstart[0],&qend[0]);
 

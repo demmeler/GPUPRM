@@ -142,7 +142,7 @@ int main(int argc, char** argv)
   for(int i=0;i<ndof;++i){
     mins[i]=-pi; maxs[i]=1.5*pi;
   }
-  float dq=(argc>=4 ? atoi(argv[3]) : 0.01);//0.01;
+  float dq=(argc>=4 ? atof(argv[3]) : 0.01);//0.01;
   int confignbuf=4096;
   int numthreadsmax=1024*1024;
 

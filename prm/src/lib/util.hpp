@@ -14,7 +14,7 @@
 ///   *    implementations     *
 ///   **************************
 
-#if 0
+#ifndef MPI_CODE
     #define check(x) if(!(x)){ std::cout<<"check "<<#x<<" failed"<<std::endl;}
     #define printvar(x) std::cout<<#x<<"="<<x<<std::endl;
     #define printarr(x,n) std::cout<<#x<<"=";for(int index___=0;index___<n;++index___){std::cout<<x[index___]<<" ";}std::cout<<std::endl;

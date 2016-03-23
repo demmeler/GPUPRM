@@ -17,7 +17,8 @@ using namespace std;
 
 
 template<int ndof>
-int load_config(std::string path, Robot<ndof>* &robot, polytope* &polys, int* &sys, int &N, int* &from, int* &to, int& M, bool printmsg=false){
+int load_config(std::string path, Robot<ndof>* &robot, polytope* &polys,
+                int* &sys, int &N, int* &from, int* &to, int& M, bool printmsg=false){
 
     //! DH params
 
@@ -144,7 +145,7 @@ int main(int argc, char** argv)
   }
   float dq=(argc>=4 ? atof(argv[3]) : 0.01);//0.01;
   int confignbuf=(argc>=3 ? 2*atoi(argv[2]) : 4096);
-  int numthreadsmax=1024*1024;
+  int numthreadsmax=(argc>=7 ? atoi(argv[6]) : 1024*1024);
 
   Robot<ndof>* robot;
   polytope* polys;
@@ -217,6 +218,7 @@ int main(int argc, char** argv)
   printvar(nbuf);
   printvar(dq);
   printvar(D);
-
+  msg("5. srand");
+  printvar(numthreadsmax);
   MPI_Finalize();
 }

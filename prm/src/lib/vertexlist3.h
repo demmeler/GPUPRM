@@ -14,6 +14,7 @@
 
 #include "configspace.hpp"
 #include "util.hpp"
+#include "tictoc.h"
 
 
 
@@ -730,6 +731,7 @@ public:
 
 
     if(connectedany<mpisize){
+      tick(tconnect);
 
       printvar(connectedany);
       msg("gathering edges...");
@@ -767,6 +769,8 @@ public:
         int res1=do_dijkstra(graphr,dijkstrar,connection.index_right,i0r);
         if(res1==0){msg("ERROR: no path found by dijkstra in graphr");}
       }
+
+      tock(tconnect);
       return 1;
     }
 

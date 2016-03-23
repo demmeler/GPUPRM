@@ -26,7 +26,7 @@ test9: robotconfigspacecuda0.o test9o
 test10o:
 	mpicxx -O3 -g -c -std=c++0x -o test10.o $(SRC)/test10.cpp
 
-test10cuda: robotconfigspacecuda test10o
+test10cuda: robotconfigspacecuda.o test10o
 	mpicxx -g -o test10cuda test10.o robotconfigspacecuda.o $(CUDA_INCLUDE)
 
 test10: robotconfigspacecuda0.o test10o

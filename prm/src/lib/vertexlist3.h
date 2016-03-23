@@ -932,6 +932,8 @@ public:
     printvar(connection.index_left);
     printvar(connection.index_right);
 
+    int ret0=system(("rm -rf "+path).c_str());
+
     std::string pathl=path+"/graphl";
     //system("rm -rf "+pathl);
     int ret1=system(("mkdir -p "+pathl).c_str());

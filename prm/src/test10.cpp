@@ -142,8 +142,8 @@ int main(int argc, char** argv)
   for(int i=0;i<ndof;++i){
     mins[i]=-pi; maxs[i]=1.5*pi;
   }
-  float dq=0.01;
-  int confignbuf=512;
+  float dq=(argc>=4 ? atoi(argv[3]) : 0.01);//0.01;
+  int confignbuf=4096;
   int numthreadsmax=1024*1024;
 
   Robot<ndof>* robot;
@@ -193,9 +193,9 @@ int main(int argc, char** argv)
   tock(tinit);
   tick(trun);
 
-  int num=32;
-  int nbuf=512;
-  int maxsteps=10000;
+  int num=(argc>=2 ? atoi(argv[1]) : 32 );//128;
+  int nbuf=(argc>=3 ? atoi(argv[2]) : 2048);//2048;
+  int maxsteps=100000;
   prm.process_mpi(num,nbuf,maxsteps);
 
   tock(trun);

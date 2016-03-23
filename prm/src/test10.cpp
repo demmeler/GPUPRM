@@ -173,7 +173,9 @@ int main(int argc, char** argv)
   }
   printvar(space.deltaq());
 
-  vertexlist<ndof> prm(1.0,1.0,&space);
+
+  float D=(argc>=5 ? atof(argv[4]) : 1.0);
+  vertexlist<ndof> prm(D,D,&space);
 
   float qstart[ndof];
   float qend[ndof];
@@ -214,6 +216,7 @@ int main(int argc, char** argv)
   printvar(num);
   printvar(nbuf);
   printvar(dq);
+  printvar(D);
 
   MPI_Finalize();
 }

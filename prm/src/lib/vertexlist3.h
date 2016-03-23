@@ -1,7 +1,7 @@
 #ifndef VERTEXLIST3_H
 #define VERTEXLIST3_H
 
-#include <mpi/mpi.h>
+#include <mpi.h>
 
 #include <map>
 #include <vector>

@@ -211,6 +211,9 @@ int main(int argc, char** argv)
   printvar(rand());
   printvar(firstrand);
 
+  printvar(num);
+  printvar(nbuf);
+  printvar(dq);
 
   MPI_Finalize();
 }

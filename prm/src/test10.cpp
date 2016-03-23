@@ -156,8 +156,9 @@ int main(int argc, char** argv)
   int *from, *to;
   int M;
 
+  bool init_output=false;
   //build_example1(robot, polys, sys, N);
-  load_config<ndof>("config1",robot,polys,sys,N,from, to, M, false);
+  load_config<ndof>("config1",robot,polys,sys,N,from, to, M, init_output);
 
   RobotConfigspace<ndof> space(robot,
                             polys, sys, N,
@@ -167,14 +168,15 @@ int main(int argc, char** argv)
 
   space.init(rank,size);
 
-  printvar(space.dim());
-  for(int dof=0;dof<ndof;++dof){
-    printvar(dof);
-    printvar(space.min(dof));
-    printvar(space.max(dof));
+  if(init_output){
+    printvar(space.dim());
+    for(int dof=0;dof<ndof;++dof){
+      printvar(dof);
+      printvar(space.min(dof));
+      printvar(space.max(dof));
+    }
+    printvar(space.deltaq());
   }
-  printvar(space.deltaq());
-
 
   float D=(argc>=5 ? atof(argv[4]) : 1.0);
   vertexlist<ndof> prm(D,D,&space);

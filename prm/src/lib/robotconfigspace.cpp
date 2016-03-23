@@ -94,15 +94,16 @@ int RobotConfigspace<ndof>::init(const int ressource_rank, const int ressource_s
   int device = (ressource_rank*devcount)/ressource_size;
   cudaSetDevice(device);
 
-  std::stringstream stream;
-  stream<<"ressource_rank="<<ressource_rank<<"/"<<ressource_size<<" device="<<device<<"/"<<devcount<<std::endl;
-  std::cout<<stream.str();
-
   cudaDeviceProp p;
   cudaGetDeviceProperties(&p, device);
-  std::cout << "Device: " << p.name << std::endl;
-  std::cout << "MP: " << p.multiProcessorCount << std::endl;
-  std::cout << "Compute: " << p.major << "." << p.minor << std::endl;
+
+  std::stringstream stream;
+  stream<<"ressource_rank="<<ressource_rank<<"/"<<ressource_size<<" device="<<device<<"/"<<devcount<<std::endl;
+
+  stream << "Device: " << p.name << std::endl;
+  stream << "MP: " << p.multiProcessorCount << std::endl;
+  stream << "Compute: " << p.major << "." << p.minor << std::endl;
+  std::cout<<stream.str();
 
   polydatadev_hostref=new collision4::polytope4data;
 

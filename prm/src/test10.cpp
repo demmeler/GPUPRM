@@ -128,7 +128,7 @@ int main(int argc, char** argv)
   //srand(time(NULL));
   //srand(clock());
   //srand(rank+time(NULL));
-  srand(rank*10);
+  srand((argc>=6 ? atoi(argv[5]) : 0 )+rank*10);
   int firstrand=rand();
 
   tick(tinit);

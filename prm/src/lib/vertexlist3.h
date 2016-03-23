@@ -1134,11 +1134,12 @@ public:
            connection.index_left=positionl;
            connection.index_right=positionr;
 
+           tick(tdijkstra);
            int res0=do_dijkstra(graphl,dijkstral,i0l,connection.index_left);
            int res1=do_dijkstra(graphr,dijkstrar,connection.index_right,i0r);
            if(res0==0){msg("ERROR: no path found by dijkstra in graphl");}
            if(res1==0){msg("ERROR: no path found by dijkstra in graphr");}
-
+           tock(tdijkstra);
            delete[] poslist, distlist;
            return 1;
          }

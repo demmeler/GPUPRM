@@ -20,7 +20,7 @@
     #define printarr(x,n) std::cout<<#x<<"=";for(int index___=0;index___<n;++index___){std::cout<<x[index___]<<" ";}std::cout<<std::endl;
     #define msg(x) std::cout<<x<<std::endl;
 #else
-    #include <mpi/mpi.h>
+    #include <mpi.h>
     #define check(x) if(!(x)){int rank=0; MPI_Comm_rank(MPI_COMM_WORLD, &rank); \
                               std::stringstream stream__; stream__<<rank<<": check "<<#x<<" failed"<<std::endl;  \
                               std::cout<<stream__.str(); }

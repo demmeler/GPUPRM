@@ -14,14 +14,33 @@
 ///   *    implementations     *
 ///   **************************
 
-#define check(x) if(!(x)){ std::cout<<"check "<<#x<<" failed"<<std::endl;}
-#define printvar(x) std::cout<<#x<<"="<<x<<std::endl;
-#define printarr(x,n) std::cout<<#x<<"=";for(int index___=0;index___<n;++index___){std::cout<<x[index___]<<" ";}std::cout<<std::endl;
-#define msg(x) std::cout<<x<<std::endl;
+#if 0
+    #define check(x) if(!(x)){ std::cout<<"check "<<#x<<" failed"<<std::endl;}
+    #define printvar(x) std::cout<<#x<<"="<<x<<std::endl;
+    #define printarr(x,n) std::cout<<#x<<"=";for(int index___=0;index___<n;++index___){std::cout<<x[index___]<<" ";}std::cout<<std::endl;
+    #define msg(x) std::cout<<x<<std::endl;
+#else
+    #include <mpi/mpi.h>
+    #define check(x) if(!(x)){int rank=0; MPI_Comm_rank(MPI_COMM_WORLD, &rank); \
+                              std::stringstream stream__; stream__<<rank<<": check "<<#x<<" failed"<<std::endl;  \
+                              std::cout<<stream__.str(); }
+    #define printvar(x) {int rank=0; MPI_Comm_rank(MPI_COMM_WORLD, &rank); \
+                         std::stringstream stream__; stream__<<rank<<": "<<#x<<"="<<x<<std::endl; \
+                         std::cout<<stream__.str(); }
+    #define printarr(x,n) {int rank=0; MPI_Comm_rank(MPI_COMM_WORLD, &rank); \
+                           std::stringstream stream__; \
+                           stream__<<rank<<": "<<#x<<"="; \
+                           for(int index___=0;index___<n;++index___){stream__<<x[index___]<<" ";} \
+                           stream__<<std::endl; \
+                           std::cout<<stream__.str();}
+    #define msg(x) {int rank=0; MPI_Comm_rank(MPI_COMM_WORLD, &rank); \
+                    std::stringstream stream__; stream__<<rank<<": "<<x<<std::endl; \
+                    std::cout<<stream__.str();}
+#endif
 
 #if 1//def CUDA_IMPLEMENTATION
   #include <assert.h>
-  #define cudaassert(x) {if(x!=cudaSuccess){printvar(x); msg(cudaGetErrorString(x)); }  assert(x==cudaSuccess);}
+  #define cudaassert(x) {if(x!=cudaSuccess){printvar(x); printvar(cudaGetErrorString(x));}  assert(x==cudaSuccess);}
 #endif
 
 

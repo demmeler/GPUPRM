@@ -1,7 +1,7 @@
 #ifndef VERTEXLIST3_H
 #define VERTEXLIST3_H
 
-#include <mpi/mpi.h>
+#include <mpi.h>
 
 #include <map>
 #include <vector>
@@ -63,6 +63,10 @@ class vertexlist{
     std::vector<std::vector<int>> edgelists;     //length N
     std::vector<std::vector<float>> edgeweights; //length N
 
+    std::vector<int> from;
+    std::vector<int> to;
+    std::vector<int> weights;
+
     int newblockpos;  //position of next block in size-N-arrays
     int blocknum;     //number of used blocks
   };
@@ -79,11 +83,16 @@ public:
     blocksize(VERTEXLIST_BLOCK)
   {
 
+    int connectivity=20;
+
     graphl.qstorage.resize(ndof*N);
     graphl.surrnum.resize(N);
     graphl.edgelists.resize(N);
     graphl.edgeweights.resize(N);
     graphl.blocks.resize(N/blocksize);
+    graphl.from.reserve(N*connectivity); //pi*daumen wert
+    graphl.to.reserve(N*connectivity);
+    graphl.weights.reserve(N*connectivity);
 
     graphl.newblockpos=0;
     graphl.blocknum=0;
@@ -93,7 +102,9 @@ public:
     graphr.edgelists.resize(N);
     graphr.edgeweights.resize(N);
     graphr.blocks.resize(N/blocksize);
-
+    graphr.from.reserve(N*connectivity);
+    graphr.to.reserve(N*connectivity);
+    graphr.weights.reserve(N*connectivity);
     graphr.newblockpos=0;
     graphr.blocknum=0;
 
@@ -319,8 +330,8 @@ public:
     int dsp=cnt*rank;
 
 
-    float *qnew=new float[cnt*ndof*size];
-    float *qnewall=new float[num*ndof*size];
+    float *qnew=new float[cnt*ndof];
+    float *qnewall=new float[num*ndof];
     float *qstartlist=new float[ndof*nbuf];
     float *qendlist=new float[ndof*nbuf];
     int *resbuf=new int[nbuf];
@@ -331,9 +342,15 @@ public:
     int *leftconnall=new int[num];
     int *rightconnall=new int[num];
 
+    int *surrnumnew=new int[cnt];
+    int *surrnumnewall=new int[num];
+
+    int *positionsall=new int[num];
+
     for(int i=0;i<maxsteps;++i){
       int flag=processing_step(rank,size,
                                qnew, qnewall,num,dsp,cnt,
+                               surrnumnew,surrnumnewall,positionsall,
                                leftconn, leftconnall,rightconn, rightconnall,
                                qstartlist,qendlist,resbuf,nbuf,offset);
       if(flag==1){
@@ -359,6 +376,7 @@ public:
   //! return: 0 - no errors, 1 - connection found
   inline int processing_step(const int mpirank, const int mpisize,
                              float* qnew, float* qnewall, const int num, const int dsp, const int cnt,
+                             int *surrnumnew, int *surrnumnewall, int *positionsall,
                              int* leftconn, int *leftconnall, int *rightconn, int *rightconnall,
                              float* qstart, float* qend, int* resbuf, const int nbuf, const int offset){
     //float* qnew=qnewall+ndof*dsp;
@@ -437,7 +455,7 @@ public:
 
     //MPI_Allgather(snd.data(), snd.size(), MPI_DOUBLE, rcv.data(), rcv.size()/size, MPI_DOUBLE, MPI_COMM_WORLD);
     MPI_Request qnewrequest;
-    MPI_Iallgather(qnew, ndof*cnt, MPI_CXX_BOOL, qnewall, ndof*cnt, MPI_CXX_BOOL, MPI_COMM_WORLD,&qnewrequest);
+    MPI_Iallgather(qnew, ndof*cnt, MPI_FLOAT, qnewall, ndof*cnt, MPI_FLOAT, MPI_COMM_WORLD,&qnewrequest);
 
 
 
@@ -594,8 +612,8 @@ public:
 
     // insert all nodes of previous processes
     for(int j=0;j<dsp;++j){
-      if(leftconnall[j])insert(&qnewall[ndof*j],1,graphl);
-      if(rightconnall[j])insert(&qnewall[ndof*j],1,graphr);
+      if(leftconnall[j])positionsall[j]=insert(&qnewall[ndof*j],1,graphl);
+      if(rightconnall[j])positionsall[j]=insert(&qnewall[ndof*j],1,graphr);
     }
 
     int connected=mpisize;
@@ -612,19 +630,22 @@ public:
         //! connection to left graph exists -> insert in left graph
         //!
         positionl=insert(&qnew[ndof*j],1,graphl);
-        std::vector<int> *v=&(graphl.edgelists[positionl]);
-        std::vector<float> *w=&(graphl.edgeweights[positionl]);
-        int surrnump=maxleft-min;
-        graphl.surrnum[positionl]+=surrnump;
+        //std::vector<int> *v=&(graphl.edgelists[positionl]);
+        //std::vector<float> *w=&(graphl.edgeweights[positionl]);
+        surrnumnew[j]=maxleft-min;
+        graphl.surrnum[positionl]+=surrnumnew[j];
         for(int i=min;i<maxleft;++i){
           int goalpos=poslist[i];
           ++(graphl.surrnum[goalpos]);
           if(resbuf[i]==0){
+            graphl.from.push_back(positionl);
+            graphl.to.push_back(goalpos);
             float dist=distlist[i];
-            v->push_back(goalpos);
-            w->push_back(dist);
-            graphl.edgelists[goalpos].push_back(positionl);
-            graphl.edgeweights[goalpos].push_back(dist);
+            graphl.weights.push_back(dist);
+            //v->push_back(goalpos);
+            //w->push_back(dist);
+            //graphl.edgelists[goalpos].push_back(positionl);
+            //graphl.edgeweights[goalpos].push_back(dist);
           }
         }
       }
@@ -635,20 +656,22 @@ public:
          //! connection to right graph exists -> insert in right graph
          //!
          positionr=insert(&qnew[ndof*j],1,graphr);
-
-         std::vector<int> *v=&(graphr.edgelists[positionr]);
-         std::vector<float> *w=&(graphr.edgeweights[positionr]);
-         int surrnump=max-maxleft;
-         graphr.surrnum[positionr]+=surrnump;
+         //std::vector<int> *v=&(graphr.edgelists[positionr]);
+         //std::vector<float> *w=&(graphr.edgeweights[positionr]);
+         surrnumnew[j]=max-maxleft;
+         graphr.surrnum[positionr]+=surrnumnew[j];
          for(int i=maxleft;i<max;++i){
            int goalpos=poslist[i];
            ++(graphr.surrnum[goalpos]);
            if(resbuf[i]==0){
+             graphr.from.push_back(positionr);
+             graphr.to.push_back(goalpos);
              float dist=distlist[i];
-             v->push_back(goalpos);
-             w->push_back(dist);
-             graphr.edgelists[goalpos].push_back(positionr);
-             graphr.edgeweights[goalpos].push_back(dist);
+             graphr.weights.push_back(dist);
+             //v->push_back(goalpos);
+             //w->push_back(dist);
+             //graphr.edgelists[goalpos].push_back(positionr);
+             //graphr.edgeweights[goalpos].push_back(dist);
            }
          }
        }
@@ -662,36 +685,88 @@ public:
          connection.index_left=positionl;
          connection.index_right=positionr;
 
+
+         printvar(connection.index_left);
+         printvar(connection.index_right);
+
+
          connected=mpirank;
        }
 
     }//for
 
+    MPI_Request surrnumrequest;
+    MPI_Iallgather(surrnumnew, cnt, MPI_INT, surrnumnewall, cnt, MPI_INT, MPI_COMM_WORLD,&surrnumrequest);
+
+
     //insert all nodes of following processes
     for(int j=dsp+cnt;j<num;++j){
-      if(leftconnall[j])insert(&qnewall[ndof*j],1,graphl);
-      if(rightconnall[j])insert(&qnewall[ndof*j],1,graphr);
+      if(leftconnall[j])positionsall[j]=insert(&qnewall[ndof*j],1,graphl);
+      if(rightconnall[j])positionsall[j]=insert(&qnewall[ndof*j],1,graphr);
+    }
+
+    MPI_Status statussurr;
+    MPI_Wait(&surrnumrequest,&statussurr);
+
+    //update surrnums for other processes
+    for(int j=0;j<dsp;++j){
+      if(leftconnall[j])(graphl.surrnum[positionsall[j]])+=surrnumnewall[j];
+      if(rightconnall[j])(graphr.surrnum[positionsall[j]])+=surrnumnewall[j];
+    }
+    for(int j=dsp+cnt;j<num;++j){
+      if(leftconnall[j])(graphl.surrnum[positionsall[j]])+=surrnumnewall[j];
+      if(rightconnall[j])(graphr.surrnum[positionsall[j]])+=surrnumnewall[j];
     }
 
 
+    //!
+    //! connection checking
+    //!
 
     //check if any process found a connection
     int connectedany=mpisize;
     //MPI_Allreduce(snd.data(), rcv.data(), snd.size(), MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
     MPI_Allreduce(&connected,&connectedany,1,MPI_INT,MPI_MIN,MPI_COMM_WORLD);
 
-    printvar(connected);
-    printvar(connectedany);
-
 
     if(connectedany<mpisize){
 
-      msg("gathering edges not yet implemented!");
+      printvar(connectedany);
+      msg("gathering edges...");
 
-      int res0=do_dijkstra(graphl,dijkstral,i0l,connection.index_left);
-      if(res0==0){msg("ERROR: no path found by dijkstra in graphl");}
-      int res1=do_dijkstra(graphr,dijkstrar,connection.index_right,i0r);
-      if(res1==0){msg("ERROR: no path found by dijkstra in graphr");}
+      int root=0;
+
+      build_edges(graphl,mpirank,mpisize,root);
+      build_edges(graphr,mpirank,mpisize,root);
+
+      if(connectedany==mpirank && mpirank!=root){
+        msg("Sending");
+
+        MPI_Send(&connection.index_left,1,MPI_INT,root,1000,MPI_COMM_WORLD);
+        MPI_Send(&connection.index_right,1,MPI_INT,root,1001,MPI_COMM_WORLD);
+        MPI_Send(&connection.q[0],ndof,MPI_FLOAT,root,1002,MPI_COMM_WORLD);
+        msg("Sendt");
+      }
+      else if(mpirank==root && connectedany !=mpirank){
+        msg("recieving");
+        MPI_Status status[3];
+        MPI_Recv(&connection.index_left,1,MPI_INT,connectedany,1000,MPI_COMM_WORLD,&status[0]);
+        MPI_Recv(&connection.index_right,1,MPI_INT,connectedany,1001,MPI_COMM_WORLD,&status[1]);
+        MPI_Recv(&connection.q[0],ndof,MPI_FLOAT,connectedany,1002,MPI_COMM_WORLD,&status[2]);
+        msg("recieved");
+      }
+
+      printvar(graphl.newblockpos);
+      printvar(graphr.newblockpos);
+      printvar(blocksize);
+      printvar(graphl.from.size());
+
+      if(mpirank==root){
+        int res0=do_dijkstra(graphl,dijkstral,i0l,connection.index_left);
+        if(res0==0){msg("ERROR: no path found by dijkstra in graphl");}
+        int res1=do_dijkstra(graphr,dijkstrar,connection.index_right,i0r);
+        if(res1==0){msg("ERROR: no path found by dijkstra in graphr");}
+      }
       return 1;
     }
 
@@ -700,6 +775,42 @@ public:
 
   }
 
+
+  void build_edges(graph &g, int mpirank, int mpisize, int root){
+      int numedges=g.from.size();
+      int numedgesall;
+
+      MPI_Reduce(&numedges, &numedgesall, 1, MPI_INT, MPI_SUM, root, MPI_COMM_WORLD);
+
+      std::vector<int> numedgesvec(mpisize,0);
+      MPI_Gather(&numedges, 1, MPI_FLOAT, numedgesvec.data(), 1, MPI_FLOAT, root, MPI_COMM_WORLD);
+
+      if(mpirank==root){
+        std::vector<int> fromall(numedgesall);
+        std::vector<int> toall(numedgesall);
+        std::vector<float> weightsall(numedgesall);
+        std::vector<int> dsps(mpisize);
+        dsps[0]=0;
+        for(int i=0;i<mpisize-1;++i) dsps[i+1]=dsps[i]+numedgesvec[i];
+        MPI_Gatherv(g.from.data(),numedges,MPI_INT,fromall.data(),numedgesvec.data(),dsps.data(),MPI_INT,root,MPI_COMM_WORLD);
+        MPI_Gatherv(g.to.data(),numedges,MPI_INT,toall.data(),numedgesvec.data(),dsps.data(),MPI_INT,root,MPI_COMM_WORLD);
+        MPI_Gatherv(g.weights.data(),numedges,MPI_INT,weightsall.data(),numedgesvec.data(),dsps.data(),MPI_INT,root,MPI_COMM_WORLD);
+
+        for(int i=0;i<numedgesall;++i){
+          int f=fromall[i];
+          int t=toall[i];
+          float w=weightsall[i];
+          g.edgelists[f].push_back(t);
+          g.edgeweights[f].push_back(w);
+          g.edgelists[t].push_back(f);
+          g.edgeweights[t].push_back(w);
+        }
+      }else{
+        MPI_Gatherv(g.from.data(),numedges,MPI_INT,0x0,0x0,0x0,MPI_INT,root,MPI_COMM_WORLD);
+        MPI_Gatherv(g.to.data(),numedges,MPI_INT,0x0,0x0,0x0,MPI_INT,root,MPI_COMM_WORLD);
+        MPI_Gatherv(g.weights.data(),numedges,MPI_INT,0x0,0x0,0x0,MPI_INT,root,MPI_COMM_WORLD);
+      }
+  }
 
 
 
@@ -813,9 +924,17 @@ public:
   }
 
   void store_graphs(std::string path){
+    int rank, root=0;
+    MPI_Comm_rank(MPI_COMM_WORLD,&rank);
+    if(rank!=root)return;
+
+    msg("Storing graphs....");
+    printvar(connection.index_left);
+    printvar(connection.index_right);
+
     std::string pathl=path+"/graphl";
     //system("rm -rf "+pathl);
-    int ret1=system(("mkdir "+pathl).c_str());
+    int ret1=system(("mkdir -p "+pathl).c_str());
     store_graph(pathl,graphl,dijkstral,i0l,connection.index_left);
 
     std::string pathr=path+"/graphr";

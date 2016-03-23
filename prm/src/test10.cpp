@@ -1,6 +1,6 @@
 #include <iostream>
 #include <time.h>
-#include <mpi/mpi.h>
+#include <mpi.h>
 
 #include "lib/config.h"
 #include "lib/util.hpp"
@@ -56,16 +56,19 @@ int load_config(std::string path, Robot<ndof>* &robot, polytope* &polys, int* &s
   read_file(path+"/polys/sys.bin",sys,N);
 
   read_file(path+"/pairs/M.bin",&M, 1);   //--> check machen ob file existiert
-  printvar(M);
   check(M>0);
   from=new int[M];
   to=new int[M];
   read_file(path+"/pairs/from.bin", from, M);
   read_file(path+"/pairs/to.bin", to, M);
-  printarr(from, M);
-  printarr(to,M);
 
-  if(printmsg) printarr(sys,N);
+
+  if(printmsg){
+    printvar(M);
+    printarr(from, M);
+    printarr(to,M);
+    printarr(sys,N);
+  }
 
   polys=new polytope[N];
   for(int i=0;i<N;++i){
@@ -116,9 +119,14 @@ int main(int argc, char** argv)
 {
   MPI_Init(&argc, &argv);
 
+  int rank=0, size=1;
+  MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+  MPI_Comm_size(MPI_COMM_WORLD, &size);
+
   //srand(time(NULL));
   //srand(clock());
-  srand(0);
+  //srand(rank+time(NULL));
+  srand(rank*10);
   int firstrand=rand();
 
   tick(tinit);
@@ -145,7 +153,7 @@ int main(int argc, char** argv)
   int M;
 
   //build_example1(robot, polys, sys, N);
-  load_config<ndof>("config1",robot,polys,sys,N,from, to, M, true);
+  load_config<ndof>("config1",robot,polys,sys,N,from, to, M, false);
 
   RobotConfigspace<ndof> space(robot,
                             polys, sys, N,
@@ -194,8 +202,6 @@ int main(int argc, char** argv)
 
   tick(twrite);
 
-  int ret1=system("rm -rf prmoutput");
-  int ret2=system("mkdir prmoutput");
   prm.store_graphs("prmoutput");
 
   tock(twrite);

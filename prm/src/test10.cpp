@@ -143,7 +143,7 @@ int main(int argc, char** argv)
     mins[i]=-pi; maxs[i]=1.5*pi;
   }
   float dq=(argc>=4 ? atof(argv[3]) : 0.01);//0.01;
-  int confignbuf=4096;
+  int confignbuf=(argc>=3 ? 2*atoi(argv[2]) : 4096);
   int numthreadsmax=1024*1024;
 
   Robot<ndof>* robot;

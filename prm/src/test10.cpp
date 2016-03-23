@@ -129,7 +129,8 @@ int main(int argc, char** argv)
   //srand(time(NULL));
   //srand(clock());
   //srand(rank+time(NULL));
-  srand((argc>=6 ? atoi(argv[5]) : 0 )+rank*10);
+  int seed=(argc>=6 ? atoi(argv[5]) : 0 );
+  srand(seed+rank*10);
   int firstrand=rand();
 
   tick(tinit);
@@ -200,26 +201,30 @@ int main(int argc, char** argv)
   int nbuf=(argc>=3 ? atoi(argv[2]) : 2048);//2048;
   int maxsteps=100000;
   //prm.process_mpi(num,nbuf,maxsteps);
-  prm.process_mpi2(num,nbuf,maxsteps);
+  prm.process_mpi2(num,nbuf,maxsteps, seed);
 
   tock(trun);
 
   //prm.print();
 
-  tick(twrite);
+  MPI_Barrier(MPI_COMM_WORLD);
+  if(rank==0){
+      tick(twrite);
 
-  prm.store_graphs("prmoutput");
+      prm.store_graphs("prmoutput");
 
-  tock(twrite);
+      tock(twrite);
 
-  printvar(rand());
-  printvar(firstrand);
+      printvar(rand());
+      printvar(firstrand);
 
-  printvar(num);
-  printvar(nbuf);
-  printvar(dq);
-  printvar(D);
-  msg("5. srand");
-  printvar(numthreadsmax);
+      printvar(num);
+      printvar(nbuf);
+      printvar(dq);
+      printvar(D);
+      printvar(seed);
+      printvar(numthreadsmax);
+  }
+
   MPI_Finalize();
 }

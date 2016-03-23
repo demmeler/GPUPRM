@@ -782,19 +782,23 @@ public:
   }
 
 
+  //seed only relevant for root
+  int process_mpi2(const int num, const int nbuf, const int maxsteps, int seed){
+    //int MPI_Bcast( void *buffer, int count, MPI_Datatype datatype, int root, MPI_Comm comm );
+    MPI_Bcast( &seed, 1, MPI_INT, 0, MPI_COMM_WORLD );
+    srand(seed);
 
-  int process_mpi2(int num, const int nbuf, const int maxsteps){
     int rank=0, size=1;
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
     MPI_Comm_size(MPI_COMM_WORLD, &size);
 
+    MPI_Barrier(MPI_COMM_WORLD);
+
+    printvar(seed);
     printvar(rank);
     printvar(size);
     printvar(num);
     assert(num%size==0);
-
-    int cnt=num/size;
-    int dsp=cnt*rank;
 
 
     float *qnew=new float[num*ndof];
@@ -804,8 +808,8 @@ public:
     int *resbufloc=new int[nbuf];
     int offset=nbuf;
 
-    int *leftconn=new int[cnt];
-    int *rightconn=new int[cnt];
+    int *leftconn=new int[num];
+    int *rightconn=new int[num];
 
     for(int i=0;i<maxsteps;++i){
       int flag=processing_step2(rank,size,

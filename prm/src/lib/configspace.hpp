@@ -18,6 +18,9 @@ public:
   //! res is return value
   //! number of pairs
   virtual int indicator2(const float* qs, const float* qe, int *res, const int N, const int offset)=0;
+  virtual int indicator2_async(const float* qs, const float* qe, int *res, const int N, const int offset, int &request)=0;
+  virtual int indicator2_async_wait(int request)=0;
+
   //! same paircheck as above, but with compressed storage:
   //! checks pairs: (qs[i],...) ->  (qe(posqe[i]),...) , ...., (qe[posqe[i]+numqe[i]-1],...) for i=0,...,M-1
   virtual int indicator2(const float* qs, const int M, const float* qe, int *res, const int *posqe, const int *numqe, const int offset)=0;

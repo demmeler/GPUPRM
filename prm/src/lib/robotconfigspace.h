@@ -2,6 +2,7 @@
 #define ROBOTCONFIGSPACE_H
 
 #include <string>
+#include <map>
 
 #include "configspace.hpp"
 #include "robot.h"
@@ -70,6 +71,9 @@ public:
   //! res is return value
   //! number of pairs
   int indicator2(const float* qs, const float* qe, int *res, const int N, const int offset);
+  int indicator2_async(const float* qs, const float* qe, int *res, const int N, const int offset, int &request);
+  int indicator2_async_wait(int request);
+
   //! same paircheck as above, but with compressed storage:
   //! checks pairs: (qs[i],...) ->  (qe(posqe[i]),...) , ...., (qe[posqe[i]+numqe[i]-1],...) for i=0,...,M-1
   int indicator2(const float* qs, const int M, const float* qe, int *res, const int *posqe, const int *numqe, const int offset);
@@ -134,6 +138,13 @@ private:
   float mins[ndof];
   float maxs[ndof];
   float dq;
+
+  int requeststack_id;
+  struct request_data{
+      int* res;
+      int N;
+  };
+  std::map<int,request_data> requeststack;
 
 };
 

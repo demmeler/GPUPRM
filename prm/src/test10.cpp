@@ -39,6 +39,8 @@ int main(int argc, char** argv)
   float dq=(argc>=4 ? atof(argv[3]) : 0.01);
   float D=(argc>=5 ? atof(argv[4]) : 1.0);
   int seed=(argc>=6 ? atoi(argv[5]) : 0 );
+  int blocksize=(argc>=7 ? atoi(argv[6]) : 256);
+  int maxstorage=(argc>=8 ? atoi(argv[7]) : 1024*1024);
   int maxsteps=100000;
 
   //srand(time(NULL));
@@ -53,7 +55,7 @@ int main(int argc, char** argv)
   RobotConfigspace<ndof> space("config1",dq, confignbuf);
   space.init(rank,size);
 
-  vertexlist<ndof> prm(D,D,&space);
+  vertexlist<ndof> prm(&space, D, D, maxstorage, blocksize);
 
 
   float qstart[ndof];
@@ -106,6 +108,8 @@ int main(int argc, char** argv)
       printvar(dq);
       printvar(D);
       printvar(seed);
+      printvar(blocksize);
+      printvar(maxstorage);
   }
 
   MPI_Finalize();

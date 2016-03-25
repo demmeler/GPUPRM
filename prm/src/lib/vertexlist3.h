@@ -1,7 +1,7 @@
 #ifndef VERTEXLIST3_H
 #define VERTEXLIST3_H
 
-#include <mpi.h>
+#include <mpi/mpi.h>
 #include <omp.h>
 
 #include <map>
@@ -80,9 +80,9 @@ class vertexlist{
 
 public:
 
-  vertexlist(float H_, float D_, Configspace<ndof> *space_=0x0)
-    :N(VERTEXLIST_N),
-    blocksize(VERTEXLIST_BLOCK)
+  vertexlist(Configspace<ndof> *space_, float H_, float D_, int N=1024*1024, int blocksize=256)
+    :N(N),
+    blocksize(blocksize)
   {
 
     int connectivity=20;
@@ -200,10 +200,6 @@ public:
   //! offset: i-th component of k-th vec in qlist is qlist[i*offset+k]
   //! nbuf: length(qlist)
   //! D: maximal distance
-  inline int get_near_vertices(const float* qref, float* qlist, const int& nbuf, const int& offset){
-    return get_near_vertices(qref,qlist,nbuf,offset,graphl);
-  }
-
   inline int get_near_vertices(const float* qref, float* qlist, const int& nbuf, const int& offset, graph& g){
     const int keylower=calc_key(qref[0]-D);
     piterator begin=g.map.lower_bound(keylower);
@@ -1291,6 +1287,41 @@ public:
     return 0;
   }
 
+  inline int get_random_nodes(graph &g, const int start, const int end, float *qnew){
+      for(int j=start;j<end;++j){
+        bool dismiss;
+        do{
+          //!choose random block
+          int k;
+          block *b;
+          do{
+              k=rand()%g.blocknum;
+              b=&(g.blocks[k]);
+          }while(b->num==0);
+          //!chose random vertex
+          int m=(b->pos+rand()%b->num);
+          int l;
+          int x=1+g.surrnum[m];
+          int prob=RAND_MAX/(x*x*x);
+          if(rand()>prob){
+            dismiss=true;
+          }else{
+            l=ndof*m;
+            for(int i=0;i<ndof;++i){
+              qnew[ndof*j+i]=g.qstorage[l+i]-D+2*D*((float)rand()/RAND_MAX);
+            }
+
+            dismiss=space->indicator(&qnew[ndof*j])!=0;
+          }
+  #ifndef NO_IO
+          printvar(l);
+          printarr(&qnew[ndof*j],ndof);
+          printvar(dismiss);
+  #endif
+        }while(dismiss);
+      }
+  }
+
 
   inline int processing_step3(const int mpirank, const int mpisize,
                              float* qnew, const int num, const int *dsp, const int *cnt,
@@ -1302,6 +1333,7 @@ public:
       //! create nodes qnew randomly
       //!
 
+#if 0
       //!from left graph
       for(int j=0;j<num/2;++j){
         bool dismiss;
@@ -1367,10 +1399,12 @@ public:
   #endif
         }while(dismiss);
       }
+#else
 
+      get_random_nodes(graphl,0,num/2,qnew);
+      get_random_nodes(graphr,num/2,num,qnew);
 
-
-
+#endif
 
       //!
       //! make list of potential neighbours for all new nodes
@@ -1614,6 +1648,279 @@ public:
       return 0;
 
     }
+
+
+
+  inline void find_neighbours(int from, int to,
+                              float *&qnew, float *&qstartp, float *&qendp,
+                              int *&poslistp, int *&distlistp, int &nbufrest, int &index,
+                              int *&posqlist, int *&numqlistleft, int *&numqlist,
+                              int nbuf, int offset
+                              ){
+
+      for(int j=from;j<to;++j){
+        posqlist[j]=index;
+
+        int writtenleft=get_near_vertices(&qnew[ndof*j],1,qendp,poslistp,distlistp,nbufrest,offset,graphl);
+
+        for(int i=0;i<ndof;++i)
+        for(int k=0;k<writtenleft;++k){
+          qstartp[k+offset*i]=qnew[ndof*j+i];
+        }
+        numqlistleft[j]=writtenleft;
+        index+=writtenleft;
+
+        assert(writtenleft<=nbufrest);
+
+        qstartp+=writtenleft;
+        qendp+=writtenleft;
+        poslistp+=writtenleft;
+        distlistp+=writtenleft;
+        nbufrest-=writtenleft;
+
+        int writtenright=get_near_vertices(&qnew[ndof*j],1,qendp,poslistp,distlistp,nbufrest,offset,graphr);
+
+        for(int i=0;i<ndof;++i)
+        for(int k=0;k<writtenright;++k){
+          qstartp[k+offset*i]=qnew[ndof*j+i];
+        }
+        numqlist[j]=writtenleft+writtenright;
+        index+=writtenright;
+
+        assert(writtenright<=nbufrest);
+
+
+        qstartp+=writtenright;
+        qendp+=writtenright;
+        poslistp+=writtenright;
+        distlistp+=writtenright;
+        nbufrest-=writtenright;
+      }
+
+  }
+
+
+  inline int processing_step4(const int mpirank, const int mpisize,
+                             float* qnew, const int num, const int *dsp, const int *cnt,
+                             int *leftconn, int *rightconn,
+                             int *poslist, float *distlist,
+                             float* qstart, float* qend, int* resbuf, int *resbufloc, const int nbuf, const int offset)
+  {
+
+      int dsp_=dsp[mpirank];
+      int cnt_=cnt[mpirank];
+
+      //!
+      //! create nodes qnew randomly
+      //!
+
+      get_random_nodes(graphl,0,num/2,qnew);
+      get_random_nodes(graphr,num/2,num,qnew);
+
+
+      //!
+      //! make list of potential neighbours for all new nodes
+      //!
+
+
+      //!posqlist[i]: position in qlist buffer, at which neighbours of qnew[i] start
+      int posqlist[num];
+      int numqlist[num];
+      int numqlistleft[num];
+      int Nqlist;             //sum(numqlist)
+
+      int index=0;
+      float *qstartp=qstart;
+      float *qendp=qend;
+      int *poslistp=poslist;
+      float *distlistp=distlist;
+      int nbufrest=nbuf;
+
+
+      find_neighbours(  dsp_, dsp_+cnt_,
+                        qnew, qstartp, qendp,
+                        poslistp, distlistp, nbufrest, index,
+                        posqlist, numqlistleft, numqlist,
+                        nbuf, offset
+                      );
+
+
+
+      int disp=posqlist[dsp[mpirank]]; //==0
+      int count=numqlist[dsp[mpirank]];
+
+      int configrequest;
+      space->indicator2_async(qstart+disp,qend+disp,resbufloc,count,offset,configrequest); // ---> make asynchron
+
+      int *counts=new int[mpisize];
+      int *disps=new int[mpisize];
+
+      MPI_Allgather(&count,1,MPI_INT,counts,mpisize,MPI_INT,MPI_COMM_WORLD);
+
+
+      disps[mpirank]=0;
+      int disps_=count;
+      for(int rank=0;rank<mpisize;++rank){
+        if(rank!=mpirank){
+          disps[rank]=disps_;
+          disps_+=counts[rank];
+        }
+      }
+
+
+      find_neighbours(  0, dsp_,
+                        qnew, qstartp, qendp,
+                        poslistp, distlistp, nbufrest, index,
+                        posqlist, numqlistleft, numqlist,
+                        nbuf, offset
+                      );
+      find_neighbours(  dsp_+cnt_, num,
+                        qnew, qstartp, qendp,
+                        poslistp, distlistp, nbufrest, index,
+                        posqlist, numqlistleft, numqlist,
+                        nbuf, offset
+                      );
+
+
+      Nqlist=index;
+
+
+      printvar(disp);
+      printvar(count);
+      printarr(disps,mpisize);
+      printarr(counts,mpisize);
+      printvar(Nqlist);
+
+
+      space->indicator2_async_wait(configrequest);
+
+      //!
+      //! calculate which edges exist
+      //!
+
+      MPI_Request resrequest;
+      MPI_Iallgatherv(resbufloc,count,MPI_INT,resbuf,counts,disps,MPI_INT,MPI_COMM_WORLD,&resrequest);
+
+
+      calc_conn(resbufloc-disp, posqlist, numqlistleft, numqlist, leftconn, rightconn, dsp_, dsp_+cnt_);
+
+
+      MPI_Status resstatus;
+      MPI_Wait(&resrequest,&resstatus);
+
+      delete[] counts, disps;
+
+
+  #ifndef NO_IO
+      printarr(qnew,ndof*num);
+      printvar(num);
+      printarr(qstart,ndof*nbuf);
+      printarr(qend,ndof*nbuf);
+      printvar(Nqlist);
+      printarr(posqlist,num);
+      printarr(numqlist,num);
+      printarr(numqlistleft,num);
+      printvar(offset);
+      printarr(distlist,nbuf);
+      printarr(poslist,nbuf);
+      printarr(resbuf,nbuf);
+  #endif
+
+
+
+      //!
+      //! insert nodes and edges
+      //!
+
+      //calc_conn(resbufloc-disp, posqlist, numqlistleft, numqlist, leftconn, rightconn, dsp_, dsp_+cnt_);
+      calc_conn(resbuf, posqlist, numqlistleft, numqlist, leftconn, rightconn, 0, dsp_);
+      calc_conn(resbuf, posqlist, numqlistleft, numqlist, leftconn, rightconn, dsp_+cnt_, num);
+
+      //calc_conn(resbuf, posqlist, numqlistleft, numqlist, leftconn, rightconn, 0, num);
+
+
+
+      for(int j=0;j<num;++j){
+
+        int min=posqlist[j];
+        int maxleft=min+numqlistleft[j];
+        int max=min+numqlist[j];
+
+        int positionl;
+        if(leftconn[j]){
+          //!
+          //! connection to left graph exists -> insert in left graph
+          //!
+          positionl=insert(&qnew[ndof*j],1,graphl);
+          int surrnump=0;
+          std::vector<int> *v=&(graphl.edgelists[positionl]);
+          std::vector<float> *w=&(graphl.edgeweights[positionl]);
+          for(int i=min;i<maxleft;++i){
+            if(resbuf[i]==0){
+              int goalpos=poslist[i];
+              float dist=distlist[i];
+              ++surrnump;
+              v->push_back(goalpos);
+              w->push_back(dist);
+              ++(graphl.surrnum[goalpos]);
+              graphl.edgelists[goalpos].push_back(positionl);
+              graphl.edgeweights[goalpos].push_back(dist);
+            }
+          }
+          graphl.surrnum[positionl]+=surrnump;
+        }
+
+        int positionr;
+        if(rightconn[j]){
+           //!
+           //! connection to right graph exists -> insert in right graph
+           //!
+           positionr=insert(&qnew[ndof*j],1,graphr);
+           int surrnump=0;
+           std::vector<int> *v=&(graphr.edgelists[positionr]);
+           std::vector<float> *w=&(graphr.edgeweights[positionr]);
+           for(int i=maxleft;i<max;++i){
+             if(resbuf[i]==0){
+               int goalpos=poslist[i];
+               float dist=distlist[i];
+               ++surrnump;
+               v->push_back(goalpos);
+               w->push_back(dist);
+               ++(graphr.surrnum[goalpos]);
+               graphr.edgelists[goalpos].push_back(positionr);
+               graphr.edgeweights[goalpos].push_back(dist);
+             }
+           }
+           graphr.surrnum[positionr]+=surrnump;
+         }
+
+         if(leftconn[j] && rightconn[j]){
+           //!
+           //!  Connection found! abort
+           //!
+           for(int l=0;l<ndof;++l)connection.q[l]=qnew[ndof*j+l];
+
+           connection.index_left=positionl;
+           connection.index_right=positionr;
+
+           //tick(tdijkstra);
+           int res0=do_dijkstra(graphl,dijkstral,i0l,connection.index_left);
+           int res1=do_dijkstra(graphr,dijkstrar,connection.index_right,i0r);
+           if(res0==0){msg("ERROR: no path found by dijkstra in graphl");}
+           if(res1==0){msg("ERROR: no path found by dijkstra in graphr");}
+           //tock(tdijkstra);
+
+           return 1;
+         }
+
+      }//for
+
+      return 0;
+
+    }
+
+
+
 
     inline void calc_conn(const int *resbuf, const int *posqlist, const int *numqlistleft, const int *numqlist, int *leftconn, int *rightconn, const int from, const int to){
         for(int j=from;j<to;++j){

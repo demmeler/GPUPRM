@@ -1463,7 +1463,7 @@ public:
 
       int *counts=new int[mpisize];
       int *disps=new int[mpisize];
-#if 1
+#if 0
       int r = Nqlist % mpisize, q = Nqlist / mpisize;
       for(int rank=0;rank<mpisize;++rank){
         int count = q;
@@ -1496,10 +1496,16 @@ public:
       MPI_Request resrequest;
       MPI_Iallgatherv(resbufloc,count,MPI_INT,resbuf,counts,disps,MPI_INT,MPI_COMM_WORLD,&resrequest);
 
+      int dsp_=dsp[mpirank];
+      int cnt_=cnt[mpirank];
+      calc_conn(resbufloc-disp, posqlist, numqlistleft, numqlist, leftconn, rightconn, dsp_, dsp_+cnt_);
+
+
       MPI_Status resstatus;
       MPI_Wait(&resrequest,&resstatus);
 
       delete[] counts, disps;
+
 
   #ifndef NO_IO
       printarr(qnew,ndof*num);
@@ -1522,32 +1528,8 @@ public:
       //! insert nodes and edges
       //!
 
-
-      for(int j=0;j<num;++j){
-
-        //! left:  min,...,maxleft-1
-        //! right: maxleft,...,max-1
-        int min=posqlist[j];
-        int maxleft=min+numqlistleft[j];
-        int max=min+numqlist[j];
-
-        leftconn[j]=0;
-        for(int i=min;i<maxleft;++i){
-          if(resbuf[i]==0){
-            leftconn[j]=1;
-            break;
-          }
-        }
-        rightconn[j]=0;
-        for(int i=maxleft;i<max;++i){
-          if(resbuf[i]==0){
-            rightconn[j]=1;
-            break;
-          }
-        }
-
-      }
-
+      calc_conn(resbuf, posqlist, numqlistleft, numqlist, leftconn, rightconn, 0, dsp_);
+      calc_conn(resbuf, posqlist, numqlistleft, numqlist, leftconn, rightconn, dsp_+cnt_, num);
 
 
 
@@ -1630,7 +1612,31 @@ public:
 
     }
 
+    inline void calc_conn(const int *resbuf, const int *posqlist, const int *numqlistleft, const int *numqlist, int *leftconn, int *rightconn, const int from, const int to){
+        for(int j=from;j<to;++j){
 
+          //! left:  min,...,maxleft-1
+          //! right: maxleft,...,max-1
+          int min=posqlist[j];
+          int maxleft=min+numqlistleft[j];
+          int max=min+numqlist[j];
+
+          leftconn[j]=0;
+          for(int i=min;i<maxleft;++i){
+            if(resbuf[i]==0){
+              leftconn[j]=1;
+              break;
+            }
+          }
+          rightconn[j]=0;
+          for(int i=maxleft;i<max;++i){
+            if(resbuf[i]==0){
+              rightconn[j]=1;
+              break;
+            }
+          }
+        }
+    }
 
 
 

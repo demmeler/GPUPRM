@@ -1,7 +1,7 @@
 #ifndef VERTEXLIST3_H
 #define VERTEXLIST3_H
 
-#include <mpi.h>
+#include <mpi/mpi.h>
 #include <omp.h>
 
 #include <map>
@@ -1268,7 +1268,7 @@ public:
     float *distlist=new float[nbuf];
 
     for(int i=0;i<maxsteps;++i){
-      int flag=processing_step3(rank,size,
+      int flag=processing_step4(rank,size,
                                qnew, num, dsp, cnt,
                                leftconn, rightconn,
                                poslist, distlist,
@@ -1652,9 +1652,9 @@ public:
 
 
   inline void find_neighbours(int from, int to,
-                              float *&qnew, float *&qstartp, float *&qendp,
-                              int *&poslistp, int *&distlistp, int &nbufrest, int &index,
-                              int *&posqlist, int *&numqlistleft, int *&numqlist,
+                              float *qnew, float *&qstartp, float *&qendp,
+                              int *&poslistp, float *&distlistp, int &nbufrest, int &index,
+                              int *posqlist, int *numqlistleft, int *numqlist,
                               int nbuf, int offset
                               ){
 
@@ -1740,22 +1740,23 @@ public:
       find_neighbours(  dsp_, dsp_+cnt_,
                         qnew, qstartp, qendp,
                         poslistp, distlistp, nbufrest, index,
-                        posqlist, numqlistleft, numqlist,
+                        &posqlist[0], &numqlistleft[0], &numqlist[0],
                         nbuf, offset
                       );
 
 
 
       int disp=posqlist[dsp[mpirank]]; //==0
-      int count=numqlist[dsp[mpirank]];
+      int count=index-disp;
 
       int configrequest;
-      space->indicator2_async(qstart+disp,qend+disp,resbufloc,count,offset,configrequest); // ---> make asynchron
+      space->indicator2_async(qstart+disp,qend+disp,resbufloc,count,offset,configrequest);
+      space->indicator2_async_wait(configrequest);
 
       int *counts=new int[mpisize];
       int *disps=new int[mpisize];
 
-      MPI_Allgather(&count,1,MPI_INT,counts,mpisize,MPI_INT,MPI_COMM_WORLD);
+      MPI_Allgather(&count,1,MPI_INT,counts,1,MPI_INT,MPI_COMM_WORLD);
 
 
       disps[mpirank]=0;
@@ -1768,23 +1769,26 @@ public:
       }
 
 
+
       find_neighbours(  0, dsp_,
                         qnew, qstartp, qendp,
                         poslistp, distlistp, nbufrest, index,
-                        posqlist, numqlistleft, numqlist,
+                        &posqlist[0], &numqlistleft[0], &numqlist[0],
                         nbuf, offset
                       );
       find_neighbours(  dsp_+cnt_, num,
                         qnew, qstartp, qendp,
                         poslistp, distlistp, nbufrest, index,
-                        posqlist, numqlistleft, numqlist,
+                        &posqlist[0], &numqlistleft[0], &numqlist[0],
                         nbuf, offset
                       );
 
 
       Nqlist=index;
 
-#if 0
+#if 1
+      printarr(dsp,mpisize);
+      printarr(cnt,mpisize);
       printvar(disp);
       printvar(count);
       printarr(disps,mpisize);
@@ -1792,7 +1796,6 @@ public:
       printvar(Nqlist);
 #endif
 
-      space->indicator2_async_wait(configrequest);
 
       //!
       //! calculate which edges exist

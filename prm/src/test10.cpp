@@ -164,7 +164,7 @@ int main(int argc, char** argv)
                             polys, sys, N,
                             from, to, M,
                             mins, maxs, dq,
-                            confignbuf, numthreadsmax);
+                            confignbuf);//, numthreadsmax);
 
   space.init(rank,size);
 

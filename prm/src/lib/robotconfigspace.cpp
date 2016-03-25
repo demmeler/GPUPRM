@@ -20,7 +20,7 @@ void RobotConfigspace<ndof>::construct(const Robot<ndof>* robot_,
                  const int* sys_,
                  const int N_,
                  const float* mins_, const float* maxs_, const float dq_,
-                 const int nbuf_, const int numthreadsmax_){
+                 const int nbuf_){//, const int numthreadsmax_){
   robot=robot_;
   kin=new Kinematics<ndof>(robot);
   for(int i=0;i<ndof;++i){
@@ -42,7 +42,7 @@ void RobotConfigspace<ndof>::construct(const Robot<ndof>* robot_,
   nbufqfrom=ndof*nbuf_;
   nbuftest=nbuf_;
 
-  numthreadsmax=numthreadsmax_;
+  //numthreadsmax=numthreadsmax_;
 
   devloaded=false;
 }
@@ -56,9 +56,9 @@ template<int ndof>
 RobotConfigspace<ndof>::RobotConfigspace(const Robot<ndof>* robot_,
                                          const polytope* polys_,  const int* sys_, const int N_,
                                          const float* mins_, const float* maxs_, const float dq_,
-                                         const int nbuf_, const int numthreadsmax_)
+                                         const int nbuf_)//, const int numthreadsmax_)
 {
-  construct(robot_, polys_, sys_, N_, mins_, maxs_, dq_, nbuf_, numthreadsmax_);
+  construct(robot_, polys_, sys_, N_, mins_, maxs_, dq_, nbuf_);//, numthreadsmax_);
 }
 
 template<int ndof>
@@ -66,9 +66,9 @@ RobotConfigspace<ndof>::RobotConfigspace(const Robot<ndof>* robot_,
                                          const polytope* polys_,  const int* sys_, const int N_,
                                          const int *from_, const int *to_, const int M_,
                                          const float* mins_, const float* maxs_, const float dq_,
-                                         const int nbuf_, const int numthreadsmax_)
+                                         const int nbuf_)//, const int numthreadsmax_)
 {
-    construct(robot_, polys_, sys_, N_, mins_, maxs_, dq_, nbuf_, numthreadsmax_);
+    construct(robot_, polys_, sys_, N_, mins_, maxs_, dq_, nbuf_);//, numthreadsmax_);
     polylist.from=from_;
     polylist.to=to_;
     polylist.M=M_;
@@ -372,10 +372,10 @@ int RobotConfigspace<ndof>::indicator2(const float* qs, const float* qe, int *re
     numthreads+=testnum[l];
   }
 
-  if(numthreads>numthreadsmax){
+  /*if(numthreads>numthreadsmax){
     msg("error, thread limit reached")
     return -1;
-  }
+  }*/
 
 #ifdef CUDA_IMPLEMENTATION
   int BLOCK = 256, GRID = (numthreads + BLOCK - 1)/BLOCK;
@@ -394,8 +394,8 @@ int RobotConfigspace<ndof>::indicator2(const float* qs, const float* qe, int *re
   int GRIDN=(N + BLOCK - 1)/BLOCK;
   set_kernel<int><<<GRIDN,BLOCK>>>(resdevbuffer,0,N);
 
-  kernel_indicator2<ndof><<<GRID,BLOCK>>>(robotdev,polydatadev,qdevbufferfrom,nbufqfrom,qdevbufferto,nbufqto,resdevbuffer,resdevbufferext,testposdev,testnumdev,N, numthreads);
-
+  //kernel_indicator2<ndof><<<GRID,BLOCK>>>(robotdev,polydatadev,qdevbufferfrom,nbufqfrom,qdevbufferto,nbufqto,resdevbuffer,resdevbufferext,testposdev,testnumdev,N, numthreads);
+  kernel_indicator2<ndof><<<GRID,BLOCK>>>(robotdev,polydatadev,qdevbufferfrom,nbufqfrom,qdevbufferto,nbufqto,resdevbuffer,0x0,testposdev,testnumdev,N, numthreads);
 
   cudaassert(cudaMemcpy((void*)res,(void*)resdevbuffer,N*sizeof(int), cudaMemcpyDeviceToHost));
 
@@ -405,7 +405,9 @@ int RobotConfigspace<ndof>::indicator2(const float* qs, const float* qe, int *re
     res[k]=0; //-> kernel?
   }
 
-  kernel_indicator2<ndof>(robot,polydata,qs,offset,qe,offset,res,resbufferext,testpos.data(),testnum.data(),N, numthreads);
+  //kernel_indicator2<ndof>(robot,polydata,qs,offset,qe,offset,res,resbufferext,testpos.data(),testnum.data(),N, numthreads);
+  kernel_indicator2<ndof>(robot,polydata,qs,offset,qe,offset,res,0x0,testpos.data(),testnum.data(),N, numthreads);
+
 #endif
 
   //printarr(res,N);

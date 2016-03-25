@@ -1751,7 +1751,6 @@ public:
 
       int configrequest;
       space->indicator2_async(qstart+disp,qend+disp,resbufloc,count,offset,configrequest);
-      space->indicator2_async_wait(configrequest);
 
       int *counts=new int[mpisize];
       int *disps=new int[mpisize];
@@ -1800,6 +1799,8 @@ public:
       //!
       //! calculate which edges exist
       //!
+
+      space->indicator2_async_wait(configrequest);
 
       MPI_Request resrequest;
       MPI_Iallgatherv(resbufloc,count,MPI_INT,resbuf,counts,disps,MPI_INT,MPI_COMM_WORLD,&resrequest);

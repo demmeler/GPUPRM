@@ -1528,9 +1528,11 @@ public:
       //! insert nodes and edges
       //!
 
-      calc_conn(resbufloc-disp, posqlist, numqlistleft, numqlist, leftconn, rightconn, dsp_, dsp_+cnt_);
+      /*calc_conn(resbufloc-disp, posqlist, numqlistleft, numqlist, leftconn, rightconn, dsp_, dsp_+cnt_);
       calc_conn(resbuf, posqlist, numqlistleft, numqlist, leftconn, rightconn, 0, dsp_);
       calc_conn(resbuf, posqlist, numqlistleft, numqlist, leftconn, rightconn, dsp_+cnt_, num);
+*/
+      calc_conn(resbuf, posqlist, numqlistleft, numqlist, leftconn, rightconn, 0, num);
 
 
 

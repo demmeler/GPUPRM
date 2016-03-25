@@ -26,7 +26,7 @@ public:
                    const int* sys_,
                    const int N_,
                    const float* mins_, const float* maxs_, const float dq_,
-                   const int nbuf_);//, const int numthreadsmax_);
+                   const int nbuf_);
   RobotConfigspace(const Robot<ndof>* robot_,
                    const polytope *polys_,
                    const int* sys_,
@@ -34,14 +34,14 @@ public:
                    const int *from_, const int *to_,
                    const int M_,
                    const float* mins_, const float* maxs_, const float dq_,
-                   const int nbuf_);//, const int numthreadsmax_);
+                   const int nbuf_);
 private:
   void construct(const Robot<ndof>* robot_,
                  const polytope *polys_,
                  const int* sys_,
                  const int N_,
                  const float* mins_, const float* maxs_, const float dq_,
-                 const int nbuf_);//, const int numthreadsmax_);
+                 const int nbuf_);
 public:
 
   //!initialization function copy polydata to gpu etc..
@@ -127,11 +127,6 @@ private:
   int* testnumdev; //GPU length nbuftest
   int* testposdev; //GPU length nbuftest
   int nbuftest;
-
-  //int* resdevbufferext; //GPU length numthreadsmax
-  //int* resbufferext;    //host length numthreadsmax -> for implementation without cuda
-  //int numthreadsmax;
-
 
   float mins[ndof];
   float maxs[ndof];

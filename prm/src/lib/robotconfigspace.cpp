@@ -119,11 +119,9 @@ int RobotConfigspace<ndof>::init(const int ressource_rank, const int ressource_s
   cudaassert(cudaMalloc((void**)&testnumdev, nbuftest*sizeof(int)));
   cudaassert(cudaMalloc((void**)&testposdev, nbuftest*sizeof(int)));
   cudaassert(cudaMalloc((void**)&resdevbuffer, nbufres*sizeof(int)));
-  //cudaassert(cudaMalloc((void**)&resdevbufferext, numthreadsmax*sizeof(int)));
 
 #else
 
-  //resbufferext=new int[numthreadsmax];
 
 #endif
 
@@ -247,7 +245,7 @@ __global__ void kernel_indicator2(Robot<ndof>* robot,
                                   collision4::polytope4data* polydata,
                                   float* qs, int offsets,
                                   float* qe, int offsete,
-                                  int* res, int* resext,
+                                  int* res,
                                   int* testpos, int* testnum,
                                   int N, int numthreads){
   int i = blockDim.x * blockIdx.x + threadIdx.x;
@@ -257,7 +255,7 @@ void kernel_indicator2(const Robot<ndof>* robot,
                        const collision4::polytope4data* polydata,
                        const float* qs, int offsets,
                        const float* qe, int offsete,
-                       int* res, int* resext,
+                       int* res,
                        const int* testpos, const int* testnum,
                        int N, int numthreads){
   for(int i=0;i<numthreads;++i){
@@ -284,7 +282,6 @@ void kernel_indicator2(const Robot<ndof>* robot,
 
 
     Kinematics<ndof> kin(robot);
-    //resext[i]=0;
     int resext=0;
     kin.calculate(&q[0],1);
 
@@ -324,20 +321,17 @@ void kernel_indicator2(const Robot<ndof>* robot,
           polydata->get_polytope(poly1, k1);
           int result=collision4::seperating_vector_algorithm(poly0,poly1,kin.trafos[polydata->sys[k0]],kin.trafos[polydata->sys[k1]]);
           if(result!=0){
-            //resext[i]=result;
             resext=result;
           }
       }
     }
 
-    //printf("resext[i]=%d\n",resext[i]);
+    //printf("resext=%d\n",resext);
 
 #endif
 
     //! reduce resext to res with ||
 #if 1//def CUDA_IMPLEMENTATION
-    //TODO
-    //if(resext[i]!=0) res[k]=resext[i];
     if(resext!=0) res[k]=resext;
 #else
     if(resext[i]!=0 || i==testpos[k]) res[k]=resext[i];
@@ -394,8 +388,7 @@ int RobotConfigspace<ndof>::indicator2(const float* qs, const float* qe, int *re
   int GRIDN=(N + BLOCK - 1)/BLOCK;
   set_kernel<int><<<GRIDN,BLOCK>>>(resdevbuffer,0,N);
 
-  //kernel_indicator2<ndof><<<GRID,BLOCK>>>(robotdev,polydatadev,qdevbufferfrom,nbufqfrom,qdevbufferto,nbufqto,resdevbuffer,resdevbufferext,testposdev,testnumdev,N, numthreads);
-  kernel_indicator2<ndof><<<GRID,BLOCK>>>(robotdev,polydatadev,qdevbufferfrom,nbufqfrom,qdevbufferto,nbufqto,resdevbuffer,0x0,testposdev,testnumdev,N, numthreads);
+  kernel_indicator2<ndof><<<GRID,BLOCK>>>(robotdev,polydatadev,qdevbufferfrom,nbufqfrom,qdevbufferto,nbufqto,resdevbuffer,testposdev,testnumdev,N, numthreads);
 
   cudaassert(cudaMemcpy((void*)res,(void*)resdevbuffer,N*sizeof(int), cudaMemcpyDeviceToHost));
 
@@ -405,8 +398,7 @@ int RobotConfigspace<ndof>::indicator2(const float* qs, const float* qe, int *re
     res[k]=0; //-> kernel?
   }
 
-  //kernel_indicator2<ndof>(robot,polydata,qs,offset,qe,offset,res,resbufferext,testpos.data(),testnum.data(),N, numthreads);
-  kernel_indicator2<ndof>(robot,polydata,qs,offset,qe,offset,res,0x0,testpos.data(),testnum.data(),N, numthreads);
+  kernel_indicator2<ndof>(robot,polydata,qs,offset,qe,offset,res,testpos.data(),testnum.data(),N, numthreads);
 
 #endif
 

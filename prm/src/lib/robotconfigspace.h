@@ -1,6 +1,8 @@
 #ifndef ROBOTCONFIGSPACE_H
 #define ROBOTCONFIGSPACE_H
 
+#include <string>
+
 #include "configspace.hpp"
 #include "robot.h"
 #include "polytope.h"
@@ -25,23 +27,24 @@ public:
                    const polytope *polys_,
                    const int* sys_,
                    const int N_,
-                   const float* mins_, const float* maxs_, const float dq_,
-                   const int nbuf_);
-  RobotConfigspace(const Robot<ndof>* robot_,
-                   const polytope *polys_,
-                   const int* sys_,
-                   const int N_,
                    const int *from_, const int *to_,
                    const int M_,
                    const float* mins_, const float* maxs_, const float dq_,
                    const int nbuf_);
+  RobotConfigspace(std::string path, const float dq, const int nbuf_);
+
 private:
   void construct(const Robot<ndof>* robot_,
                  const polytope *polys_,
                  const int* sys_,
                  const int N_,
+                 const int *from_, const int *to_, const int M_,
                  const float* mins_, const float* maxs_, const float dq_,
                  const int nbuf_);
+  int load_config(std::string path, Robot<ndof>* &robot, polytope* &polys,
+                  int* &sys, int &N, int* &from, int* &to, int& M, float *&mins, float *&maxs, bool printmsg=false) const;
+
+
 public:
 
   //!initialization function copy polydata to gpu etc..

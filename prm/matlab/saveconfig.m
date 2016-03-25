@@ -166,6 +166,10 @@ if 1
            ];
        
      %pairs=[8,2];
+     
+     mins=[-3,-3,-3,-3];
+     maxs=[4.5, 4.5, 4.5, 4.5];
+     
     
 end
 
@@ -177,7 +181,7 @@ N=length(polys);
 %%% write files %%%
 
 configpath='../config1';
-configwrite(configpath,dhparams,ndof,polys,N, pairs);
+configwrite(configpath,dhparams,ndof,polys,N, pairs, mins, maxs);
 
 
 pathplot(dhparams,ndof,polys,N,zeros(ndof,1)+0.0, 0.03, false);

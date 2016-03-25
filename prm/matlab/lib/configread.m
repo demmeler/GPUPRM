@@ -1,4 +1,4 @@
-function [dhparams, ndof, polys, N, pairs] = configread( configpath )
+function [dhparams, ndof, polys, N, pairs, mins, maxs] = configread( configpath )
 % write configuration to file structure
 
 
@@ -7,6 +7,8 @@ function [dhparams, ndof, polys, N, pairs] = configread( configpath )
     pairspath=[configpath '/pairs'];
     
     ndof=binread([configpath '/ndof.bin'],'int');
+    mins=binread([configpath '/mins.bin'],'float');
+    maxs=binread([configpath '/maxs.bin'],'float');
     [ polys, N]=polylistread(listpath);
     dhparams=dhread(dhpath);
     

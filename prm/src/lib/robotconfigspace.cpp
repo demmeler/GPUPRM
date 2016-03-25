@@ -5,6 +5,7 @@
 
 
 #include "cuda_head.h"
+#include "util.hpp"
 
 #include "collision4.h"
 #include "polytope4data.h"
@@ -19,6 +20,7 @@ void RobotConfigspace<ndof>::construct(const Robot<ndof>* robot_,
                  const polytope *polys_,
                  const int* sys_,
                  const int N_,
+                 const int *from_, const int *to_, const int M_,
                  const float* mins_, const float* maxs_, const float dq_,
                  const int nbuf_){//, const int numthreadsmax_){
   robot=robot_;
@@ -33,16 +35,15 @@ void RobotConfigspace<ndof>::construct(const Robot<ndof>* robot_,
   polylist.sys=sys_;
   polylist.N=N_;
 
-  polylist.from=0x0;
-  polylist.to=0x0;
-  polylist.M=0x0;
+  polylist.from=from_;
+  polylist.to=to_;
+  polylist.M=M_;
 
   nbufres=nbuf_;
   nbufqto=ndof*nbuf_;
   nbufqfrom=ndof*nbuf_;
   nbuftest=nbuf_;
 
-  //numthreadsmax=numthreadsmax_;
 
   devloaded=false;
 }
@@ -55,25 +56,140 @@ void RobotConfigspace<ndof>::construct(const Robot<ndof>* robot_,
 template<int ndof>
 RobotConfigspace<ndof>::RobotConfigspace(const Robot<ndof>* robot_,
                                          const polytope* polys_,  const int* sys_, const int N_,
+                                         const int *from_, const int *to_, const int M_,
                                          const float* mins_, const float* maxs_, const float dq_,
-                                         const int nbuf_)//, const int numthreadsmax_)
+                                         const int nbuf_)
 {
-  construct(robot_, polys_, sys_, N_, mins_, maxs_, dq_, nbuf_);//, numthreadsmax_);
+    construct(robot_, polys_, sys_, N_, from_, to_, M_, mins_, maxs_, dq_, nbuf_);
 }
 
 template<int ndof>
-RobotConfigspace<ndof>::RobotConfigspace(const Robot<ndof>* robot_,
-                                         const polytope* polys_,  const int* sys_, const int N_,
-                                         const int *from_, const int *to_, const int M_,
-                                         const float* mins_, const float* maxs_, const float dq_,
-                                         const int nbuf_)//, const int numthreadsmax_)
+RobotConfigspace<ndof>::RobotConfigspace(std::string path, const float dq_, const int nbuf_)
 {
-    construct(robot_, polys_, sys_, N_, mins_, maxs_, dq_, nbuf_);//, numthreadsmax_);
-    polylist.from=from_;
-    polylist.to=to_;
-    polylist.M=M_;
+    polytope *polys_;
+    int *sys_, *from_, *to_;
+    int N_,M_;
+    Robot<ndof>* robot_;
+    float *mins_, *maxs_;
+    load_config(path,robot_,polys_,sys_,N_,from_,to_,M_, mins_, maxs_,false);
+
+    construct(robot_, polys_, sys_, N_, from_, to_, M_, mins_, maxs_, dq_, nbuf_);
+
+    delete mins_, maxs_;
 }
 
+template<int ndof>
+int RobotConfigspace<ndof>::load_config(std::string path, Robot<ndof>* &robot, polytope* &polys,
+                int* &sys, int &N, int* &from, int* &to, int& M, float *&mins, float *&maxs, bool printmsg) const{
+
+    //! DH params
+
+  int ndof_loaded=0;
+  read_file(path+"/ndof.bin",&ndof_loaded,1);
+  if(ndof_loaded!=ndof){
+    msg("error: wrong ndof");
+    return -1;
+  }
+
+  robot=new Robot<ndof>;
+
+  read_file(path+"/dh/a.bin",&(robot->a[0]),ndof);
+  read_file(path+"/dh/alpha.bin",&(robot->alpha[0]),ndof);
+  read_file(path+"/dh/q.bin",&(robot->q[0]),ndof);
+  read_file(path+"/dh/d.bin",&(robot->d[0]),ndof);
+  read_file(path+"/dh/types.bin",(int*)&(robot->types[0]),ndof);
+
+  if(printmsg){
+      printvar(ndof);
+      printarr(robot->a,ndof);
+      printarr(robot->alpha,ndof);
+      printarr(robot->q,ndof);
+      printarr(robot->d,ndof);
+      printarr(robot->types,ndof);
+  }
+
+
+
+  mins=new float[ndof];
+  maxs=new float[ndof];
+  /*for(int i=0;i<ndof;++i){
+    mins[i]=-pi; maxs[i]=1.5*pi;
+  }*/
+  read_file(path+"/mins.bin",mins,ndof);
+  read_file(path+"/maxs.bin",maxs,ndof);
+
+  printvar(mins[0]+pi);
+  printvar(maxs[0]-1.5*pi);
+
+    //! Polytopes
+
+  read_file(path+"/polys/N.bin",&N,1);
+  if(N<=0){
+    msg("error: N<=0");
+    return -1;
+  }
+
+  sys=new int[N];
+  read_file(path+"/polys/sys.bin",sys,N);
+
+  read_file(path+"/pairs/M.bin",&M, 1);   //--> check machen ob file existiert
+  check(M>0);
+  from=new int[M];
+  to=new int[M];
+  read_file(path+"/pairs/from.bin", from, M);
+  read_file(path+"/pairs/to.bin", to, M);
+
+
+  if(printmsg){
+    printvar(M);
+    printarr(from, M);
+    printarr(to,M);
+    printarr(sys,N);
+  }
+
+  polys=new polytope[N];
+  for(int i=0;i<N;++i){
+    std::stringstream polypathstream;
+    polypathstream<<path<<"/polys/poly"<<i;
+    std::string polypath=polypathstream.str();
+    int size[2];
+    read_file(polypath+"/size.bin",&(size[0]),2);
+    int n,m;
+    n=polys[i].n=size[0];
+    m=polys[i].m=size[1];
+    polys[i].dsp=new int[n];
+    polys[i].cnt=new int[n];
+    polys[i].dest=new int[m];
+    polys[i].vertices=new polytope::vec4[4*n];
+    float* vertices=new float[3*n];
+    read_file(polypath+"/vertices.bin",vertices,3*n);
+    for(int j=0;j<n;++j){
+        polys[i].vertices[j].x=vertices[3*j];
+        polys[i].vertices[j].y=vertices[3*j+1];
+        polys[i].vertices[j].z=vertices[3*j+2];
+        polys[i].vertices[j].w=1.0;
+    }
+    read_file(polypath+"/dsp.bin",polys[i].dsp,n);
+    read_file(polypath+"/cnt.bin",polys[i].cnt,n);
+    read_file(polypath+"/dest.bin",polys[i].dest,m);
+
+
+    if(printmsg){
+      msg("-----");
+      printvar(i);
+      //geo4::trafo4 t(0.0,0.0,0.0,0.0);
+      //p4print(polys[i],t);
+
+      printvar(n);
+      printvar(m);
+      printarr(polys[i].dsp,n);
+      printarr(polys[i].cnt,n);
+      printarr(polys[i].dest,m);
+    }
+
+  }
+  return 0; //TODO error handling?
+}
 
 
 //!initialization function copy polytope and robot data to gpu etc..
@@ -410,8 +526,8 @@ int RobotConfigspace<ndof>::check_boundaries(const float* q)
 
 
 
-template class RobotConfigspace<2>;
-template class RobotConfigspace<3>;
+//template class RobotConfigspace<2>;
+//template class RobotConfigspace<3>;
 template class RobotConfigspace<4>;
 
 

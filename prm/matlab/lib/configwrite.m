@@ -1,4 +1,4 @@
-function [] = configwrite( configpath, dhparams, ndof, polys, N, pairs )
+function [] = configwrite( configpath, dhparams, ndof, polys, N, pairs, mins, maxs )
 % write configuration to file structure
 % pairs: [from,to]
     
@@ -8,6 +8,9 @@ function [] = configwrite( configpath, dhparams, ndof, polys, N, pairs )
     
     mkdir(configpath)
     binwrite([configpath '/ndof.bin'],ndof,'int');
+    binwrite([configpath '/mins.bin'],mins,'float');
+    binwrite([configpath '/maxs.bin'],maxs,'float');
+    
     polylistwrite(listpath, polys, N);
     dhwrite(dhpath, dhparams);
     

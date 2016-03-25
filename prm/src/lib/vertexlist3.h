@@ -1498,7 +1498,7 @@ public:
 
       int dsp_=dsp[mpirank];
       int cnt_=cnt[mpirank];
-      calc_conn(resbufloc-disp, posqlist, numqlistleft, numqlist, leftconn, rightconn, dsp_, dsp_+cnt_);
+      //calc_conn(resbufloc-disp, posqlist, numqlistleft, numqlist, leftconn, rightconn, dsp_, dsp_+cnt_);
 
 
       MPI_Status resstatus;
@@ -1528,6 +1528,7 @@ public:
       //! insert nodes and edges
       //!
 
+      calc_conn(resbufloc-disp, posqlist, numqlistleft, numqlist, leftconn, rightconn, dsp_, dsp_+cnt_);
       calc_conn(resbuf, posqlist, numqlistleft, numqlist, leftconn, rightconn, 0, dsp_);
       calc_conn(resbuf, posqlist, numqlistleft, numqlist, leftconn, rightconn, dsp_+cnt_, num);
 

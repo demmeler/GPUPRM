@@ -40,7 +40,8 @@ int main(int argc, char** argv)
   float D=(argc>=5 ? atof(argv[4]) : 1.0);
   int seed=(argc>=6 ? atoi(argv[5]) : 0 );
   int blocksize=(argc>=7 ? atoi(argv[6]) : 256);
-  int maxstorage=(argc>=8 ? atoi(argv[7]) : 1024*1024);
+  int prmversion=(argc>=8 ? atoi(argv[7]) : 3 );
+  int maxstorage=1024*1024;//(argc>=8 ? atoi(argv[7]) : 1024*1024);
   int maxsteps=100000;
 
   //srand(time(NULL));
@@ -83,7 +84,11 @@ int main(int argc, char** argv)
 
 
   //prm.process_mpi(num,nbuf,maxsteps);
-  prm.process_mpi3(num,nbuf,maxsteps, seed);
+  if(prmversion==3){
+    prm.process_mpi3(num,nbuf,maxsteps, seed);
+  }else{
+    prm.process_mpi4(num,nbuf,maxsteps, seed);
+  }
 
   tock(trun);
 

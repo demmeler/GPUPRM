@@ -1268,7 +1268,7 @@ public:
     float *distlist=new float[nbuf];
 
     for(int i=0;i<maxsteps;++i){
-      int flag=processing_step4(rank,size,
+      int flag=processing_step3(rank,size,
                                qnew, num, dsp, cnt,
                                leftconn, rightconn,
                                poslist, distlist,
@@ -1698,6 +1698,88 @@ public:
       }
 
   }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  //! *******************
+  //! *                 *
+  //! *    process 4    *
+  //! *                 *
+  //! *******************
+
+
+
+  //seed only relevant for root
+  int process_mpi4(const int num, const int nbuf, const int maxsteps, int seed){
+    //int MPI_Bcast( void *buffer, int count, MPI_Datatype datatype, int root, MPI_Comm comm );
+    MPI_Bcast( &seed, 1, MPI_INT, 0, MPI_COMM_WORLD );
+    srand(seed);
+
+    int rank=0, size=1;
+    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+    MPI_Comm_size(MPI_COMM_WORLD, &size);
+
+    MPI_Barrier(MPI_COMM_WORLD);
+
+    /*
+    printvar(seed);
+    printvar(rank);
+    printvar(size);
+    printvar(num);
+    */
+    assert(num%size==0);
+    int cnt_=num/size;
+    int *dsp=new int[size];
+    int *cnt=new int[size];
+    for(int r=0; r<size;++r){
+      dsp[r]=cnt_*r;
+      cnt[r]=cnt_;
+    }
+
+    float *qnew=new float[ndof*num];
+    float *qstartlist=new float[ndof*nbuf];
+    float *qendlist=new float[ndof*nbuf];
+    int *resbuf=new int[nbuf];
+    int *resbufloc=new int[nbuf];
+    int offset=nbuf;
+
+    int *leftconn=new int[num];
+    int *rightconn=new int[num];
+    int *poslist=new int[nbuf];
+    float *distlist=new float[nbuf];
+
+    for(int i=0;i<maxsteps;++i){
+      int flag=processing_step4(rank,size,
+                               qnew, num, dsp, cnt,
+                               leftconn, rightconn,
+                               poslist, distlist,
+                               qstartlist,qendlist,resbuf, resbufloc,nbuf,offset);
+      if(flag==1){
+        msg("connection found");
+        printvar(i);
+        break;
+      }else if(i%50==0){
+        printvar(i);
+      }
+    }
+
+    delete[] qnew, qstartlist,qendlist, resbuf, resbufloc, leftconn, rightconn, poslist, distlist, dsp, cnt;
+
+    return 0;
+  }
+
 
 
   inline int processing_step4(const int mpirank, const int mpisize,

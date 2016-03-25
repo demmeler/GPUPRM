@@ -119,11 +119,11 @@ int RobotConfigspace<ndof>::init(const int ressource_rank, const int ressource_s
   cudaassert(cudaMalloc((void**)&testnumdev, nbuftest*sizeof(int)));
   cudaassert(cudaMalloc((void**)&testposdev, nbuftest*sizeof(int)));
   cudaassert(cudaMalloc((void**)&resdevbuffer, nbufres*sizeof(int)));
-  cudaassert(cudaMalloc((void**)&resdevbufferext, numthreadsmax*sizeof(int)));
+  //cudaassert(cudaMalloc((void**)&resdevbufferext, numthreadsmax*sizeof(int)));
 
 #else
 
-  resbufferext=new int[numthreadsmax];
+  //resbufferext=new int[numthreadsmax];
 
 #endif
 

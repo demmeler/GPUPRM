@@ -1,7 +1,7 @@
 #ifndef VERTEXLIST3_H
 #define VERTEXLIST3_H
 
-#include <mpi.h>
+#include <mpi/mpi.h>
 #include <omp.h>
 
 #include <map>
@@ -1232,7 +1232,6 @@ public:
 
 
 
-
   //seed only relevant for root
   int process_mpi3(const int num, const int nbuf, const int maxsteps, int seed){
     //int MPI_Bcast( void *buffer, int count, MPI_Datatype datatype, int root, MPI_Comm comm );
@@ -1252,8 +1251,15 @@ public:
     printvar(num);
     */
     assert(num%size==0);
+    int cnt_=num/size;
+    int *dsp=new int[size];
+    int *cnt=new int[size];
+    for(int r=0; r<size;++r){
+      dsp[r]=cnt_*r;
+      cnt[r]=cnt_;
+    }
 
-    float *qnew=new float[num*ndof];
+    float *qnew=new float[ndof*num];
     float *qstartlist=new float[ndof*nbuf];
     float *qendlist=new float[ndof*nbuf];
     int *resbuf=new int[nbuf];
@@ -1262,11 +1268,14 @@ public:
 
     int *leftconn=new int[num];
     int *rightconn=new int[num];
+    int *poslist=new int[nbuf];
+    float *distlist=new float[nbuf];
 
     for(int i=0;i<maxsteps;++i){
-      int flag=processing_step2(rank,size,
-                               qnew, num,
+      int flag=processing_step3(rank,size,
+                               qnew, num, dsp, cnt,
                                leftconn, rightconn,
+                               poslist, distlist,
                                qstartlist,qendlist,resbuf, resbufloc,nbuf,offset);
       if(flag==1){
         msg("connection found");
@@ -1277,15 +1286,16 @@ public:
       }
     }
 
-    delete[] qnew, qstartlist,qendlist, resbuf, resbufloc, leftconn, rightconn;
+    delete[] qnew, qstartlist,qendlist, resbuf, resbufloc, leftconn, rightconn, poslist, distlist, dsp, cnt;
 
     return 0;
   }
 
 
   inline int processing_step3(const int mpirank, const int mpisize,
-                             float* qnew, const int num,
+                             float* qnew, const int num, const int *dsp, const int *cnt,
                              int *leftconn, int *rightconn,
+                             int *poslist, float *distlist,
                              float* qstart, float* qend, int* resbuf, int *resbufloc, const int nbuf, const int offset)
   {
       //!
@@ -1373,8 +1383,6 @@ public:
       int numqlistleft[num];
       int Nqlist;             //sum(numqlist)
 
-      int *poslist=new int[nbuf];
-      float *distlist=new float[nbuf];
       int index=0;
       float *qstartp=qstart;
       float *qendp=qend;
@@ -1453,9 +1461,10 @@ public:
       //space->indicator2(qnew,num,qlist,resbuf,posqlist,numqlist,offset);
       //space->indicator2(qstart,qend,resbuf,Nqlist,offset);
 
-      int r = Nqlist % mpisize, q = Nqlist / mpisize;
       int *counts=new int[mpisize];
       int *disps=new int[mpisize];
+#if 1
+      int r = Nqlist % mpisize, q = Nqlist / mpisize;
       for(int rank=0;rank<mpisize;++rank){
         int count = q;
         int disp = rank * q;
@@ -1464,11 +1473,31 @@ public:
         counts[rank]=count;
         disps[rank]=disp;
       }
+#else
+      for(int rank=0;rank<mpisize-1;++rank){
+        int dsp_=dsp[rank];
+        disps[rank]=posqlist[dsp_];
+        counts[rank]=posqlist[dsp[rank+1]]-posqlist[dsp_];
+      }
+      disps[mpisize-1]=posqlist[dsp[mpisize-1]];
+      counts[mpisize-1]=Nqlist-disps[mpisize-1];
+#endif
       int disp=disps[mpirank];
       int count=counts[mpirank];
+
+      printvar(disp);
+      printvar(count);
+      printarr(disps,mpisize);
+      printarr(counts,mpisize);
+      printvar(Nqlist);
+
       space->indicator2(qstart+disp,qend+disp,resbufloc,count,offset);
 
-      MPI_Allgatherv(resbufloc,count,MPI_INT,resbuf,counts,disps,MPI_INT,MPI_COMM_WORLD);
+      MPI_Request resrequest;
+      MPI_Iallgatherv(resbufloc,count,MPI_INT,resbuf,counts,disps,MPI_INT,MPI_COMM_WORLD,&resrequest);
+
+      MPI_Status resstatus;
+      MPI_Wait(&resrequest,&resstatus);
 
       delete[] counts, disps;
 
@@ -1592,15 +1621,11 @@ public:
            if(res1==0){msg("ERROR: no path found by dijkstra in graphr");}
            //tock(tdijkstra);
 
-           delete[] poslist, distlist;
            return 1;
          }
 
       }//for
 
-
-
-      delete[] poslist, distlist;
       return 0;
 
     }

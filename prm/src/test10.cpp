@@ -205,7 +205,7 @@ int main(int argc, char** argv)
   int nbuf=(argc>=3 ? atoi(argv[2]) : 2048);//2048;
   int maxsteps=100000;
   //prm.process_mpi(num,nbuf,maxsteps);
-  prm.process_mpi2(num,nbuf,maxsteps, seed);
+  prm.process_mpi3(num,nbuf,maxsteps, seed);
 
   tock(trun);
 

@@ -114,7 +114,7 @@ int main(int argc, char** argv)
       printvar(D);
       printvar(seed);
       printvar(blocksize);
-      printvar(maxstorage);
+      printvar(prmversion);
   }
 
   MPI_Finalize();

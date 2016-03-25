@@ -146,7 +146,6 @@ int main(int argc, char** argv)
   }
   float dq=(argc>=4 ? atof(argv[3]) : 0.01);//0.01;
   int confignbuf=(argc>=3 ? 2*atoi(argv[2]) : 4096);
-  int numthreadsmax=(argc>=7 ? atoi(argv[6]) : 1024*1024);
 
   Robot<ndof>* robot;
   polytope* polys;
@@ -164,7 +163,7 @@ int main(int argc, char** argv)
                             polys, sys, N,
                             from, to, M,
                             mins, maxs, dq,
-                            confignbuf);//, numthreadsmax);
+                            confignbuf);
 
   space.init(rank,size);
 
@@ -227,7 +226,6 @@ int main(int argc, char** argv)
       printvar(dq);
       printvar(D);
       printvar(seed);
-      printvar(numthreadsmax);
   }
 
   MPI_Finalize();

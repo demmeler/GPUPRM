@@ -160,24 +160,6 @@ int RobotConfigspace<ndof>::indicator(const float* q)
   if(check_boundaries(q)==1) return 1;
   kin->calculate(q,1);
 
-#if 0
-  for(int dof0=0;dof0<=ndof;++dof0) for(int dof1=dof0+1;dof1<=ndof;++dof1){
-    int numsys0=polydata->get_numsys(dof0), numsys1=polydata->get_numsys(dof1);
-    for(int k0=0;k0<numsys0;++k0) for(int k1=0;k1<numsys1;++k1){
-      collision4::polytope4 poly0, poly1;
-      polydata->get_polytope(poly0, dof0,k0);
-      polydata->get_polytope(poly1, dof1,k1);
-      int res=seperating_vector_algorithm(poly0,poly1,kin->trafos[dof0],kin->trafos[dof1]);
-      if(res!=0){
-        return res;
-      }
-    }
-  }
-#else
-
-        //new version, only testing specific pairs
-
-
     //! collision algorithm
 
     for(int k0=0;k0<polydata->N;++k0){
@@ -205,7 +187,6 @@ int RobotConfigspace<ndof>::indicator(const float* q)
       }
     }
 
-#endif
   return 0;
 }
 
@@ -286,27 +267,6 @@ void kernel_indicator2(const Robot<ndof>* robot,
     kin.calculate(&q[0],1);
 
 
-#if 0
-
-    //! collision algorithm
-    for(int dof0=0;dof0<=ndof;++dof0) for(int dof1=dof0+1;dof1<=ndof;++dof1){
-      int numsys0=polydata->get_numsys(dof0), numsys1=polydata->get_numsys(dof1);
-      for(int k0=0;k0<numsys0;++k0) for(int k1=0;k1<numsys1;++k1){
-        collision4::polytope4 poly0, poly1;
-        polydata->get_polytope(poly0, dof0, k0);
-        polydata->get_polytope(poly1, dof1, k1);
-        int result=collision4::seperating_vector_algorithm(poly0,poly1,kin.trafos[dof0],kin.trafos[dof1]);
-        if(result!=0){
-          resext[i]=result;
-        }
-      }
-    }
-
-#else
-
-        //new version, only testing specific pairs
-
-
     //! collision algorithm
 
     for(int k0=0;k0<polydata->N;++k0){
@@ -328,14 +288,8 @@ void kernel_indicator2(const Robot<ndof>* robot,
 
     //printf("resext=%d\n",resext);
 
-#endif
-
     //! reduce resext to res with ||
-#if 1//def CUDA_IMPLEMENTATION
     if(resext!=0) res[k]=resext;
-#else
-    if(resext[i]!=0 || i==testpos[k]) res[k]=resext[i];
-#endif
 
   }//if/for
 }
@@ -365,11 +319,6 @@ int RobotConfigspace<ndof>::indicator2(const float* qs, const float* qe, int *re
     testnum[l]=(int)(norm/dq)+1; //start and end points included
     numthreads+=testnum[l];
   }
-
-  /*if(numthreads>numthreadsmax){
-    msg("error, thread limit reached")
-    return -1;
-  }*/
 
 #ifdef CUDA_IMPLEMENTATION
   int BLOCK = 256, GRID = (numthreads + BLOCK - 1)/BLOCK;

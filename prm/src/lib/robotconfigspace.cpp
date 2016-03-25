@@ -284,7 +284,8 @@ void kernel_indicator2(const Robot<ndof>* robot,
 
 
     Kinematics<ndof> kin(robot);
-    resext[i]=0;
+    //resext[i]=0;
+    int resext=0;
     kin.calculate(&q[0],1);
 
 
@@ -323,7 +324,8 @@ void kernel_indicator2(const Robot<ndof>* robot,
           polydata->get_polytope(poly1, k1);
           int result=collision4::seperating_vector_algorithm(poly0,poly1,kin.trafos[polydata->sys[k0]],kin.trafos[polydata->sys[k1]]);
           if(result!=0){
-            resext[i]=result;
+            //resext[i]=result;
+            resext=result;
           }
       }
     }
@@ -335,7 +337,8 @@ void kernel_indicator2(const Robot<ndof>* robot,
     //! reduce resext to res with ||
 #if 1//def CUDA_IMPLEMENTATION
     //TODO
-    if(resext[i]!=0) res[k]=resext[i];
+    //if(resext[i]!=0) res[k]=resext[i];
+    if(resext!=0) res[k]=resext;
 #else
     if(resext[i]!=0 || i==testpos[k]) res[k]=resext[i];
 #endif

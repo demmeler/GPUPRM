@@ -1866,17 +1866,6 @@ public:
       Nqlist=index;
 
 
-#if 1
-      printarr(dsp,mpisize);
-      printarr(cnt,mpisize);
-      printvar(disp);
-      printvar(count);
-      printarr(disps,mpisize);
-      printarr(counts,mpisize);
-      printvar(Nqlist);
-#endif
-
-
       //!
       //! calculate which edges exist
       //!
@@ -1886,9 +1875,7 @@ public:
       MPI_Request resrequest;
       MPI_Iallgatherv(resbufloc,count,MPI_INT,resbuf,counts,disps,MPI_INT,MPI_COMM_WORLD,&resrequest);
 
-
       calc_conn(resbufloc-disp, posqlist, numqlistleft, numqlist, leftconn, rightconn, dsp_, dsp_+cnt_);
-
 
       MPI_Status resstatus;
       MPI_Wait(&resrequest,&resstatus);
@@ -1896,7 +1883,17 @@ public:
       delete[] counts, disps;
 
 
+
   #ifndef NO_IO
+    #if 1
+      printarr(dsp,mpisize);
+      printarr(cnt,mpisize);
+      printvar(disp);
+      printvar(count);
+      printarr(disps,mpisize);
+      printarr(counts,mpisize);
+      printvar(Nqlist);
+    #endif
       printarr(qnew,ndof*num);
       printvar(num);
       printarr(qstart,ndof*nbuf);

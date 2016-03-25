@@ -90,6 +90,9 @@ int main(int argc, char** argv)
     prm.process_mpi3(num,nbuf,maxsteps, seed);
   }else if(prmversion==4){
     prm.process_mpi4(num,nbuf,maxsteps, seed);
+  }else{
+    msg("Error: prmprocess not valid");
+    return 0;
   }
 
   tock(trun);

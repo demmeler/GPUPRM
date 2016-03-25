@@ -1784,13 +1784,13 @@ public:
 
       Nqlist=index;
 
-
+#if 0
       printvar(disp);
       printvar(count);
       printarr(disps,mpisize);
       printarr(counts,mpisize);
       printvar(Nqlist);
-
+#endif
 
       space->indicator2_async_wait(configrequest);
 

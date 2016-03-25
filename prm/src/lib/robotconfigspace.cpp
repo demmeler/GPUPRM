@@ -473,7 +473,7 @@ int RobotConfigspace<ndof>::indicator2_async(const float* qs, const float* qe, i
     request=requeststack_id;
 
     //printarr(res,N);
-    printvar(numthreads);
+    //printvar(numthreads);
 
     return 0; //TODO error handling?
 }

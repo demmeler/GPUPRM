@@ -84,9 +84,11 @@ int main(int argc, char** argv)
 
 
   //prm.process_mpi(num,nbuf,maxsteps);
-  if(prmversion==3){
+  if(prmversion==2){
+    prm.process_mpi2(num,nbuf,maxsteps, seed);
+  }else if(prmversion==3){
     prm.process_mpi3(num,nbuf,maxsteps, seed);
-  }else{
+  }else if(prmversion==4){
     prm.process_mpi4(num,nbuf,maxsteps, seed);
   }
 

@@ -1850,7 +1850,6 @@ public:
       }
 
 
-
       find_neighbours(  0, dsp_,
                         qnew, qstartp, qendp,
                         poslistp, distlistp, nbufrest, index,

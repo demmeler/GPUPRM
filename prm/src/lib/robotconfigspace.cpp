@@ -232,10 +232,14 @@ int RobotConfigspace<ndof>::init(const int ressource_rank, const int ressource_s
   cudaassert(cudaMalloc((void**)&robotdev, sizeof(Robot<ndof>)));
   cudaassert(cudaMemcpy((void*)robotdev,(void*)robot, sizeof(Robot<ndof>), cudaMemcpyHostToDevice));
 
-  cudaassert(cudaMalloc((void**)&qdevbufferfrom, ndof*nbufqfrom*sizeof(float)));
-  cudaassert(cudaMalloc((void**)&qdevbufferto, ndof*nbufqto*sizeof(float)));
-  cudaassert(cudaMalloc((void**)&testnumdev, nbuftest*sizeof(int)));
-  cudaassert(cudaMalloc((void**)&testposdev, nbuftest*sizeof(int)));
+  qdevbufferfrom.resize(1,0x0);
+  cudaassert(cudaMalloc((void**)&qdevbufferfrom[0], ndof*nbufqfrom*sizeof(float)));
+  qdevbufferto.resize(1,0x0);
+  cudaassert(cudaMalloc((void**)&qdevbufferto[0], ndof*nbufqto*sizeof(float)));
+  testnumdev.resize(1,0x0);
+  cudaassert(cudaMalloc((void**)&testnumdev[0], nbuftest*sizeof(int)));
+  testposdev.resize(1,0x0);
+  cudaassert(cudaMalloc((void**)&testposdev[0], nbuftest*sizeof(int)));
   resdevbuffers.resize(1,0x0);
   cudaassert(cudaMalloc((void**)&resdevbuffers[0], nbufres*sizeof(int)));
   free_resdevbuffer_ids.insert(0);
@@ -435,6 +439,14 @@ int RobotConfigspace<ndof>::indicator2_async(const float* qs, const float* qe, i
         id=resdevbuffers.size();
         resdevbuffers.push_back(0x0);
         cudaassert(cudaMalloc((void**)&resdevbuffers[id], nbufres*sizeof(int)));
+        qdevbufferfrom.push_back((0x0);
+        cudaassert(cudaMalloc((void**)&qdevbufferfrom[id], ndof*nbufqfrom*sizeof(float)));
+        qdevbufferto.push_back((0x0);
+        cudaassert(cudaMalloc((void**)&qdevbufferto[id], ndof*nbufqto*sizeof(float)));
+        testnumdev.push_back((0x0);
+        cudaassert(cudaMalloc((void**)&testnumdev[id], nbuftest*sizeof(int)));
+        testposdev.push_back((0x0);
+        cudaassert(cudaMalloc((void**)&testposdev[id], nbuftest*sizeof(int)));
     }else{
         std::set<int>::iterator it=free_resdevbuffer_ids.begin();
         id=*it;
@@ -472,12 +484,12 @@ int RobotConfigspace<ndof>::indicator2_async(const float* qs, const float* qe, i
 
     for(int i=0;i<ndof;++i){
         //pointer inkrement in cuda??
-      cudaassert(cudaMemcpy((void*)(qdevbufferfrom+nbufqfrom*i),(void*)&(qs[offset*i]), N*sizeof(float), cudaMemcpyHostToDevice));
-      cudaassert(cudaMemcpy((void*)(qdevbufferto+nbufqto*i),(void*)&(qe[offset*i]), N*sizeof(float), cudaMemcpyHostToDevice));
+      cudaassert(cudaMemcpy((void*)(qdevbufferfrom[data.resdevbuffer_id]+nbufqfrom*i),(void*)&(qs[offset*i]), N*sizeof(float), cudaMemcpyHostToDevice));
+      cudaassert(cudaMemcpy((void*)(qdevbufferto[data.resdevbuffer_id]+nbufqto*i),(void*)&(qe[offset*i]), N*sizeof(float), cudaMemcpyHostToDevice));
     }
 
-    cudaassert(cudaMemcpy((void*)testposdev,(void*)testpos.data(), N*sizeof(int), cudaMemcpyHostToDevice));
-    cudaassert(cudaMemcpy((void*)testnumdev,(void*)testnum.data(), N*sizeof(int), cudaMemcpyHostToDevice));
+    cudaassert(cudaMemcpy((void*)testposdev[data.resdevbuffer_id],(void*)testpos.data(), N*sizeof(int), cudaMemcpyHostToDevice));
+    cudaassert(cudaMemcpy((void*)testnumdev[data.resdevbuffer_id],(void*)testnum.data(), N*sizeof(int), cudaMemcpyHostToDevice));
 
     kernel_indicator2<ndof><<<GRID,BLOCK>>>(robotdev,polydatadev,qdevbufferfrom,nbufqfrom,qdevbufferto,nbufqto,resdevbuffers[data.resdevbuffer_id],testposdev,testnumdev,N, numthreads);
 

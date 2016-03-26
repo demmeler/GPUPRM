@@ -126,17 +126,17 @@ private:
   bool devloaded;
 
   //!device storage for indicator querries
-  float* qdevbufferfrom; //GPU length nbufqfrom
+  std::vector<float*> qdevbufferfrom; //GPU length nbufqfrom
   int nbufqfrom;
-  float* qdevbufferto;   //GPU length nbufqto
+  std::vector<float*> qdevbufferto;   //GPU length nbufqto
   int nbufqto;
   std::vector<int*> resdevbuffers;    //GPU length nbufres
   std::set<int> free_resdevbuffer_ids;
 
   int nbufres;
 
-  int* testnumdev; //GPU length nbuftest
-  int* testposdev; //GPU length nbuftest
+  std::vector<int*> testnumdev; //GPU length nbuftest
+  std::vector<int*> testposdev; //GPU length nbuftest
   int nbuftest;
 
   float mins[ndof];

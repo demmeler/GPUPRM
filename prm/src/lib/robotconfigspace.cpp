@@ -491,7 +491,8 @@ int RobotConfigspace<ndof>::indicator2_async(const float* qs, const float* qe, i
     cudaassert(cudaMemcpy((void*)testposdev[data.resdevbuffer_id],(void*)testpos.data(), N*sizeof(int), cudaMemcpyHostToDevice));
     cudaassert(cudaMemcpy((void*)testnumdev[data.resdevbuffer_id],(void*)testnum.data(), N*sizeof(int), cudaMemcpyHostToDevice));
 
-    kernel_indicator2<ndof><<<GRID,BLOCK>>>(robotdev,polydatadev,qdevbufferfrom,nbufqfrom,qdevbufferto,nbufqto,resdevbuffers[data.resdevbuffer_id],testposdev,testnumdev,N, numthreads);
+    kernel_indicator2<ndof><<<GRID,BLOCK>>>(robotdev,polydatadev,qdevbufferfrom[data.resdevbuffer_id],nbufqfrom,qdevbufferto[data.resdevbuffer_id],
+                                            nbufqto,resdevbuffers[data.resdevbuffer_id],testposdev[data.resdevbuffer_id],testnumdev[data.resdevbuffer_id],N, numthreads);
 
   #else
     for(int k=0;k<N;++k){

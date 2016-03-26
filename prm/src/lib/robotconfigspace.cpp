@@ -426,8 +426,6 @@ int RobotConfigspace<ndof>::indicator2_async(const float* qs, const float* qe, i
     request_data data;
     data.res=res;
     data.N=N;
-    requeststack[requeststack_id]=data;
-    request=requeststack_id;
 
 #ifdef CUDA_IMPLEMENTATION
     int id;
@@ -490,6 +488,10 @@ int RobotConfigspace<ndof>::indicator2_async(const float* qs, const float* qe, i
     kernel_indicator2<ndof>(robot,polydata,qs,offset,qe,offset,res,testpos.data(),testnum.data(),N, numthreads);
 
   #endif
+
+
+    requeststack[requeststack_id]=data;
+    request=requeststack_id;
 
     //printarr(res,N);
     printvar(numthreads);

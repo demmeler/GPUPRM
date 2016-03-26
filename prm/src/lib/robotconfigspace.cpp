@@ -439,13 +439,13 @@ int RobotConfigspace<ndof>::indicator2_async(const float* qs, const float* qe, i
         id=resdevbuffers.size();
         resdevbuffers.push_back(0x0);
         cudaassert(cudaMalloc((void**)&resdevbuffers[id], nbufres*sizeof(int)));
-        qdevbufferfrom.push_back((0x0);
+        qdevbufferfrom.push_back(0x0);
         cudaassert(cudaMalloc((void**)&qdevbufferfrom[id], ndof*nbufqfrom*sizeof(float)));
-        qdevbufferto.push_back((0x0);
+        qdevbufferto.push_back(0x0);
         cudaassert(cudaMalloc((void**)&qdevbufferto[id], ndof*nbufqto*sizeof(float)));
-        testnumdev.push_back((0x0);
+        testnumdev.push_back(0x0);
         cudaassert(cudaMalloc((void**)&testnumdev[id], nbuftest*sizeof(int)));
-        testposdev.push_back((0x0);
+        testposdev.push_back(0x0);
         cudaassert(cudaMalloc((void**)&testposdev[id], nbuftest*sizeof(int)));
     }else{
         std::set<int>::iterator it=free_resdevbuffer_ids.begin();

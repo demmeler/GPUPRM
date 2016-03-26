@@ -3,6 +3,8 @@
 
 #include <string>
 #include <map>
+#include <vector>
+#include <set>
 
 #include "configspace.hpp"
 #include "robot.h"
@@ -128,7 +130,9 @@ private:
   int nbufqfrom;
   float* qdevbufferto;   //GPU length nbufqto
   int nbufqto;
-  int* resdevbuffer;    //GPU length nbufres
+  std::vector<int*> resdevbuffers;    //GPU length nbufres
+  std::set<int> free_resdevbuffer_ids;
+
   int nbufres;
 
   int* testnumdev; //GPU length nbuftest
@@ -141,6 +145,7 @@ private:
 
   int requeststack_id;
   struct request_data{
+      int resdevbuffer_id;
       int* res;
       int N;
   };

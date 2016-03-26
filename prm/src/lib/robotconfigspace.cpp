@@ -236,8 +236,9 @@ int RobotConfigspace<ndof>::init(const int ressource_rank, const int ressource_s
   cudaassert(cudaMalloc((void**)&qdevbufferto, ndof*nbufqto*sizeof(float)));
   cudaassert(cudaMalloc((void**)&testnumdev, nbuftest*sizeof(int)));
   cudaassert(cudaMalloc((void**)&testposdev, nbuftest*sizeof(int)));
-  cudaassert(cudaMalloc((void**)&resdevbuffer, nbufres*sizeof(int)));
-
+  resdevbuffers.resize(1,0x0);
+  cudaassert(cudaMalloc((void**)&resdevbuffers[0], nbufres*sizeof(int)));
+  free_resdevbuffer_ids.insert(0);
 #else
 
 
@@ -421,12 +422,33 @@ int RobotConfigspace<ndof>::indicator2_async(const float* qs, const float* qe, i
     assert(N<=nbuftest);
     assert(N<=nbufres);
 
+    ++requeststack_id;
+    request_data data;
+    data.res=res;
+    data.N=N;
+    requeststack[requeststack_id]=data;
+    request=requeststack_id;
+
+
 #ifdef CUDA_IMPLEMENTATION
+    int id;
+    if(free_resdevbuffer_ids.empty()){
+        msg("RobotConfigspace: adding new resdevbuffer");
+        id=resdevbuffers.size();
+        resdevbuffers.push_back(0x0);
+        cudaassert(cudaMalloc((void**)&resdevbuffers[id], nbufres*sizeof(int)));
+    }else{
+        std::set<int>::iterator it=free_resdevbuffer_ids.begin();
+        id=*it;
+        free_resdevbuffer_ids.erase(it);
+    }
+    data.resdevbuffer_id=id;
+
     int BLOCK = 256;
 
     //cudaassert(cudaMemcpy((void*)resdevbuffer,(void*)res,N*sizeof(int), cudaMemcpyHostToDevice));
     int GRIDN=(N + BLOCK - 1)/BLOCK;
-    set_kernel<int><<<GRIDN,BLOCK>>>(resdevbuffer,0,N);
+    set_kernel<int><<<GRIDN,BLOCK>>>(resdevbuffers[data.resdevbuffer_id],0,N);
 #endif
 
     //! calculate number of threads needed
@@ -457,7 +479,7 @@ int RobotConfigspace<ndof>::indicator2_async(const float* qs, const float* qe, i
     cudaassert(cudaMemcpy((void*)testposdev,(void*)testpos.data(), N*sizeof(int), cudaMemcpyHostToDevice));
     cudaassert(cudaMemcpy((void*)testnumdev,(void*)testnum.data(), N*sizeof(int), cudaMemcpyHostToDevice));
 
-    kernel_indicator2<ndof><<<GRID,BLOCK>>>(robotdev,polydatadev,qdevbufferfrom,nbufqfrom,qdevbufferto,nbufqto,resdevbuffer,testposdev,testnumdev,N, numthreads);
+    kernel_indicator2<ndof><<<GRID,BLOCK>>>(robotdev,polydatadev,qdevbufferfrom,nbufqfrom,qdevbufferto,nbufqto,resdevbuffers[data.resdevbuffer_id],testposdev,testnumdev,N, numthreads);
 
   #else
     for(int k=0;k<N;++k){
@@ -467,13 +489,6 @@ int RobotConfigspace<ndof>::indicator2_async(const float* qs, const float* qe, i
     kernel_indicator2<ndof>(robot,polydata,qs,offset,qe,offset,res,testpos.data(),testnum.data(),N, numthreads);
 
   #endif
-
-    ++requeststack_id;
-    request_data data;
-    data.res=res;
-    data.N=N;
-    requeststack[requeststack_id]=data;
-    request=requeststack_id;
 
     //printarr(res,N);
     printvar(numthreads);
@@ -489,7 +504,8 @@ int RobotConfigspace<ndof>::indicator2_async_wait(int request){
     request_data data=requeststack[request];
     requeststack.erase(it);
 #ifdef CUDA_IMPLEMENTATION
-    cudaassert(cudaMemcpy((void*)data.res,(void*)resdevbuffer,data.N*sizeof(int), cudaMemcpyDeviceToHost));
+    cudaassert(cudaMemcpy((void*)data.res,(void*)resdevbuffers[data.resdevbuffer_id],data.N*sizeof(int), cudaMemcpyDeviceToHost));
+    free_resdevbuffer_ids.insert(data.resdevbuffer_id);
 #else
 #endif
 

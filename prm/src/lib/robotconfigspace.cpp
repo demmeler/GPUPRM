@@ -421,6 +421,14 @@ int RobotConfigspace<ndof>::indicator2_async(const float* qs, const float* qe, i
     assert(N<=nbuftest);
     assert(N<=nbufres);
 
+#ifdef CUDA_IMPLEMENTATION
+    int BLOCK = 256;
+
+    //cudaassert(cudaMemcpy((void*)resdevbuffer,(void*)res,N*sizeof(int), cudaMemcpyHostToDevice));
+    int GRIDN=(N + BLOCK - 1)/BLOCK;
+    set_kernel<int><<<GRIDN,BLOCK>>>(resdevbuffer,0,N);
+#endif
+
     //! calculate number of threads needed
     std::vector<int> testnum(N,0);
     std::vector<int> testpos(N,0);
@@ -438,7 +446,7 @@ int RobotConfigspace<ndof>::indicator2_async(const float* qs, const float* qe, i
     }
 
   #ifdef CUDA_IMPLEMENTATION
-    int BLOCK = 256, GRID = (numthreads + BLOCK - 1)/BLOCK;
+    int GRID = (numthreads + BLOCK - 1)/BLOCK;
 
     for(int i=0;i<ndof;++i){
         //pointer inkrement in cuda??
@@ -448,11 +456,6 @@ int RobotConfigspace<ndof>::indicator2_async(const float* qs, const float* qe, i
 
     cudaassert(cudaMemcpy((void*)testposdev,(void*)testpos.data(), N*sizeof(int), cudaMemcpyHostToDevice));
     cudaassert(cudaMemcpy((void*)testnumdev,(void*)testnum.data(), N*sizeof(int), cudaMemcpyHostToDevice));
-
-
-    //cudaassert(cudaMemcpy((void*)resdevbuffer,(void*)res,N*sizeof(int), cudaMemcpyHostToDevice));
-    int GRIDN=(N + BLOCK - 1)/BLOCK;
-    set_kernel<int><<<GRIDN,BLOCK>>>(resdevbuffer,0,N);
 
     kernel_indicator2<ndof><<<GRID,BLOCK>>>(robotdev,polydatadev,qdevbufferfrom,nbufqfrom,qdevbufferto,nbufqto,resdevbuffer,testposdev,testnumdev,N, numthreads);
 

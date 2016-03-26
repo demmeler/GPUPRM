@@ -1,8 +1,7 @@
-#ifndef VERTEXLIST3_H
-#define VERTEXLIST3_H
+#ifndef PRMSOLVER_H
+#define PRMSOLVER_H
 
 #include <mpi.h>
-#include <omp.h>
 
 #include <map>
 #include <vector>
@@ -19,30 +18,15 @@
 
 
 
-#define VERTEXLIST_N 1024*1024
-#define VERTEXLIST_BLOCK 256
 
 
 
 template<int ndof>
-class vertexlist{
+class PRMSolver{
 
     //! *******************
     //! *    subtypes     *
     //! *******************
-
-#if 0
-  //!lexikographic comparison
-  struct comparer{
-    bool operator() (const vertex& l, const vertex& r) const
-    {
-      for(int i=0;i<ndof;++i){
-        if(l.val[i]<r.val[i])return true;
-      }
-      return false;
-    }
-  };
-#endif
 
   struct block;
 
@@ -73,6 +57,12 @@ class vertexlist{
     int blocknum;     //number of used blocks
   };
 
+  struct dijkstra_result{
+    std::vector<int> parent; //length newblockpos
+    std::vector<float> dist; //length newblockpos
+    std::vector<int> path; //computed path
+  };
+
     //! *******************
     //! *      class      *
     //! *******************
@@ -80,19 +70,19 @@ class vertexlist{
 
 public:
 
-  vertexlist(Configspace<ndof> *space_, float H_, float D_, int N=1024*1024, int blocksize=256)
+  PRMSolver(Configspace<ndof> *space_, float H_, float D_, int N=1024*1024, int blocksize=256)
     :N(N),
     blocksize(blocksize)
   {
 
-    int connectivity=20;
+    int connectivity=20; //pi*daumen wert fuer reservierung
 
     graphl.qstorage.resize(ndof*N);
     graphl.surrnum.resize(N);
     graphl.edgelists.resize(N);
     graphl.edgeweights.resize(N);
     graphl.blocks.resize(N/blocksize);
-    graphl.from.reserve(N*connectivity); //pi*daumen wert
+    graphl.from.reserve(N*connectivity);
     graphl.to.reserve(N*connectivity);
     graphl.weights.reserve(N*connectivity);
 
@@ -128,178 +118,14 @@ public:
     space=space_;
   }
 
-  ~vertexlist(){
-    //nicht ganz sicher wie ...
+  ~PRMSolver(){
+    //nothing to do
   }
 
   int init(const float* qstart, const float* qend){
     i0l=insert(qstart,graphl);
     i0r=insert(qend,graphr);
   }
-
-  //!insert node q, data of surrnum and edges are not modified -> position returned for this
-  int insert(const float* q){return insert(q,graphl);}
-  int insert(const float* q, graph& g){
-    return insert(q,1,g);
-  }
-
-  //!insert node q, data of surrnum and edges are not modified -> position returned for this
-  int insert(const float* q, const int offset, graph& g){
-    int key=calc_key(q[0]);
-    piterator it = g.map.find(key);
-    block *b;
-    int fall=0;
-    int size,size2,pos,num;
-    if(it==g.map.end()){
-      size2=g.blocknum;
-      size=g.newblockpos;
-
-      b=&(g.blocks[g.blocknum++]);
-      g.map[key]=b;
-      b->pos=g.newblockpos;
-      g.newblockpos+=blocksize;
-      if(g.newblockpos>N) return -1;
-      b->num=0;
-      b->acceptance_prob=1.0;
-    }else{
-      size=g.newblockpos;
-      size2=g.blocknum;
-      fall=1;
-
-      b=it->second;
-      num=b->num;
-      pos=b->pos;
-      while(b->num>=blocksize){
-        b=b->next;
-      }
-    }
-    //printvar(b->pos);
-    //printvar(b->num);
-    int position=b->pos+b->num++;
-    int qposition=ndof*position;
-    for(int i=0;i<ndof;++i){
-      g.qstorage[qposition+i]=q[offset*i];
-    }
-    //surrnum[position]=0;
-    if(b->num>=blocksize){
-      block *bnew=&(g.blocks[g.blocknum++]);
-      b->next=bnew;
-      bnew->pos=g.newblockpos;
-      g.newblockpos+=blocksize;
-      if(g.newblockpos>N) return -1;
-      bnew->num=0;
-      bnew->acceptance_prob=b->acceptance_prob/2.0;
-    }
-    return position;
-  }
-
-
-  //! get list of all vertices nearer than D
-  //! qref: vertex to process
-  //! qlist: buffer to store neighbour candidates, struct of arrays
-  //! offset: i-th component of k-th vec in qlist is qlist[i*offset+k]
-  //! nbuf: length(qlist)
-  //! D: maximal distance
-  inline int get_near_vertices(const float* qref, float* qlist, const int& nbuf, const int& offset, graph& g){
-    const int keylower=calc_key(qref[0]-D);
-    piterator begin=g.map.lower_bound(keylower);
-    const int keyupper=calc_key(qref[0]+D);
-    piterator end=g.map.upper_bound(keyupper);
-    int index[ndof];
-    for(int i=0;i<ndof;++i){
-        index[i]=i*offset;
-    }
-    //printvar(begin->first);
-    //printvar(end->first);
-    for(;!(begin==end);++begin){
-      //printvar(begin->first);
-      block *b=begin->second;
-      //printvar(b->pos);
-      bool more=true;
-      while(more){
-        more=b->num>=blocksize;
-        printvar(b->num);
-        const int pos=ndof*b->pos;
-        const int max=pos+ndof*b->num;
-        for(int k=pos;k<max;k+=ndof){
-          //!calc norm
-          float normsq=0;
-          for(int i=0;i<ndof;++i){
-            float diff=g.qstorage[k+i]-qref[i];
-            //printvar(diff);
-            normsq+=diff*diff;
-          }
-          //!compare norm
-          if(normsq<D2){
-            //printvar(k);
-            //! store neighbour in buffer
-            for(int i=0;i<ndof;++i){
-              qlist[index[i]++]=g.qstorage[k+i];
-            }
-            //! terminate if buffer full
-            if(index[0]==nbuf)return nbuf;
-          }
-        }//for
-        b=b->next;
-      }
-    }//for
-    //!number of written q's
-    return index[0];
-  }
-
-  inline int get_near_vertices(const float* qref, const int& offsetref, float* qlist, int* posqlist, float* distlist, const int& nbuf, const int& offset, graph& g){
-    const int keylower=calc_key(qref[0]-D);
-    piterator begin=g.map.lower_bound(keylower);
-    const int keyupper=calc_key(qref[0]+D);
-    piterator end=g.map.upper_bound(keyupper);
-    int index[ndof];
-    for(int i=0;i<ndof;++i){
-        index[i]=i*offset;
-    }
-    //printvar(begin->first);
-    //printvar(end->first);
-    for(;!(begin==end);++begin){
-      //printvar(begin->first);
-      block *b=begin->second;
-      //printvar(b->pos);
-      bool more=true;
-      while(more){
-        more=b->num>=blocksize;
-        //printvar(b->num);
-        const int pos=b->pos;
-        const int max=pos+b->num;
-        for(int l=pos;l<max;++l){
-          int k=ndof*l;
-          //!calc norm
-          float normsq=0;
-          for(int i=0;i<ndof;++i){
-            float diff=g.qstorage[k+i]-qref[offsetref*i];
-            //printvar(diff);
-            normsq+=diff*diff;
-          }
-          //!compare norm
-          if(normsq<D2){
-            //printvar(k);
-            //! store neighbour in buffer
-            posqlist[index[0]]=l;
-            distlist[index[0]]=sqrt(normsq);
-            for(int i=0;i<ndof;++i){
-              qlist[index[i]++]=g.qstorage[k+i];
-            }
-            //! terminate if buffer full
-            if(index[0]==nbuf)return nbuf;
-          }
-        }//for
-        b=b->next;
-      }
-    }//for
-    //!number of written q's
-    return index[0];
-  }
-
-
-
-
 
 
 
@@ -851,12 +677,6 @@ public:
 
     MPI_Barrier(MPI_COMM_WORLD);
 
-    /*
-    printvar(seed);
-    printvar(rank);
-    printvar(size);
-    printvar(num);
-    */
     assert(num%size==0);
 
     float *qnew=new float[num*ndof];
@@ -1240,12 +1060,6 @@ public:
 
     MPI_Barrier(MPI_COMM_WORLD);
 
-    /*
-    printvar(seed);
-    printvar(rank);
-    printvar(size);
-    printvar(num);
-    */
     assert(num%size==0);
     int cnt_=num/size;
     int *dsp=new int[size];
@@ -1287,41 +1101,6 @@ public:
     return 0;
   }
 
-  inline int get_random_nodes(graph &g, const int start, const int end, float *qnew){
-      for(int j=start;j<end;++j){
-        bool dismiss;
-        do{
-          //!choose random block
-          int k;
-          block *b;
-          do{
-              k=rand()%g.blocknum;
-              b=&(g.blocks[k]);
-          }while(b->num==0);
-          //!chose random vertex
-          int m=(b->pos+rand()%b->num);
-          int l;
-          int x=1+g.surrnum[m];
-          int prob=RAND_MAX/(x*x*x);
-          if(rand()>prob){
-            dismiss=true;
-          }else{
-            l=ndof*m;
-            for(int i=0;i<ndof;++i){
-              qnew[ndof*j+i]=g.qstorage[l+i]-D+2*D*((float)rand()/RAND_MAX);
-            }
-
-            dismiss=space->indicator(&qnew[ndof*j])!=0;
-          }
-  #ifndef NO_IO
-          printvar(l);
-          printarr(&qnew[ndof*j],ndof);
-          printvar(dismiss);
-  #endif
-        }while(dismiss);
-      }
-  }
-
 
   inline int processing_step3(const int mpirank, const int mpisize,
                              float* qnew, const int num, const int *dsp, const int *cnt,
@@ -1333,78 +1112,9 @@ public:
       //! create nodes qnew randomly
       //!
 
-#if 0
-      //!from left graph
-      for(int j=0;j<num/2;++j){
-        bool dismiss;
-        do{
-          //!choose random block
-          int k;
-          block *b;
-          do{
-              k=rand()%graphl.blocknum;
-              b=&(graphl.blocks[k]);
-          }while(b->num==0);
-          //!chose random vertex
-          int m=(b->pos+rand()%b->num);
-          int l;
-          int x=1+graphl.surrnum[m];
-          int prob=RAND_MAX/(x*x*x);
-          if(rand()>prob){
-            dismiss=true;
-          }else{
-            l=ndof*m;
-            for(int i=0;i<ndof;++i){
-              qnew[ndof*j+i]=graphl.qstorage[l+i]-D+2*D*((float)rand()/RAND_MAX);
-            }
-
-            dismiss=space->indicator(&qnew[ndof*j])!=0;
-          }
-  #ifndef NO_IO
-          printvar(l);
-          printarr(&qnew[ndof*j],ndof);
-          printvar(dismiss);
-  #endif
-        }while(dismiss);
-      }
-      //!from right graph
-      for(int j=num/2;j<num;++j){
-        bool dismiss;
-        do{
-          //!choose random block
-          int k;
-          block *b;
-          do{
-              k=rand()%graphr.blocknum;
-              b=&(graphr.blocks[k]);
-          }while(b->num==0);
-          //!chose random vertex
-          int m=(b->pos+rand()%b->num);
-          int l;
-          int x=1+graphr.surrnum[m];
-          int prob=RAND_MAX/(x*x*x);
-          if(rand()>prob){
-            dismiss=true;
-          }else{
-            l=ndof*m;
-            for(int i=0;i<ndof;++i){
-              qnew[ndof*j+i]=graphr.qstorage[l+i]-D+2*D*((float)rand()/RAND_MAX);
-            }
-            dismiss=space->indicator(&qnew[ndof*j])!=0;
-          }
-  #ifndef NO_IO
-          printvar(l);
-          printarr(&qnew[ndof*j],ndof);
-          printvar(dismiss);
-  #endif
-        }while(dismiss);
-      }
-#else
-
       get_random_nodes(graphl,0,num/2,qnew);
       get_random_nodes(graphr,num/2,num,qnew);
 
-#endif
 
       //!
       //! make list of potential neighbours for all new nodes
@@ -1651,53 +1361,6 @@ public:
 
 
 
-  inline void find_neighbours(int from, int to,
-                              float *qnew, float *&qstartp, float *&qendp,
-                              int *&poslistp, float *&distlistp, int &nbufrest, int &index,
-                              int *posqlist, int *numqlistleft, int *numqlist,
-                              int nbuf, int offset
-                              ){
-
-      for(int j=from;j<to;++j){
-        posqlist[j]=index;
-
-        int writtenleft=get_near_vertices(&qnew[ndof*j],1,qendp,poslistp,distlistp,nbufrest,offset,graphl);
-
-        for(int i=0;i<ndof;++i)
-        for(int k=0;k<writtenleft;++k){
-          qstartp[k+offset*i]=qnew[ndof*j+i];
-        }
-        numqlistleft[j]=writtenleft;
-        index+=writtenleft;
-
-        assert(writtenleft<=nbufrest);
-
-        qstartp+=writtenleft;
-        qendp+=writtenleft;
-        poslistp+=writtenleft;
-        distlistp+=writtenleft;
-        nbufrest-=writtenleft;
-
-        int writtenright=get_near_vertices(&qnew[ndof*j],1,qendp,poslistp,distlistp,nbufrest,offset,graphr);
-
-        for(int i=0;i<ndof;++i)
-        for(int k=0;k<writtenright;++k){
-          qstartp[k+offset*i]=qnew[ndof*j+i];
-        }
-        numqlist[j]=writtenleft+writtenright;
-        index+=writtenright;
-
-        assert(writtenright<=nbufrest);
-
-
-        qstartp+=writtenright;
-        qendp+=writtenright;
-        poslistp+=writtenright;
-        distlistp+=writtenright;
-        nbufrest-=writtenright;
-      }
-
-  }
 
 
 
@@ -1733,12 +1396,6 @@ public:
 
     MPI_Barrier(MPI_COMM_WORLD);
 
-    /*
-    printvar(seed);
-    printvar(rank);
-    printvar(size);
-    printvar(num);
-    */
     assert(num%size==0);
     int cnt_=num/size;
     int *dsp=new int[size];
@@ -1885,7 +1542,6 @@ public:
 
 
   #ifndef NO_IO
-    #if 1
       printarr(dsp,mpisize);
       printarr(cnt,mpisize);
       printvar(disp);
@@ -1893,19 +1549,6 @@ public:
       printarr(disps,mpisize);
       printarr(counts,mpisize);
       printvar(Nqlist);
-    #endif
-      printarr(qnew,ndof*num);
-      printvar(num);
-      printarr(qstart,ndof*nbuf);
-      printarr(qend,ndof*nbuf);
-      printvar(Nqlist);
-      printarr(posqlist,num);
-      printarr(numqlist,num);
-      printarr(numqlistleft,num);
-      printvar(offset);
-      printarr(distlist,nbuf);
-      printarr(poslist,nbuf);
-      printarr(resbuf,nbuf);
   #endif
 
 
@@ -2002,6 +1645,302 @@ public:
 
 
 
+
+
+
+
+  //! **********************
+  //! *                    *
+  //! *    help methods    *
+  //! *                    *
+  //! **********************
+
+  //!
+  //! \brief calc_key   mapping q -> key
+  //! \param component  q[0]
+  //! \return
+  //!
+  inline int calc_key(const float& component){
+    return (int)(component*factor);
+  }
+
+
+  //!insert node q, data of surrnum and edges are not modified -> position returned for this
+  int insert(const float* q, graph& g){
+    return insert(q,1,g);
+  }
+
+  //!insert node q, data of surrnum and edges are not modified -> position returned for this
+  int insert(const float* q, const int offset, graph& g){
+    int key=calc_key(q[0]);
+    piterator it = g.map.find(key);
+    block *b;
+    int fall=0;
+    int size,size2,pos,num;
+    if(it==g.map.end()){
+      size2=g.blocknum;
+      size=g.newblockpos;
+
+      b=&(g.blocks[g.blocknum++]);
+      g.map[key]=b;
+      b->pos=g.newblockpos;
+      g.newblockpos+=blocksize;
+      if(g.newblockpos>N) return -1;
+      b->num=0;
+      b->acceptance_prob=1.0;
+    }else{
+      size=g.newblockpos;
+      size2=g.blocknum;
+      fall=1;
+
+      b=it->second;
+      num=b->num;
+      pos=b->pos;
+      while(b->num>=blocksize){
+        b=b->next;
+      }
+    }
+    //printvar(b->pos);
+    //printvar(b->num);
+    int position=b->pos+b->num++;
+    int qposition=ndof*position;
+    for(int i=0;i<ndof;++i){
+      g.qstorage[qposition+i]=q[offset*i];
+    }
+    //surrnum[position]=0;
+    if(b->num>=blocksize){
+      block *bnew=&(g.blocks[g.blocknum++]);
+      b->next=bnew;
+      bnew->pos=g.newblockpos;
+      g.newblockpos+=blocksize;
+      if(g.newblockpos>N) return -1;
+      bnew->num=0;
+      bnew->acceptance_prob=b->acceptance_prob/2.0;
+    }
+    return position;
+  }
+
+
+  //! get list of all vertices nearer than D
+  //! qref: vertex to process
+  //! qlist: buffer to store neighbour candidates, struct of arrays
+  //! offset: i-th component of k-th vec in qlist is qlist[i*offset+k]
+  //! nbuf: length(qlist)
+  //! D: maximal distance
+  inline int get_near_vertices(const float* qref, float* qlist, const int& nbuf, const int& offset, graph& g){
+    const int keylower=calc_key(qref[0]-D);
+    piterator begin=g.map.lower_bound(keylower);
+    const int keyupper=calc_key(qref[0]+D);
+    piterator end=g.map.upper_bound(keyupper);
+    int index[ndof];
+    for(int i=0;i<ndof;++i){
+        index[i]=i*offset;
+    }
+    //printvar(begin->first);
+    //printvar(end->first);
+    for(;!(begin==end);++begin){
+      //printvar(begin->first);
+      block *b=begin->second;
+      //printvar(b->pos);
+      bool more=true;
+      while(more){
+        more=b->num>=blocksize;
+        printvar(b->num);
+        const int pos=ndof*b->pos;
+        const int max=pos+ndof*b->num;
+        for(int k=pos;k<max;k+=ndof){
+          //!calc norm
+          float normsq=0;
+          for(int i=0;i<ndof;++i){
+            float diff=g.qstorage[k+i]-qref[i];
+            //printvar(diff);
+            normsq+=diff*diff;
+          }
+          //!compare norm
+          if(normsq<D2){
+            //printvar(k);
+            //! store neighbour in buffer
+            for(int i=0;i<ndof;++i){
+              qlist[index[i]++]=g.qstorage[k+i];
+            }
+            //! terminate if buffer full
+            if(index[0]==nbuf)return nbuf;
+          }
+        }//for
+        b=b->next;
+      }
+    }//for
+    //!number of written q's
+    return index[0];
+  }
+
+  //!
+  //! \brief get_near_vertices  get nodes nearer than D to base node
+  //! \param qref               base node
+  //! \param offsetref          offset for base node
+  //! \param qlist              near nodes data
+  //! \param posqlist           near nodes indices
+  //! \param distlist           distances
+  //! \param nbuf               maximal number of near nodes (arrays must have length nbuf resp. ndof*nbuf)
+  //! \param offset             offset of buffers
+  //! \param g                  the graph
+  //! \return
+  //!
+  inline int get_near_vertices(const float* qref, const int& offsetref, float* qlist, int* posqlist, float* distlist, const int& nbuf, const int& offset, graph& g){
+    const int keylower=calc_key(qref[0]-D);
+    piterator begin=g.map.lower_bound(keylower);
+    const int keyupper=calc_key(qref[0]+D);
+    piterator end=g.map.upper_bound(keyupper);
+    int index[ndof];
+    for(int i=0;i<ndof;++i){
+        index[i]=i*offset;
+    }
+    //printvar(begin->first);
+    //printvar(end->first);
+    for(;!(begin==end);++begin){
+      //printvar(begin->first);
+      block *b=begin->second;
+      //printvar(b->pos);
+      bool more=true;
+      while(more){
+        more=b->num>=blocksize;
+        //printvar(b->num);
+        const int pos=b->pos;
+        const int max=pos+b->num;
+        for(int l=pos;l<max;++l){
+          int k=ndof*l;
+          //!calc norm
+          float normsq=0;
+          for(int i=0;i<ndof;++i){
+            float diff=g.qstorage[k+i]-qref[offsetref*i];
+            //printvar(diff);
+            normsq+=diff*diff;
+          }
+          //!compare norm
+          if(normsq<D2){
+            //printvar(k);
+            //! store neighbour in buffer
+            posqlist[index[0]]=l;
+            distlist[index[0]]=sqrt(normsq);
+            for(int i=0;i<ndof;++i){
+              qlist[index[i]++]=g.qstorage[k+i];
+            }
+            //! terminate if buffer full
+            if(index[0]==nbuf)return nbuf;
+          }
+        }//for
+        b=b->next;
+      }
+    }//for
+    //!number of written q's
+    return index[0];
+  }
+
+  //!
+  //! \brief get_random_nodes   get random feasible nodes from graph
+  //! \param g                  the graph
+  //! \param start              start index in qnew
+  //! \param end                end (excl.) index
+  //! \param qnew               node storage (array of structs)
+  //! \return
+  //!
+  inline int get_random_nodes(graph &g, const int start, const int end, float *qnew){
+      for(int j=start;j<end;++j){
+        bool dismiss;
+        do{
+          //!choose random block
+          int k;
+          block *b;
+          do{
+              k=rand()%g.blocknum;
+              b=&(g.blocks[k]);
+          }while(b->num==0);
+          //!chose random vertex
+          int m=(b->pos+rand()%b->num);
+          int l;
+          int x=1+g.surrnum[m];
+          int prob=RAND_MAX/(x*x*x);
+          if(rand()>prob){
+            dismiss=true;
+          }else{
+            l=ndof*m;
+            for(int i=0;i<ndof;++i){
+              qnew[ndof*j+i]=g.qstorage[l+i]-D+2*D*((float)rand()/RAND_MAX);
+            }
+
+            dismiss=space->indicator(&qnew[ndof*j])!=0;
+          }
+  #ifndef NO_IO
+          printvar(l);
+          printarr(&qnew[ndof*j],ndof);
+          printvar(dismiss);
+  #endif
+        }while(dismiss);
+      }
+  }
+
+
+
+  inline void find_neighbours(int from, int to,
+                              float *qnew, float *&qstartp, float *&qendp,
+                              int *&poslistp, float *&distlistp, int &nbufrest, int &index,
+                              int *posqlist, int *numqlistleft, int *numqlist,
+                              int nbuf, int offset
+                              ){
+
+      for(int j=from;j<to;++j){
+        posqlist[j]=index;
+
+        int writtenleft=get_near_vertices(&qnew[ndof*j],1,qendp,poslistp,distlistp,nbufrest,offset,graphl);
+
+        for(int i=0;i<ndof;++i)
+        for(int k=0;k<writtenleft;++k){
+          qstartp[k+offset*i]=qnew[ndof*j+i];
+        }
+        numqlistleft[j]=writtenleft;
+        index+=writtenleft;
+
+        assert(writtenleft<=nbufrest);
+
+        qstartp+=writtenleft;
+        qendp+=writtenleft;
+        poslistp+=writtenleft;
+        distlistp+=writtenleft;
+        nbufrest-=writtenleft;
+
+        int writtenright=get_near_vertices(&qnew[ndof*j],1,qendp,poslistp,distlistp,nbufrest,offset,graphr);
+
+        for(int i=0;i<ndof;++i)
+        for(int k=0;k<writtenright;++k){
+          qstartp[k+offset*i]=qnew[ndof*j+i];
+        }
+        numqlist[j]=writtenleft+writtenright;
+        index+=writtenright;
+
+        assert(writtenright<=nbufrest);
+
+
+        qstartp+=writtenright;
+        qendp+=writtenright;
+        poslistp+=writtenright;
+        distlistp+=writtenright;
+        nbufrest-=writtenright;
+      }
+
+  }
+
+
+  //!
+  //! \brief calc_conn      calculate, which nodes have edges and therefore can be inserted in graphl/graphr
+  //! \param resbuf         0=edge, other value=no edge
+  //! \param posqlist       displacement array
+  //! \param numqlistleft   count array 1
+  //! \param numqlist       count array 2
+  //! \param leftconn       result graphl
+  //! \param rightconn      result graphr
+  //! \param from           start index to treat
+  //! \param to             end (excl.) index
+  //!
     inline void calc_conn(const int *resbuf, const int *posqlist, const int *numqlistleft, const int *numqlist, int *leftconn, int *rightconn, const int from, const int to){
         for(int j=from;j<to;++j){
 
@@ -2033,15 +1972,16 @@ public:
 
 
 
-  //!for dijkstra at the end
-  struct dijkstra_result{
-    std::vector<int> parent; //length newblockpos
-    std::vector<float> dist; //length newblockpos
-    std::vector<int> path; //computed path
-  };
 
 
-
+    //!
+    //! \brief do_dijkstra  Dijkstra algorithm implementation
+    //! \param g            the graph
+    //! \param d            the result
+    //! \param from         start index
+    //! \param to           goal index
+    //! \return
+    //!
   int do_dijkstra(graph& g, dijkstra_result& d, int from, int to){
     d.dist.assign(g.newblockpos,FLT_MAX);
     d.dist[from]=0.0;
@@ -2089,12 +2029,19 @@ public:
 
 
 
-  inline int calc_key(const float& component){
-    return (int)(component*factor);
-  }
+
+
+
+
+  //! ************************
+  //! *                      *
+  //! *    output methods    *
+  //! *                      *
+  //! ************************
+
 
   void print(){
-    msg("-------vertexlist-------");
+    msg("-------PRMSolver-------");
     msg("graphl:");
     for(piterator it=graphl.map.begin();it!=graphl.map.end();++it){
       block *b=it->second;
@@ -2278,4 +2225,4 @@ private:
 };
 
 
-#endif // VERTEXLIST3_H
+#endif // PRMSOLVER3_H

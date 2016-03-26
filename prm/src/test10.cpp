@@ -10,7 +10,7 @@
 
 #include "lib/robotconfigspace.h"
 #include "lib/polytope.h"
-#include "lib/vertexlist3.h"
+#include "lib/prmsolver.h"
 
 
 using namespace std;
@@ -56,7 +56,7 @@ int main(int argc, char** argv)
   RobotConfigspace<ndof> space("config1",dq, confignbuf);
   space.init(rank,size);
 
-  vertexlist<ndof> prm(&space, D, D, maxstorage, blocksize);
+  PRMSolver<ndof> prm(&space, D, D, maxstorage, blocksize);
 
 
   float qstart[ndof];

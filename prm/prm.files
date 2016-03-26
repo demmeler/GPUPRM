@@ -45,7 +45,7 @@ src/lib/robot.h
 src/lib/robotconfigspace.cpp
 src/lib/robotconfigspace.h
 src/lib/util.hpp
-src/lib/vertexlist3.h
+src/lib/prmsolver.h
 src/colltest.cpp
 src/colltest2.cpp
 src/colltestcuda.cpp

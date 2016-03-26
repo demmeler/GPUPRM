@@ -40,7 +40,7 @@ int main(int argc, char** argv)
   float D=(argc>=5 ? atof(argv[4]) : 1.0);
   int seed=(argc>=6 ? atoi(argv[5]) : 0 );
   int blocksize=(argc>=7 ? atoi(argv[6]) : 256);
-  int prmversion=(argc>=8 ? atoi(argv[7]) : 3 );
+  int prmversion=(argc>=8 ? atoi(argv[7]) : 5 );
   int maxstorage=1024*1024;//(argc>=8 ? atoi(argv[7]) : 1024*1024);
   int maxsteps=100000;
 
@@ -90,7 +90,9 @@ int main(int argc, char** argv)
     prm.process_mpi3(num,nbuf,maxsteps, seed);
   }else if(prmversion==4){
     prm.process_mpi4(num,nbuf,maxsteps, seed);
-  }else{
+  }else if(prmversion==5){
+      prm.process_mpi5(num,nbuf,maxsteps, seed);
+  }else {
     msg("Error: prmprocess not valid");
     return 0;
   }

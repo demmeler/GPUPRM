@@ -39,6 +39,8 @@ class PRMSolver{
 
   typedef std::map<int,block*> pmap;
   typedef typename pmap::iterator piterator;
+  typedef typename pmap::const_iterator const_piterator;
+
 
   struct graph{
     pmap map; //map for sorting on high level
@@ -1112,8 +1114,8 @@ public:
       //! create nodes qnew randomly
       //!
 
-      get_random_nodes(graphl,0,num/2,qnew);
-      get_random_nodes(graphr,num/2,num,qnew);
+      get_random_nodes(graphl,0,num/2,qnew,D,space);
+      get_random_nodes(graphr,num/2,num,qnew,D,space);
 
 
       //!
@@ -1453,8 +1455,8 @@ public:
       //! create nodes qnew randomly
       //!
 
-      get_random_nodes(graphl,0,num/2,qnew);
-      get_random_nodes(graphr,num/2,num,qnew);
+      get_random_nodes(graphl,0,num/2,qnew,D,space);
+      get_random_nodes(graphr,num/2,num,qnew,D,space);
 
 
       //!
@@ -1645,6 +1647,406 @@ public:
 
 
 
+  //! *******************
+  //! *                 *
+  //! *    process 4    *
+  //! *                 *
+  //! *******************
+
+
+
+  //seed only relevant for root
+  int process_mpi5(const int numall, const int nbuf, const int maxsteps, int seed){
+    //int MPI_Bcast( void *buffer, int count, MPI_Datatype datatype, int root, MPI_Comm comm );
+    MPI_Bcast( &seed, 1, MPI_INT, 0, MPI_COMM_WORLD );
+    srand(seed);
+
+    int rank=0, size=1;
+    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+    MPI_Comm_size(MPI_COMM_WORLD, &size);
+
+
+    MPI_Barrier(MPI_COMM_WORLD);
+
+    assert(numall%(size*2)==0);
+
+    int num=numall/2;
+
+    int cnt_=num/size;
+    int *dsp=new int[size];
+    int *cnt=new int[size];
+    for(int r=0; r<size;++r){
+      dsp[r]=cnt_*r;
+      cnt[r]=cnt_;
+    }
+
+    int offset=nbuf;
+
+    float *qnew=new float[ndof*num];
+    int *leftconn=new int[num];
+    int *rightconn=new int[num];
+    float *qstartlist=new float[ndof*nbuf];
+    float *qendlist=new float[ndof*nbuf];
+    int *resbuf=new int[nbuf];
+    int *resbufloc=new int[nbuf];
+    int *poslist=new int[nbuf];
+    float *distlist=new float[nbuf];
+
+
+    float *qnew2=new float[ndof*num];
+    int *leftconn2=new int[num];
+    int *rightconn2=new int[num];
+    float *qstartlist2=new float[ndof*nbuf];
+    float *qendlist2=new float[ndof*nbuf];
+    int *resbuf2=new int[nbuf];
+    int *resbufloc2=new int[nbuf];
+    int *poslist2=new int[nbuf];
+    float *distlist2=new float[nbuf];
+
+
+    processor5 processor1(rank,size,
+                         qnew, num, dsp, cnt,
+                         leftconn, rightconn,
+                         poslist, distlist,
+                         qstartlist,qendlist,resbuf, resbufloc,nbuf,offset,
+                         this);
+
+    processor5 processor2(rank,size,
+                         qnew2, num, dsp, cnt,
+                         leftconn2, rightconn2,
+                         poslist2, distlist2,
+                         qstartlist2,qendlist2,resbuf2, resbufloc2,nbuf,offset,
+                         this);
+
+
+    for(int i=0;i<maxsteps;++i){
+      processor1.processing_step_part0();
+      processor2.processing_step_part0();
+
+      processor1.processing_step_part1();
+      processor2.processing_step_part1();
+
+
+      processor2.processing_step_part2();
+      processor1.processing_step_part2();
+
+      int flag1=processor1.processing_step_part3();
+      int flag2=processor2.processing_step_part3();
+      int flag=(flag1==1 || flag2==1 ? 1 : 0);
+
+      printvar(flag1);
+      printvar(flag2);
+      printvar(flag);
+
+
+      if(flag==1){
+        msg("connection found");
+        printvar(i);
+        break;
+      }else if(i%50==0){
+        printvar(i);
+      }
+    }
+
+    delete[] qnew, qstartlist,qendlist, resbuf, resbufloc, leftconn, rightconn, poslist, distlist, dsp, cnt,
+            qnew2, qstartlist2,qendlist2, resbuf2, resbufloc2, leftconn2, rightconn2, poslist2, distlist2;
+
+
+    msg("process_mpi5 finished");
+    return 0;
+  }
+
+
+  friend class processor5;
+
+  class processor5{
+  private:
+      const int mpirank;
+      const int mpisize;
+      float* qnew;
+      const int num;
+      const int *dsp;
+      const int *cnt;
+      int *leftconn;
+      int *rightconn;
+      int *poslist;
+      float *distlist;
+      float* qstart;
+      float* qend; int* resbuf;
+      int *resbufloc;
+      const int nbuf;
+      const int offset;
+
+      int dsp_, cnt_;
+      int *posqlist;
+      int *numqlist;
+      int *numqlistleft;
+      int Nqlist;             //sum(numqlist)
+
+      int index;
+      float *qstartp;
+      float *qendp;
+      int *poslistp;
+      float *distlistp;
+      int nbufrest=nbuf;
+
+      int configrequest;
+      int disp,count;
+      int *counts, *disps;
+
+      PRMSolver *in;
+
+      float &D;
+      Configspace<ndof>* &space;
+      graph &graphl;
+      graph &graphr;
+
+  public:
+    processor5( const int mpirank_, const int mpisize_,
+                                   float* qnew_, const int num_, const int *dsp_, const int *cnt_,
+                                   int *leftconn_, int *rightconn_,
+                                   int *poslist_, float *distlist_,
+                                   float* qstart_, float* qend_, int* resbuf_, int *resbufloc_, const int nbuf_, const int offset_,
+                                   PRMSolver *instance_):
+        mpirank(mpirank_), mpisize(mpisize_), num(num_), nbuf(nbuf_), offset(offset_),
+        in(instance_), D(in->D), space(in->space), graphl(in->graphl), graphr(in->graphr)
+
+    {
+        qnew=qnew_; dsp=dsp_; cnt=cnt_;
+        leftconn=leftconn_; rightconn=rightconn_;
+        poslist=poslist_;
+        distlist=distlist_;
+        qstart=qstart_; qend=qend_; resbuf=resbuf_; resbufloc=resbufloc_;
+
+
+        this->dsp_=dsp[mpirank];
+        this->cnt_=cnt[mpirank];
+        posqlist=new int[num];
+        numqlist=new int[num];
+        numqlistleft=new int[num];
+        counts=new int[mpisize];
+        disps=new int[mpisize];
+    }
+
+    ~processor5(){
+        delete[] posqlist, numqlist, numqlistleft, counts, disps;
+    }
+
+
+
+    inline int processing_step_part0()
+    {
+        get_random_nodes(graphl,0,num/2,qnew,D,space);
+    }
+
+    inline int processing_step_part1()
+    {
+
+
+      //!
+      //! create nodes qnew randomly
+      //!
+
+
+      get_random_nodes(graphr,num/2,num,qnew,D,space);
+
+
+      //!
+      //! make list of potential neighbours for all new nodes
+      //!
+
+
+      //!posqlist[i]: position in qlist buffer, at which neighbours of qnew[i] start
+
+      index=0;
+      qstartp=qstart;
+      qendp=qend;
+      poslistp=poslist;
+      distlistp=distlist;
+      nbufrest=nbuf;
+
+
+      in->find_neighbours(  dsp_, dsp_+cnt_,
+                        qnew, qstartp, qendp,
+                        poslistp, distlistp, nbufrest, index,
+                        &posqlist[0], &numqlistleft[0], &numqlist[0],
+                        nbuf, offset
+                      );
+
+
+
+      disp=posqlist[dsp[mpirank]]; //==0
+      count=index-disp;
+
+      space->indicator2_async(qstart+disp,qend+disp,resbufloc,count,offset,configrequest);
+
+
+      MPI_Allgather(&count,1,MPI_INT,counts,1,MPI_INT,MPI_COMM_WORLD);
+
+
+      disps[mpirank]=0;
+      int disps_=count;
+      for(int rank=0;rank<mpisize;++rank){
+        if(rank!=mpirank){
+          disps[rank]=disps_;
+          disps_+=counts[rank];
+        }
+      }
+
+
+      in->find_neighbours(  0, dsp_,
+                        qnew, qstartp, qendp,
+                        poslistp, distlistp, nbufrest, index,
+                        &posqlist[0], &numqlistleft[0], &numqlist[0],
+                        nbuf, offset
+                      );
+      in->find_neighbours(  dsp_+cnt_, num,
+                        qnew, qstartp, qendp,
+                        poslistp, distlistp, nbufrest, index,
+                        &posqlist[0], &numqlistleft[0], &numqlist[0],
+                        nbuf, offset
+                      );
+
+      Nqlist=index;
+
+
+      //!
+      //! calculate which edges exist
+      //!
+
+
+      return 0;
+  }
+
+
+
+  inline int processing_step_part2(){
+
+#if 1//ndef NO_IO
+    printarr(dsp,mpisize);
+    printarr(cnt,mpisize);
+    printvar(disp);
+    printvar(count);
+    printarr(disps,mpisize);
+    printarr(counts,mpisize);
+    printvar(Nqlist);
+#endif
+
+
+      space->indicator2_async_wait(configrequest);
+
+      MPI_Request resrequest;
+      MPI_Iallgatherv(resbufloc,count,MPI_INT,resbuf,counts,disps,MPI_INT,MPI_COMM_WORLD,&resrequest);
+
+      calc_conn(resbufloc-disp, posqlist, numqlistleft, numqlist, leftconn, rightconn, dsp_, dsp_+cnt_);
+
+      MPI_Status resstatus;
+      MPI_Wait(&resrequest,&resstatus);
+
+
+
+      //!
+      //! insert nodes and edges
+      //!
+
+      calc_conn(resbuf, posqlist, numqlistleft, numqlist, leftconn, rightconn, 0, dsp_);
+      calc_conn(resbuf, posqlist, numqlistleft, numqlist, leftconn, rightconn, dsp_+cnt_, num);
+      //calc_conn(resbuf, posqlist, numqlistleft, numqlist, leftconn, rightconn, 0, num);
+
+      return 0;
+    }
+
+
+
+    inline int processing_step_part3(){
+
+      for(int j=0;j<num;++j){
+
+        int min=posqlist[j];
+        int maxleft=min+numqlistleft[j];
+        int max=min+numqlist[j];
+
+        int positionl;
+        if(leftconn[j]){
+          //!
+          //! connection to left graph exists -> insert in left graph
+          //!
+          positionl=in->insert(&qnew[ndof*j],1,graphl);
+          int surrnump=0;
+          std::vector<int> *v=&(graphl.edgelists[positionl]);
+          std::vector<float> *w=&(graphl.edgeweights[positionl]);
+          for(int i=min;i<maxleft;++i){
+            if(resbuf[i]==0){
+              int goalpos=poslist[i];
+              float dist=distlist[i];
+              ++surrnump;
+              v->push_back(goalpos);
+              w->push_back(dist);
+              ++(graphl.surrnum[goalpos]);
+              graphl.edgelists[goalpos].push_back(positionl);
+              graphl.edgeweights[goalpos].push_back(dist);
+            }
+          }
+          graphl.surrnum[positionl]+=surrnump;
+        }
+
+        int positionr;
+        if(rightconn[j]){
+           //!
+           //! connection to right graph exists -> insert in right graph
+           //!
+           positionr=in->insert(&qnew[ndof*j],1,graphr);
+           int surrnump=0;
+           std::vector<int> *v=&(graphr.edgelists[positionr]);
+           std::vector<float> *w=&(graphr.edgeweights[positionr]);
+           for(int i=maxleft;i<max;++i){
+             if(resbuf[i]==0){
+               int goalpos=poslist[i];
+               float dist=distlist[i];
+               ++surrnump;
+               v->push_back(goalpos);
+               w->push_back(dist);
+               ++(graphr.surrnum[goalpos]);
+               graphr.edgelists[goalpos].push_back(positionr);
+               graphr.edgeweights[goalpos].push_back(dist);
+             }
+           }
+           graphr.surrnum[positionr]+=surrnump;
+         }
+
+         if(leftconn[j] && rightconn[j]){
+           //!
+           //!  Connection found! abort
+           //!
+
+          connection_data &connection=in->connection;
+          dijkstra_result &dijkstral=in->dijkstral;
+          dijkstra_result &dijkstrar=in->dijkstrar;
+          int &i0l=in->i0l, &i0r=in->i0r;
+
+           for(int l=0;l<ndof;++l)connection.q[l]=qnew[ndof*j+l];
+
+           connection.index_left=positionl;
+           connection.index_right=positionr;
+
+           //tick(tdijkstra);
+           int res0=in->do_dijkstra(graphl,dijkstral,i0l,connection.index_left);
+           int res1=in->do_dijkstra(graphr,dijkstrar,connection.index_right,i0r);
+           if(res0==0){msg("ERROR: no path found by dijkstra in graphl");}
+           if(res1==0){msg("ERROR: no path found by dijkstra in graphr");}
+           //tock(tdijkstra);
+
+           return 1;
+         }
+
+      }//for
+
+      return 0;
+
+    }
+
+    };
+
 
 
 
@@ -1660,7 +2062,7 @@ public:
   //! \param component  q[0]
   //! \return
   //!
-  inline int calc_key(const float& component){
+  inline int calc_key(const float& component) const{
     return (int)(component*factor);
   }
 
@@ -1727,11 +2129,11 @@ public:
   //! offset: i-th component of k-th vec in qlist is qlist[i*offset+k]
   //! nbuf: length(qlist)
   //! D: maximal distance
-  inline int get_near_vertices(const float* qref, float* qlist, const int& nbuf, const int& offset, graph& g){
+  inline int get_near_vertices(const float* qref, float* qlist, const int& nbuf, const int& offset, const graph& g) const{
     const int keylower=calc_key(qref[0]-D);
-    piterator begin=g.map.lower_bound(keylower);
+    const_piterator begin=g.map.lower_bound(keylower);
     const int keyupper=calc_key(qref[0]+D);
-    piterator end=g.map.upper_bound(keyupper);
+    const_piterator end=g.map.upper_bound(keyupper);
     int index[ndof];
     for(int i=0;i<ndof;++i){
         index[i]=i*offset;
@@ -1740,7 +2142,7 @@ public:
     //printvar(end->first);
     for(;!(begin==end);++begin){
       //printvar(begin->first);
-      block *b=begin->second;
+      const block *b=begin->second;
       //printvar(b->pos);
       bool more=true;
       while(more){
@@ -1786,11 +2188,11 @@ public:
   //! \param g                  the graph
   //! \return
   //!
-  inline int get_near_vertices(const float* qref, const int& offsetref, float* qlist, int* posqlist, float* distlist, const int& nbuf, const int& offset, graph& g){
+  inline int get_near_vertices(const float* qref, const int& offsetref, float* qlist, int* posqlist, float* distlist, const int& nbuf, const int& offset, const graph& g) const{
     const int keylower=calc_key(qref[0]-D);
-    piterator begin=g.map.lower_bound(keylower);
+    const_piterator begin=g.map.lower_bound(keylower);
     const int keyupper=calc_key(qref[0]+D);
-    piterator end=g.map.upper_bound(keyupper);
+    const_piterator end=g.map.upper_bound(keyupper);
     int index[ndof];
     for(int i=0;i<ndof;++i){
         index[i]=i*offset;
@@ -1799,7 +2201,7 @@ public:
     //printvar(end->first);
     for(;!(begin==end);++begin){
       //printvar(begin->first);
-      block *b=begin->second;
+      const block *b=begin->second;
       //printvar(b->pos);
       bool more=true;
       while(more){
@@ -1844,13 +2246,13 @@ public:
   //! \param qnew               node storage (array of structs)
   //! \return
   //!
-  inline int get_random_nodes(graph &g, const int start, const int end, float *qnew){
+  static inline int get_random_nodes(const graph &g, const int start, const int end, float *qnew, float D, Configspace<ndof> *space){
       for(int j=start;j<end;++j){
         bool dismiss;
         do{
           //!choose random block
           int k;
-          block *b;
+          const block *b;
           do{
               k=rand()%g.blocknum;
               b=&(g.blocks[k]);
@@ -1886,7 +2288,7 @@ public:
                               int *&poslistp, float *&distlistp, int &nbufrest, int &index,
                               int *posqlist, int *numqlistleft, int *numqlist,
                               int nbuf, int offset
-                              ){
+                              ) const{
 
       for(int j=from;j<to;++j){
         posqlist[j]=index;
@@ -1941,7 +2343,7 @@ public:
   //! \param from           start index to treat
   //! \param to             end (excl.) index
   //!
-    inline void calc_conn(const int *resbuf, const int *posqlist, const int *numqlistleft, const int *numqlist, int *leftconn, int *rightconn, const int from, const int to){
+    static inline void calc_conn(const int *resbuf, const int *posqlist, const int *numqlistleft, const int *numqlist, int *leftconn, int *rightconn, const int from, const int to){
         for(int j=from;j<to;++j){
 
           //! left:  min,...,maxleft-1
@@ -2213,11 +2615,12 @@ private:
 
   int i0l, i0r; //indices of start and goal
 
-  struct {
+  struct connection_data{
     float q[ndof];   //connecting node
     int index_left;  //index of connected node in graphl
     int index_right; //index of connected node in graphr
-  }connection;
+  };
+  connection_data connection;
 
 
   bool connection_found;

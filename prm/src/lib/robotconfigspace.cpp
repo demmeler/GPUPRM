@@ -429,7 +429,6 @@ int RobotConfigspace<ndof>::indicator2_async(const float* qs, const float* qe, i
     requeststack[requeststack_id]=data;
     request=requeststack_id;
 
-
 #ifdef CUDA_IMPLEMENTATION
     int id;
     if(free_resdevbuffer_ids.empty()){
@@ -508,6 +507,12 @@ int RobotConfigspace<ndof>::indicator2_async_wait(int request){
 #ifdef CUDA_IMPLEMENTATION
     cudaassert(cudaMemcpy((void*)data.res,(void*)resdevbuffers[data.resdevbuffer_id],data.N*sizeof(int), cudaMemcpyDeviceToHost));
     free_resdevbuffer_ids.insert(data.resdevbuffer_id);
+    msg("wait");
+    printvar(data.resdevbuffer_id);
+    for(std::set<int>::iterator it=free_resdevbuffer_ids.begin(); it!= free_resdevbuffer_ids.end();++it){
+        printvar(*it);
+    }
+    msg("<- this is list now");
 #else
 #endif
 

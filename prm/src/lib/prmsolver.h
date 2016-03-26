@@ -1924,7 +1924,7 @@ public:
 
   inline int processing_step_part2(){
 
-#if 1//ndef NO_IO
+#ifndef NO_IO
     printarr(dsp,mpisize);
     printarr(cnt,mpisize);
     printvar(disp);

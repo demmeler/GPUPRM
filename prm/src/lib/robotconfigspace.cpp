@@ -443,6 +443,8 @@ int RobotConfigspace<ndof>::indicator2_async(const float* qs, const float* qe, i
         free_resdevbuffer_ids.erase(it);
     }
     data.resdevbuffer_id=id;
+    printvar(id);
+    printvar(request);
 
     int BLOCK = 256;
 

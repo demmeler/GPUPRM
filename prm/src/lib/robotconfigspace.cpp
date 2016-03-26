@@ -347,10 +347,10 @@ template<int ndof>
 #ifdef CUDA_IMPLEMENTATION
 __global__ void kernel_indicator2(const Robot<ndof>* robot,
                                   const collision4::polytope4data* polydata,
-                                  float* qs, int offsets,
-                                  float* qe, int offsete,
+                                  const float* qs, int offsets,
+                                  const float* qe, int offsete,
                                   int* res,
-                                  int* testpos, int* testnum,
+                                  const int* testpos, const int* testnum,
                                   int N, int numthreads){
   int i = blockDim.x * blockIdx.x + threadIdx.x;
   if(i<numthreads){

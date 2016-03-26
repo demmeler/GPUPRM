@@ -47,8 +47,8 @@ robo: robotconfigspacecuda robotconfigspacecuda0
 #	g++ -std=c++11 -c -g -o robotconfigspace.o $(SRC)/lib/robotconfigspace.cpp
 
 robotconfigspacecuda: $(SRC)/lib/robotconfigspace.cpp
-	nvcc -O3 -g -G -x=cu -arch=$(ARCHITECTURE) -c -o robotconfigspacecuda.o $(SRC)/lib/robotconfigspace.cpp -D CUDA_IMPLEMENTATION
+	nvcc -O3 -g -G -std=c++11 -x=cu -arch=$(ARCHITECTURE) -c -o robotconfigspacecuda.o $(SRC)/lib/robotconfigspace.cpp -D CUDA_IMPLEMENTATION
 
 robotconfigspacecuda0: $(SRC)/lib/robotconfigspace.cpp
-	nvcc -O3 -g -G -x=cu -arch=$(ARCHITECTURE) -c -o robotconfigspacecuda0.o $(SRC)/lib/robotconfigspace.cpp
+	nvcc -O3 -g -G -std=c++11 -x=cu -arch=$(ARCHITECTURE) -c -o robotconfigspacecuda0.o $(SRC)/lib/robotconfigspace.cpp
 

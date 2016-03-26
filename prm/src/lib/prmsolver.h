@@ -1725,11 +1725,10 @@ public:
 
     for(int i=0;i<maxsteps;++i){
 
-
       processor1.processing_step_part2();
       int flag1=processor1.processing_step_part3();
       if(flag1==1){
-        msg("connection found");
+        msg("connection found 1");
         printvar(i);
         break;
       }
@@ -1738,7 +1737,7 @@ public:
       processor2.processing_step_part2();
       int flag2=processor2.processing_step_part3();
       if(flag2==1){
-        msg("connection found");
+        msg("connection found 2");
         printvar(i);
         break;
       }

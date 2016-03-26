@@ -1720,29 +1720,29 @@ public:
 
 
 
-    processor1.processing_step_part0();
     processor1.processing_step_part1();
+    processor2.processing_step_part1();
 
     for(int i=0;i<maxsteps;++i){
 
-      processor2.processing_step_part0();
-      processor2.processing_step_part1();
 
       processor1.processing_step_part2();
       int flag1=processor1.processing_step_part3();
-
-      processor1.processing_step_part0();
-      processor1.processing_step_part1();
-
-      processor2.processing_step_part2();
-      int flag2=processor2.processing_step_part3();
-      int flag=(flag1==1 || flag2==1 ? 1 : 0);
-
-      if(flag==1){
+      if(flag1==1){
         msg("connection found");
         printvar(i);
         break;
       }
+      processor1.processing_step_part1();
+
+      processor2.processing_step_part2();
+      int flag2=processor2.processing_step_part3();
+      if(flag2==1){
+        msg("connection found");
+        printvar(i);
+        break;
+      }
+      processor2.processing_step_part1();
 
       if(i%50==0){
         printvar(i);
@@ -1836,10 +1836,6 @@ public:
 
 
 
-    inline int processing_step_part0()
-    {
-        get_random_nodes(graphl,0,num/2,qnew,D,space);
-    }
 
     inline int processing_step_part1()
     {
@@ -1850,6 +1846,8 @@ public:
       //!
 
 
+
+      get_random_nodes(graphl,0,num/2,qnew,D,space);
       get_random_nodes(graphr,num/2,num,qnew,D,space);
 
 

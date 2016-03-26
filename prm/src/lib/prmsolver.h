@@ -1731,6 +1731,9 @@ public:
       processor1.processing_step_part2();
       int flag1=processor1.processing_step_part3();
 
+      processor1.processing_step_part0();
+      processor1.processing_step_part1();
+
       processor2.processing_step_part2();
       int flag2=processor2.processing_step_part3();
       int flag=(flag1==1 || flag2==1 ? 1 : 0);
@@ -1740,9 +1743,6 @@ public:
         printvar(i);
         break;
       }
-
-      processor1.processing_step_part0();
-      processor1.processing_step_part1();
 
       if(i%50==0){
         printvar(i);

@@ -1733,9 +1733,9 @@ public:
         printvar(i);
         break;
       }
-      tick(waiting1);
+      tick(setting1);
       processor1.processing_step_part1();
-      tock(waiting1);
+      tock(setting1);
 
       tick(evaluating2);
       processor2.processing_step_part2();
@@ -1746,9 +1746,9 @@ public:
         printvar(i);
         break;
       }
-      tick(waiting2);
+      tick(setting2);
       processor2.processing_step_part1();
-      tock(waiting2);
+      tock(setting2);
 
       if(i%50==0){
         printvar(i);
@@ -1938,8 +1938,9 @@ public:
     printvar(Nqlist);
 #endif
 
-
+      tick(waiting);
       space->indicator2_async_wait(configrequest);
+      tock(waiting);
 
       MPI_Request resrequest;
       MPI_Iallgatherv(resbufloc,count,MPI_INT,resbuf,counts,disps,MPI_INT,MPI_COMM_WORLD,&resrequest);

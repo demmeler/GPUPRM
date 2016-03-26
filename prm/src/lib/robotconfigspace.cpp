@@ -6,7 +6,6 @@
 
 #include "cuda_head.h"
 #include "util.hpp"
-#include "tictoc.h"
 
 #include "collision4.h"
 #include "polytope4data.h"
@@ -510,11 +509,9 @@ int RobotConfigspace<ndof>::indicator2_async_wait(int request){
     requeststack.erase(it);
 #ifdef CUDA_IMPLEMENTATION
     msg("waiting for kernel...");
-    tick(twaiting);
     printvar(data.resdevbuffer_id);
     cudaassert(cudaMemcpy((void*)data.res,(void*)resdevbuffers[data.resdevbuffer_id],data.N*sizeof(int), cudaMemcpyDeviceToHost));
     free_resdevbuffer_ids.insert(data.resdevbuffer_id);
-    tock(twaiting);
     msg("finished");
 #else
 #endif

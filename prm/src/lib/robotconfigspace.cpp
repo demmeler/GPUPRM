@@ -345,8 +345,8 @@ __global__ void set_kernel(T *array, T val, int n){
 
 template<int ndof>
 #ifdef CUDA_IMPLEMENTATION
-__global__ void kernel_indicator2(Robot<ndof>* robot,
-                                  collision4::polytope4data* polydata,
+__global__ void kernel_indicator2(const Robot<ndof>* robot,
+                                  const collision4::polytope4data* polydata,
                                   float* qs, int offsets,
                                   float* qe, int offsete,
                                   int* res,

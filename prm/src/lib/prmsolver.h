@@ -1719,30 +1719,32 @@ public:
                          this);
 
 
-    for(int i=0;i<maxsteps;++i){
-      processor1.processing_step_part0();
-      processor2.processing_step_part0();
 
-      processor1.processing_step_part1();
+    processor1.processing_step_part0();
+    processor1.processing_step_part1();
+
+    for(int i=0;i<maxsteps;++i){
+
+      processor2.processing_step_part0();
       processor2.processing_step_part1();
 
-      processor2.processing_step_part2();
       processor1.processing_step_part2();
-
       int flag1=processor1.processing_step_part3();
+
+      processor2.processing_step_part2();
       int flag2=processor2.processing_step_part3();
       int flag=(flag1==1 || flag2==1 ? 1 : 0);
-
-      printvar(flag1);
-      printvar(flag2);
-      printvar(flag);
-
 
       if(flag==1){
         msg("connection found");
         printvar(i);
         break;
-      }else if(i%50==0){
+      }
+
+      processor1.processing_step_part0();
+      processor1.processing_step_part1();
+
+      if(i%50==0){
         printvar(i);
       }
     }

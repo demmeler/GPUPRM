@@ -1726,7 +1726,6 @@ public:
       processor1.processing_step_part1();
       processor2.processing_step_part1();
 
-
       processor2.processing_step_part2();
       processor1.processing_step_part2();
 
@@ -1772,7 +1771,8 @@ public:
       int *poslist;
       float *distlist;
       float* qstart;
-      float* qend; int* resbuf;
+      float* qend;
+      int* resbuf;
       int *resbufloc;
       const int nbuf;
       const int offset;
@@ -1788,7 +1788,7 @@ public:
       float *qendp;
       int *poslistp;
       float *distlistp;
-      int nbufrest=nbuf;
+      int nbufrest;
 
       int configrequest;
       int disp,count;

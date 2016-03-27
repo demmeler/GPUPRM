@@ -464,7 +464,7 @@ int RobotConfigspace<ndof>::indicator2_async(const float* qs, const float* qe, i
 
     //cudaassert(cudaMemcpy((void*)resdevbuffer,(void*)res,N*sizeof(int), cudaMemcpyHostToDevice));
     int GRIDN=(N + BLOCK - 1)/BLOCK;
-    set_kernel<int><<<GRIDN,BLOCK>>>(resdevbuffers[data.resdevbuffer_id],0,N);
+    set_kernel<int><<<GRIDN,BLOCK,0,streams[data.resdevbuffer_id]>>>(resdevbuffers[data.resdevbuffer_id],0,N);
 #endif
 
     //! calculate number of threads needed

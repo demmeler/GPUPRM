@@ -1,6 +1,12 @@
 #ifndef CONFIGSPACE_HPP
 #define CONFIGSPACE_HPP
 
+
+//!
+//!  interface to pass different configuration spaces to the PRMSolver
+//!
+
+
 template<int ndof>
 class Configspace
 {

@@ -8,13 +8,11 @@
 #include "lib/util.hpp"
 #include "lib/tictoc.h"
 
-#include "lib/robotconfigspace.h"
-#include "lib/polytope.h"
-#include "lib/prmsolver.h"
+#include "lib/robotspace/robotconfigspace.h"
+#include "lib/prm/prmsolver.h"
 
 
 using namespace std;
-
 
 
 int main(int argc, char** argv)

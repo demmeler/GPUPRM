@@ -8,7 +8,7 @@
 
 #define MPI_CODE
 
-#include "config.h"
+#include <config.h>
 
 #include "configspace.hpp"
 

@@ -2,10 +2,8 @@
 #define KINEMATICS_H
 
 
-#include "cuda_head.h"
-
-#include "geo4.h"
-//using namespace geo4;
+#include <collision4/cuda_head.h>
+#include <collision4/geo4.h>
 
 #include "robot.h"
 

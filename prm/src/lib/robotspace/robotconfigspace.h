@@ -6,9 +6,10 @@
 #include <vector>
 #include <set>
 
-#include "configspace.hpp"
+#include <prm/configspace.hpp>
+#include <collision4/polytope.h>
+
 #include "robot.h"
-#include "polytope.h"
 
 template<int ndof> class Kinematics;
 

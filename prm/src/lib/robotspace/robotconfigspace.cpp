@@ -1,14 +1,14 @@
 
-#include "config.h"
+#include <config.h>
 
 #include "robotconfigspace.h"
 
 
-#include "cuda_head.h"
-#include "util.hpp"
+#include <collision4/cuda_head.h>
+#include <util.hpp>
 
-#include "collision4.h"
-#include "polytope4data.h"
+#include <collision4/collision4.h>
+#include <collision4/polytope4data.h>
 #include "kinematics.h"
 
 #include <vector>

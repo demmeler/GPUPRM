@@ -6,8 +6,8 @@
 #include <stdlib.h>
 #include <queue>
 
-#include "util.hpp"
-#include "tictoc.h"
+#include <util.hpp>
+#include <tictoc.h>
 
 
 

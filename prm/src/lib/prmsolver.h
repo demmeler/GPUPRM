@@ -1724,31 +1724,31 @@ public:
     processor2.processing_step_part1();
 
     for(int i=0;i<maxsteps;++i){
-      tick(evaluating1);
+      //tick(evaluating1);
       processor1.processing_step_part2();
       int flag1=processor1.processing_step_part3();
-      tock(evaluating1);
+      //tock(evaluating1);
       if(flag1==1){
         msg("connection found 1");
         printvar(i);
         break;
       }
-      tick(setting1);
+      //tick(setting1);
       processor1.processing_step_part1();
-      tock(setting1);
+      //tock(setting1);
 
-      tick(evaluating2);
+      //tick(evaluating2);
       processor2.processing_step_part2();
       int flag2=processor2.processing_step_part3();
-      tock(evaluating2);
+      //tock(evaluating2);
       if(flag2==1){
         msg("connection found 2");
         printvar(i);
         break;
       }
-      tick(setting2);
+      //tick(setting2);
       processor2.processing_step_part1();
-      tock(setting2);
+      //tock(setting2);
 
       if(i%50==0){
         printvar(i);

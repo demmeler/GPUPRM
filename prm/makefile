@@ -40,7 +40,7 @@ prmsolver:
 # configspaces
 
 arrayconfigspace:
-	g++ $(WRN_OPT) -std=c++11 -c -g -I $(SRC)/lib -o arrayconfigspace.o $(SRC)/lib/arrayspace/arrayconfigspace.cpp
+	g++ $(WRN_OPT) -std=c++0x -c -g -I $(SRC)/lib -o arrayconfigspace.o $(SRC)/lib/arrayspace/arrayconfigspace.cpp
 
 
 robo: robotconfigspace robotconfigspacecuda robotconfigspacecuda0

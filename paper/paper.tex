@@ -17,6 +17,51 @@
 
 \usepackage{hyperref}
 
+
+\usepackage{listings}
+\usepackage{xcolor}
+\definecolor{lbcolor}{rgb}{0.9,0.9,0.9}
+
+\lstdefinestyle{customc}{
+  belowcaptionskip=1\baselineskip,
+  breaklines=true,
+  %frame=LR,
+  %xleftmargin=\parindent,
+  language=C,
+  showstringspaces=false,
+  basicstyle=\footnotesize\ttfamily,
+  keywordstyle=\bfseries\color{green!40!black},
+  commentstyle=\itshape\color{purple!40!black},
+  identifierstyle=\color{blue},
+  stringstyle=\color{orange},
+}
+
+\lstdefinestyle{customcpp}{
+	backgroundcolor=\color{lbcolor},
+    	tabsize=4,
+    	language=[GNU]C++,
+        basicstyle=\tiny,%{\scriptsize},
+        upquote=true,
+        %aboveskip={1.5\baselineskip},
+        columns=fixed,
+        showstringspaces=false,
+        extendedchars=false,
+        breaklines=true,
+        prebreak = \raisebox{0ex}[0ex][0ex]{\ensuremath{\hookleftarrow}},
+        frame=single,
+        numbers=left,
+        showtabs=false,
+        showspaces=false,
+        showstringspaces=false,
+        identifierstyle=\ttfamily,
+        keywordstyle=\color[rgb]{0,0,1},
+        commentstyle=\color[rgb]{0.026,0.112,0.095},
+        stringstyle=\color[rgb]{0.627,0.126,0.941},
+        numberstyle=\color[rgb]{0.205, 0.142, 0.73},
+}
+
+\lstset{escapechar=@,style=customcpp}
+
 \DeclareMathOperator*{\esssup}{ess.sup}
 \DeclareMathOperator*{\defgl}{\vcentcolon=}
 
@@ -182,9 +227,10 @@ version 5:
 
 In the project, the probabilistic roadmap algorithm is applied  to create collisionfree trajectories of a robot arm.
 For a robot with given joint angles \(q_i\) one can calculate straightforwardly all positions and orientations  of the single parts of the robot.
-For this, coordinate frames according to the Denavit Hartenberg convention are used.
+For this, coordinate frames according to the Denavit-Hartenberg convention are used.
 The coordinate frames of the single parts are described by transformation matrices 
-$T_i \in R^{4x4}$, which transform points of the body frame into the world frame. They depend on the state $q=(q_1,...,q_d)$ of the robot and on the geometry of the joint angles given by the Denavit-Hartenberg parameters of the robot. For the exact calculations see \cite{robodyn}.
+$T_i \in R^{4x4}$, which transform points of the body frame into the world frame. They depend on the state $q=(q_1,...,q_d)$ of the robot and on the geometry of the joint angles given by the Denavit-Hartenberg parameters of the robot. 
+%For the exact calculations see \cite{robodyn}.
 
 The geometry of the robot parts is defined by a set of convex polytopes, each of them belonging to one of the robots coordinate frame. Applying the corresponding $T_i$, its vertices can be transformed into the world frame. 
 Environment obstacles are also defined by convex polytopes, in the world frame.
@@ -203,81 +249,61 @@ To apply the probabilistic roadmap algorithm, we express this by the indicator f
 It has to be noted that the trajectories \(q(t)\) the PRM algorithm generates are piecewise linear and therefore not differentiable. Hence, they have to be smoothed before the use on a robot. This is not part of the project. The task is only to generate feasible trajectories to be passed to an optimizer.
 
 
-
-
-
-here some overview
-
-- state the principle task: movement of an robot arm through environment with obstacles
-
-- define the resulting state space: $q=(q1,...,qn) \in R^ndof$
-
-- state how the indicator function has to look like in general
-
-
-
-- describe the robot: 
-
-	- consisting of convex polytopes
-
- 	- which are located in coordinate frames
-
-	- coordinate frames described by transformation matrices
-
-	- transformation matrices given by state q
-
-
-
-
-- collision tested by the ... algorithm
-
-
+The indicator function is implemented in a vectorized way as an CUDA kernel, which means that, given set of states $q^1,..,q^N$, the indicator function is evaluated for each state by one CUDA thread. Therefore, the kinematics and collision algorithm have been implemented as device code for the use in the kernel.
 
 \subsection{Direct Kinematics}
 
-
-
-- coordinate frames
-
-- DH-Parameters
+The Denavit-Hartenberg (DH) convention is a method to describe the geometry of an robots joints, 
+that is, how the transformations between the robots coordinate frames look like in dependancy of its joint values $q_1,...,q_d$.
+For this it is assumed that each joint is either rotational, that means an rotation around a fixed axis, 
+or prismatic, a translation along an axis.
+The robot consists of $d+1$ bodies each of which has an body fixed coordinate frame $B_i$, which is described by the transformation matrix $T_i$ into the world frame.
+For an robot with DH parameters $a_{i-1}, \alpha_{i-1}, d_i \in \R$, $i=1,...,d$, 
+the relative transformations $T_{i-1,i}=T_{i-1}^{-1} T_{i}$ between two bodies now is defined as
+\begin{equation}
+	T_{i-1,i} = R_z(\theta_i) T_z(d_i) R_x(\alpha_{i-1}) R_x(a_{i-1})
+\end{equation}
+where $R_x, R_z$ are rotations and $T_x, T_z$ translations around the $x$ and $z$ axes.
+By an proper choice of the body frames, every robot with rotational or prismatic joint can be described by DH parameters.
 
 
 
 \subsection{2D and 3D Geometry Library}
 
+For the CUDA implementation of the kinematics and later the collision algorithm, a geometry library was written, based on the CUDA datatypes float2 for 2D vectors and float4 for 3D vectors.
+To guarantee aligned access on the GPU, float4 is used instead of float3. Furthermore, as the geometric calculations made here are numerically not very critical, the usage of double precision has turned out to be not necessary.
+The library contains hybrid host and device inline functions for common vector operations such as
+\begin{lstlisting}
+__host__ __device__ inline float4& operator += (float4& u, const float4& v);
+__host__ __device__ inline float4& operator *=  (float4& u, const float f);
+__host__ __device__ inline float4& add(const float4& u, const float4& v, float4& w);
+\end{lstlisting}
+Operators like $+$ or $*$ are not overloaded to prevent unnecessary temporary variables.
 
-
-- vector types: float4, float2
-
-- matrix type: trafo4=float4[4]
-
-
-
-- float precision is enough for this application
-
-- everything inline 
-
-- hybrid device host functions
-
-- += etc. overloaded, + etc. to make no unnecessary temps
-
-
+Transformation matrices are implemented float4 arrays with inline functions for common matrix operations. Again operators with temporaries avoided.
+\begin{lstlisting}
+class trafo4{  public:    float4 col[4];
+    __host__ __device__ trafo4(){}
+    __host__ __device__ trafo4(float a, float alpha, float q, float d);
+    __host__ __device__ inline float4& apply(float4& u) const;    __host__ __device__ inline float4& apply(const float4& u, float4& Tu) const;
+    .
+    .
+    .
+}
+\end{lstlisting}
 
 \subsection{Polytopes}
 
-
-
-- describe polytope4 structure:
-
-	- vertices stored as float4 array
-
-	- edges stored in crs format
-
+To calculate the intersection between two polytopes, the Chung-Wang algorithm only needs their vertices 
+and the data which vertices are connected by an edge. 
+For this the adjacency matrix of the edge graph is stored compactly in the crs format.
+\begin{lstlisting}
+struct polytope4{    float4* vertices;	//length n    int n;    //!edges in crs format    int* dsp;	//length n    int* cnt;	//length n    int* dest;	//length m    int m;};
+\end{lstlisting}
+It means, that for $i=0,...,n-1$ the vertices $dest[dsp[i]],...,dest[dsp[i]+cnt[i]-1]$ are the ones connected with vertex $i$ by an edge.
 
 
 - whole list of polytopes stored compactly in polytope4data on gpu
-
-
 
 - maybe describe interface polytope <-> polytope4data <-> polytope4
 
@@ -285,7 +311,10 @@ here some overview
 
 \subsection{Chung-Wang Collision Algorithm}
 
-
+\begin{lstlisting}
+__host__ __device__ int seperating_vector_algorithm(const polytope4& P, const polytope4& Q, 
+													const trafo4& tp, const trafo4& tq);
+\end{lstlisting}
 
 - input: polytopes P, Q and trafonsformations Tp, Tq
 

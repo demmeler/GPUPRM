@@ -13,7 +13,7 @@ namespace collision4{
 
   struct polytope4{
     float4* vertices;
-    int n; //Reihenfolge?
+    int n;
     //!edges saved in crs format
     int* dsp;
     int* cnt;

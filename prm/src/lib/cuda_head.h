@@ -27,7 +27,7 @@
 #endif
 
 #ifndef CUDA_IMPLEMENTATION
-  #warning ("NO CUDA_IMPLEMENTATION");
+  #warning ("NO CUDA_IMPLEMENTATION: version without gpu");
 #endif
 
 

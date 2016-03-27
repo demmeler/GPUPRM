@@ -1,95 +1,128 @@
 #include <iostream>
+#include <time.h>
+#include <mpi.h>
 
-#include "lib/collision.hpp"
+#define MPI_CODE
+
+#include "lib/config.h"
 #include "lib/util.hpp"
+#include "lib/tictoc.h"
+
+#include "lib/robotconfigspace.h"
+#include "lib/polytope.h"
+#include "lib/prmsolver.h"
+
 
 using namespace std;
 
-using namespace collision;
 
-int main()
+
+int main(int argc, char** argv)
 {
-  trafo tp(0.50*3.141592653589793,0.0,0.0,0.0);
-  trafo tq(0.26*3.1415,0.0,0.5,0.65);
-  trafo tr(0.00*3.1415,0.0,0.5,0.0);
+  MPI_Init(&argc, &argv);
 
-  Polytope P;
-
-  double vertp[]={0.0,0.0,0.0,
-                  1.0,0.0,0.0,
-                  0.0,1.0,0.0,
-                  0.0,0.0,1.0};
-  int dspp[]={0,3,6,9};
-  int cntp[]={3,3,3,3};
-  int destp[]={1,2,3,
-               0,2,3,
-               0,1,3,
-               0,1,2};
-
-  P.n=4;
-  P.m=12;
-  P.vertices=&(vertp[0]);
-  P.dsp=&(dspp[0]);
-  P.cnt=&(cntp[0]);
-  P.dest=&(destp[0]);
+  int rank=0, size=1;
+  MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+  MPI_Comm_size(MPI_COMM_WORLD, &size);
 
 
-
-  Polytope Q;
-
-  double vertq[]={0.0,0.0,0.0,
-                  1.0,0.0,0.0,
-                  0.0,1.0,0.0,
-                  0.0,0.0,1.0};
-  int dspq[]={0,3,6,9};
-  int cntq[]={3,3,3,3};
-  int destq[]={1,2,3,
-               0,2,3,
-               0,1,3,
-               0,1,2};
-
-  Q.n=4;
-  Q.m=12;
-  Q.vertices=&(vertq[0]);
-  Q.dsp=&(dspq[0]);
-  Q.cnt=&(cntq[0]);
-  Q.dest=&(destq[0]);
-
-  Polytope R;
-
-  double vertr[]={0.0,0.0,0.0,
-                  1.0,0.0,0.0,
-                  0.0,1.0,0.0,
-                  1.0,1.0,0.0,
-                  0.0,0.0,1.0,
-                  1.0,0.0,1.0,
-                  0.0,1.0,1.0,
-                  1.0,1.0,1.0};
-  int dspr[]={0,3,6,9,12,15,18,21};
-  int cntr[]={3,3,3,3,3,3,3,3};
-  int destr[]={1,3,4,
-               0,2,5,
-               1,3,6,
-               0,2,7,
-               5,7,0,
-               4,6,1,
-               5,7,2,
-               4,6,3};
-
-  R.n=8;
-  R.m=24;
-  R.vertices=&(vertr[0]);
-  R.dsp=&(dspr[0]);
-  R.cnt=&(cntr[0]);
-  R.dest=&(destr[0]);
+  const int ndof=4;
 
 
+  tick(tinit);
 
-  cout << "inited" <<endl;
+  //! Parameters
 
-  bool coll=seperating_vector_algorithm(P,R,tp,tr);
+  int num=(argc>=2 ? atoi(argv[1]) : 32 );
+  int nbuf=(argc>=3 ? atoi(argv[2]) : 2048);
+  int confignbuf=(argc>=3 ? 2*atoi(argv[2]) : 4096);
+  float dq=(argc>=4 ? atof(argv[3]) : 0.01);
+  float D=(argc>=5 ? atof(argv[4]) : 1.0);
+  int seed=(argc>=6 ? atoi(argv[5]) : 0 );
+  int blocksize=(argc>=7 ? atoi(argv[6]) : 256);
+  int prmversion=(argc>=8 ? atoi(argv[7]) : 5 );
+  int maxstorage=1024*1024;//(argc>=8 ? atoi(argv[7]) : 1024*1024);
+  int maxsteps=100000;
 
-  cout << "Collision?? -> "<< coll << endl;
-  return 0;
+  //srand(time(NULL));
+  //srand(clock());
+  //srand(rank+time(NULL));
+  srand(seed+rank*10);
+  int firstrand=rand();
+
+
+  //! Initialization
+
+  RobotConfigspace<ndof> space("config1",dq, confignbuf);
+  space.init(rank,size);
+
+  PRMSolver<ndof> prm(&space, D, D, maxstorage, blocksize);
+
+
+  float qstart[ndof];
+  float qend[ndof];
+  for(int dof=0;dof<ndof;++dof){
+    qstart[dof]=0.0;
+    qend[dof]=3;
+  }
+
+  if(rank==0){
+    printvar(space.indicator(&qstart[0]));
+    printvar(space.indicator(&qend[0]));
+  }
+
+  prm.init(&qstart[0],&qend[0]);
+
+  //prm.print();
+
+  tock(tinit);
+
+
+  //! run
+
+  tick(trun);
+
+
+  //prm.process_mpi(num,nbuf,maxsteps);
+  if(prmversion==2){
+    prm.process_mpi2(num,nbuf,maxsteps, seed);
+  }else if(prmversion==3){
+    prm.process_mpi3(num,nbuf,maxsteps, seed);
+  }else if(prmversion==4){
+    prm.process_mpi4(num,nbuf,maxsteps, seed);
+  }else if(prmversion==5){
+      prm.process_mpi5(num,nbuf,maxsteps, seed);
+  }else {
+    msg("Error: prmprocess not valid");
+    return 0;
+  }
+
+  tock(trun);
+
+
+  //! write output
+
+  //prm.print();
+
+  MPI_Barrier(MPI_COMM_WORLD);
+  if(rank==0){
+      tick(twrite);
+
+      prm.store_results("prmoutput");
+
+      tock(twrite);
+
+      printvar(rand());
+      printvar(firstrand);
+
+      printvar(num);
+      printvar(nbuf);
+      printvar(dq);
+      printvar(D);
+      printvar(seed);
+      printvar(blocksize);
+      printvar(prmversion);
+  }
+
+  MPI_Finalize();
 }
-

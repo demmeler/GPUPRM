@@ -1942,6 +1942,7 @@ public:
       space->indicator2_async_wait(configrequest);
       //tock(waiting);
 
+
       MPI_Request resrequest;
       MPI_Iallgatherv(resbufloc,count,MPI_INT,resbuf,counts,disps,MPI_INT,MPI_COMM_WORLD,&resrequest);
 

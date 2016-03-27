@@ -26,12 +26,17 @@ test9: robotconfigspacecuda0.o test9o
 test10o:
 	mpicxx -O3 -g -c -std=c++0x -o test10.o $(SRC)/test10.cpp
 
-test10cuda: robotconfigspacecuda.o test10o
-	mpicxx -g -o test10cuda test10.o robotconfigspacecuda.o $(CUDA_INCLUDE)
+test10cuda: robotconfigspacecuda.o prmsolver test10o
+	mpicxx -g -o test10cuda test10.o prmsolver.o robotconfigspacecuda.o $(CUDA_INCLUDE)
 
-test10: robotconfigspacecuda0.o test10o
-	mpicxx -g -o test10 test10.o robotconfigspacecuda0.o $(CUDA_INCLUDE)
+test10: robotconfigspacecuda0.o prmsolver test10o
+	mpicxx -g -o test10 test10.o prmsolver.o robotconfigspacecuda0.o $(CUDA_INCLUDE)
 
+
+# solver
+
+prmsolver:
+	mpicxx -O3 -g -c -std=c++0x -o prmsolver.o $(SRC)/lib/prmsolver.cpp
 
 
 # configspaces

@@ -6,6 +6,7 @@
 #include <string>
 #include <sstream>
 
+#include "config.h"
 
 const float pi=3.1415926535897;
 

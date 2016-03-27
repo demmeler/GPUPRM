@@ -457,8 +457,6 @@ int RobotConfigspace<ndof>::indicator2_async(const float* qs, const float* qe, i
         free_resdevbuffer_ids.erase(it);
     }
     data.resdevbuffer_id=id;
-    printvar(id);
-    printvar(request);
 
     int BLOCK = 256;
 
@@ -525,11 +523,8 @@ int RobotConfigspace<ndof>::indicator2_async_wait(int request){
     request_data data=requeststack[request];
     requeststack.erase(it);
 #ifdef CUDA_IMPLEMENTATION
-    msg("waiting for kernel...");
-    printvar(data.resdevbuffer_id);
     cudaassert(cudaMemcpyAsync((void*)data.res,(void*)resdevbuffers[data.resdevbuffer_id],data.N*sizeof(int), cudaMemcpyDeviceToHost, streams[data.resdevbuffer_id]));
     free_resdevbuffer_ids.insert(data.resdevbuffer_id);
-    msg("finished");
 #else
 #endif
 

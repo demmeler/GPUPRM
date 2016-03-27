@@ -69,7 +69,7 @@ namespace collision4{
         inline int build(const polytope4* polys, const int* sys, int N, int ndof_, const int* from_=0x0, const int* to_=0x0, int M_=0); //! arrays must be sortet w.r.t. sys
         inline int build(const polytope* polys, const int* sys, int N, int ndof_, const int* from_=0x0, const int* to_=0x0, int M_=0); //! arrays must be sortet w.r.t. sys
 
-#ifdef CUDA_IMPLEMENTATION
+#ifdef GPU_VERSION
         friend int copy_host_to_device(polytope4data& devdata, const polytope4data& hostdata, bool withpairs_=false);
         friend int copy_device_to_host(polytope4data& hostdata, const polytope4data& devdata);
         //TODO: free memory
@@ -249,7 +249,7 @@ namespace collision4{
         return 0; //Todo error handling?
     }
 
-#ifdef CUDA_IMPLEMENTATION
+#ifdef GPU_VERSION
     inline int copy_host_to_device(polytope4data& devdata, const polytope4data& hostdata, bool withpairs){
         int N=devdata.N=hostdata.N;
         int sumn=devdata.sumn=hostdata.sumn;

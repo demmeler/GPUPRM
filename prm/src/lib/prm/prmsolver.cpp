@@ -74,6 +74,7 @@
   int PRMSolver<ndof>::init(const float* qstart, const float* qend){
     i0l=insert(qstart,graphl);
     i0r=insert(qend,graphr);
+    return 0;
   }
 
 
@@ -159,9 +160,18 @@
       }
     }
 
-    delete[] qnew, qnewall, qstartlist,qendlist, resbuf,
-            leftconn, rightconn, leftconnall, rightconnall,
-            surrnumnew,surrnumnewall,positionsall;
+    delete qnew;
+    delete qnewall;
+    delete qstartlist;
+    delete qendlist;
+    delete resbuf;
+    delete leftconn;
+    delete rightconn;
+    delete leftconnall;
+    delete rightconnall;
+    delete surrnumnew;
+    delete surrnumnewall;
+    delete positionsall;
 
     return 0;
   }
@@ -573,7 +583,8 @@
       return 1;
     }
 
-    delete[] poslist, distlist;
+    delete poslist;
+    delete distlist;
     return 0;
 
   }
@@ -691,7 +702,13 @@
       }
     }
 
-    delete[] qnew, qstartlist,qendlist, resbuf, resbufloc, leftconn, rightconn;
+    delete qnew;
+    delete qstartlist;
+    delete qendlist;
+    delete resbuf;
+    delete resbufloc;
+    delete leftconn;
+    delete rightconn;
 
     return 0;
   }
@@ -885,7 +902,8 @@
 
       MPI_Allgatherv(resbufloc,count,MPI_INT,resbuf,counts,disps,MPI_INT,MPI_COMM_WORLD);
 
-      delete[] counts, disps;
+      delete counts;
+      delete disps;
 
   #ifndef NO_IO
       printarr(qnew,ndof*num);
@@ -1007,7 +1025,8 @@
            if(res1==0){msg("ERROR: no path found by dijkstra in graphr");}
            //tock(tdijkstra);
 
-           delete[] poslist, distlist;
+           delete poslist;
+           delete distlist;
            return 1;
          }
 
@@ -1015,7 +1034,8 @@
 
 
 
-      delete[] poslist, distlist;
+      delete poslist;
+      delete distlist;
       return 0;
 
     }
@@ -1108,7 +1128,17 @@
       }
     }
 
-    delete[] qnew, qstartlist,qendlist, resbuf, resbufloc, leftconn, rightconn, poslist, distlist, dsp, cnt;
+    delete qnew;
+    delete qstartlist;
+    delete qendlist;
+    delete resbuf;
+    delete resbufloc;
+    delete leftconn;
+    delete rightconn;
+    delete poslist;
+    delete distlist;
+    delete dsp;
+    delete cnt;
 
     return 0;
   }
@@ -1261,7 +1291,8 @@
       MPI_Status resstatus;
       MPI_Wait(&resrequest,&resstatus);
 
-      delete[] counts, disps;
+      delete counts;
+      delete disps;
 
 
   #ifndef NO_IO
@@ -1462,7 +1493,17 @@
       }
     }
 
-    delete[] qnew, qstartlist,qendlist, resbuf, resbufloc, leftconn, rightconn, poslist, distlist, dsp, cnt;
+    delete qnew;
+    delete qstartlist;
+    delete qendlist;
+    delete resbuf;
+    delete resbufloc;
+    delete leftconn;
+    delete rightconn;
+    delete poslist;
+    delete distlist;
+    delete dsp;
+    delete cnt;
 
     return 0;
   }
@@ -1568,7 +1609,8 @@
       MPI_Status resstatus;
       MPI_Wait(&resrequest,&resstatus);
 
-      delete[] counts, disps;
+      delete counts;
+      delete disps;
 
 
 
@@ -1806,8 +1848,27 @@
     }
     tock(tloop);
 
-    delete[] qnew, qstartlist,qendlist, resbuf, resbufloc, leftconn, rightconn, poslist, distlist, dsp, cnt,
-            qnew2, qstartlist2,qendlist2, resbuf2, resbufloc2, leftconn2, rightconn2, poslist2, distlist2;
+    delete qnew;
+    delete qstartlist;
+    delete qendlist;
+    delete resbuf;
+    delete resbufloc;
+    delete leftconn;
+    delete rightconn;
+    delete poslist;
+    delete distlist;
+    delete dsp;
+    delete cnt;
+
+    delete qnew2;
+    delete qstartlist2;
+    delete qendlist2;
+    delete resbuf2;
+    delete resbufloc2;
+    delete leftconn2;
+    delete rightconn2;
+    delete poslist2;
+    delete distlist2;
 
 
     msg("process_mpi5 finished");
@@ -1845,7 +1906,11 @@
 
     template<int ndof>
     PRMSolver<ndof>::processor5::~processor5(){
-        delete[] posqlist, numqlist, numqlistleft, counts, disps;
+        delete posqlist;
+        delete numqlist;
+        delete numqlistleft;
+        delete counts;
+        delete disps;
     }
 
 
@@ -2081,12 +2146,7 @@
     int key=calc_key(q[0]);
     piterator it = g.map.find(key);
     block *b;
-    int fall=0;
-    int size,size2,pos,num;
     if(it==g.map.end()){
-      size2=g.blocknum;
-      size=g.newblockpos;
-
       b=&(g.blocks[g.blocknum++]);
       g.map[key]=b;
       b->pos=g.newblockpos;
@@ -2094,13 +2154,7 @@
       if(g.newblockpos>N) return -1;
       b->num=0;
     }else{
-      size=g.newblockpos;
-      size2=g.blocknum;
-      fall=1;
-
       b=it->second;
-      num=b->num;
-      pos=b->pos;
       while(b->num>=blocksize){
         b=b->next;
       }
@@ -2495,15 +2549,18 @@
     printvar(connection.index_right);
 
     int ret0=system(("rm -rf "+path).c_str());
+    if(ret0!=0)printvar(ret0);
 
     std::string pathl=path+"/graphl";
     //system("rm -rf "+pathl);
     int ret1=system(("mkdir -p "+pathl).c_str());
+    if(ret1!=0)printvar(ret1);
     store_graph(pathl,graphl,dijkstral,i0l,connection.index_left);
 
     std::string pathr=path+"/graphr";
     //system("rm -rf "+pathr);
     int ret2=system(("mkdir "+pathr).c_str());
+    if(ret2!=0)printvar(ret2);
     store_graph(pathr,graphr,dijkstrar,connection.index_right,i0r);
 
     write_file(path+"/connection.bin",(int*)&connection_found,1);

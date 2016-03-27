@@ -2,7 +2,7 @@
 #define CUDA_HEAD_H
 
 #undef qualifier
-#ifdef CUDA_IMPLEMENTATION
+#ifdef GPU_VERSION
   #include <cuda.h>
   #define qualifier __host__ __device__ inline
   #define qualifierd __host__ __device__ inline
@@ -15,7 +15,7 @@
   #define hostonly(x) x
 #endif
 
-#ifdef CUDA_IMPLEMENTATION
+#ifdef GPU_VERSION
   #define sin_ sinf
   #define cos_ cosf
   #define sqrt_ sqrtf
@@ -26,8 +26,8 @@
   #define sqrt_ sqrt
 #endif
 
-#ifndef CUDA_IMPLEMENTATION
-  #warning ("NO CUDA_IMPLEMENTATION: version without gpu");
+#ifndef GPU_VERSION
+  #pragma message("GPU_VERSION not defined: version without gpu");
 #endif
 
 

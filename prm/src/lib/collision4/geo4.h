@@ -7,7 +7,8 @@
 #include <iomanip>
 
 
-#ifdef NO_CUDA
+#ifndef CUDA_CODE
+  #pragma message("NO CUDA_CODE: defining float2 and float4");
   struct float4{
     float x,y,z,w;
   };
@@ -312,7 +313,7 @@ namespace geo4{
   }
 
 #ifndef SILENT
-#ifdef CUDA_IMPLEMENTATION
+#ifdef GPU_VERSION
     #define df2print(v) printf("float2: %s= %f %f\n",#v, v.x,v.y);
     #define df4print(v) printf("float4: %s= %f %f %f\n",#v, v.x,v.y,v.z);
     #define dt4print(T) printf("trafo4: %s=\n%f\t%f\t%f\t%f\n%f\t%f\t%f\t%f\n%f\t%f\t%f\t%f\n\n",\

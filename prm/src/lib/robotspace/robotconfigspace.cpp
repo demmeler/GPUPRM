@@ -77,7 +77,8 @@ RobotConfigspace<ndof>::RobotConfigspace(std::string path, const float dq_, cons
 
     construct(robot_, polys_, sys_, N_, from_, to_, M_, mins_, maxs_, dq_, nbuf_);
 
-    delete mins_, maxs_;
+    delete mins_;
+    delete maxs_;
 }
 
 template<int ndof>
@@ -205,7 +206,7 @@ int RobotConfigspace<ndof>::init(const int ressource_rank, const int ressource_s
   polydata=new collision4::polytope4data;
   polydata->build(polylist.polys,polylist.sys,polylist.N,ndof,polylist.from, polylist.to, polylist.M);
 
-#ifdef CUDA_IMPLEMENTATION
+#ifdef GPU_VERSION
   int devcount;
   cudaGetDeviceCount(&devcount);
 
@@ -329,7 +330,7 @@ int RobotConfigspace<ndof>::indicator(const float* q)
 
 //!help kernels
 
-#ifdef CUDA_IMPLEMENTATION
+#ifdef GPU_VERSION
 template<class T>
 __global__ void set_kernel(T *array, T val, int n){
     int i = blockDim.x * blockIdx.x + threadIdx.x;
@@ -346,7 +347,7 @@ __global__ void set_kernel(T *array, T val, int n){
 //! ************************
 
 template<int ndof>
-#ifdef CUDA_IMPLEMENTATION
+#ifdef GPU_VERSION
 __global__ void kernel_indicator2(const Robot<ndof>* robot,
                                   const collision4::polytope4data* polydata,
                                   const float* qs, int offsets,
@@ -433,7 +434,7 @@ int RobotConfigspace<ndof>::indicator2_async(const float* qs, const float* qe, i
     data.res=res;
     data.N=N;
 
-#ifdef CUDA_IMPLEMENTATION
+#ifdef GPU_VERSION
     int id;
     if(free_resdevbuffer_ids.empty()){
         msg("RobotConfigspace: adding new resdevbuffer");
@@ -481,7 +482,7 @@ int RobotConfigspace<ndof>::indicator2_async(const float* qs, const float* qe, i
       numthreads+=testnum[l];
     }
 
-  #ifdef CUDA_IMPLEMENTATION
+  #ifdef GPU_VERSION
     int GRID = (numthreads + BLOCK - 1)/BLOCK;
 
     for(int i=0;i<ndof;++i){
@@ -520,9 +521,11 @@ int RobotConfigspace<ndof>::indicator2_async_wait(int request){
     typename std::map<int,request_data>::iterator it;
     it=requeststack.find(request);
     assert(it!=requeststack.end());
+#if GPU_VERSION
     request_data data=requeststack[request];
+#endif
     requeststack.erase(it);
-#ifdef CUDA_IMPLEMENTATION
+#ifdef GPU_VERSION
     cudaassert(cudaMemcpyAsync((void*)data.res,(void*)resdevbuffers[data.resdevbuffer_id],data.N*sizeof(int), cudaMemcpyDeviceToHost, streams[data.resdevbuffer_id]));
     //cudaassert(cudaMemcpy((void*)data.res,(void*)resdevbuffers[data.resdevbuffer_id],data.N*sizeof(int), cudaMemcpyDeviceToHost));
     free_resdevbuffer_ids.insert(data.resdevbuffer_id);

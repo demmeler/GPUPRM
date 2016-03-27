@@ -5,6 +5,7 @@
 #include <fstream>
 #include <string>
 #include <sstream>
+#include <assert.h>
 
 #include "config.h"
 
@@ -40,8 +41,7 @@ const float pi=3.1415926535897;
                     std::cout<<stream__.str();}
 #endif
 
-#if 1//def CUDA_IMPLEMENTATION
-  #include <assert.h>
+#ifdef CUDA_CODE
   #define cudaassert(x) {if(x!=cudaSuccess){printvar(x); printvar(cudaGetErrorString(x));}  assert(x==cudaSuccess);}
 #endif
 
@@ -52,7 +52,7 @@ const float pi=3.1415926535897;
 ///   **************************
 
 #ifndef SILENT
-#ifdef CUDA_IMPLEMENTATION
+#ifdef GPU_VERSION
 #if 0
     #define dprintsetup std::stringstream str; str<<blockIdx.x<<" "<<threadIdx.x;
     #define dcheck(x) if(!(x)) printf( "check %s failed.\n", #x );

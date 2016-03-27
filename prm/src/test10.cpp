@@ -108,7 +108,7 @@ int main(int argc, char** argv)
   if(rank==0){
       tick(twrite);
 
-      prm.store_graphs("prmoutput");
+      prm.store_results("prmoutput");
 
       tock(twrite);
 

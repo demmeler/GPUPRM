@@ -34,7 +34,6 @@ class PRMSolver{
     int pos; //! position of first vertex
     int num; //! current number of vertices stored
     block* next; //!if num==blocksize -> pointer to next block
-    float acceptance_prob; //! probability for accepting this block, when chosen by prm alg
   };
 
   typedef std::map<int,block*> pmap;
@@ -128,6 +127,22 @@ public:
     i0l=insert(qstart,graphl);
     i0r=insert(qend,graphr);
   }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -659,6 +674,25 @@ public:
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
   //! *******************
   //! *                 *
   //! *    process 2    *
@@ -1042,6 +1076,28 @@ public:
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
   //! *******************
   //! *                 *
   //! *    process 3    *
@@ -1378,6 +1434,22 @@ public:
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
   //! *******************
   //! *                 *
   //! *    process 4    *
@@ -1647,9 +1719,28 @@ public:
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
   //! *******************
   //! *                 *
-  //! *    process 4    *
+  //! *    process 5    *
   //! *                 *
   //! *******************
 
@@ -1723,6 +1814,7 @@ public:
     processor1.processing_step_part1();
     processor2.processing_step_part1();
 
+    tick(tloop);
     for(int i=0;i<maxsteps;++i){
       //tick(evaluating1);
       processor1.processing_step_part2();
@@ -1754,6 +1846,7 @@ public:
         printvar(i);
       }
     }
+    tock(tloop);
 
     delete[] qnew, qstartlist,qendlist, resbuf, resbufloc, leftconn, rightconn, poslist, distlist, dsp, cnt,
             qnew2, qstartlist2,qendlist2, resbuf2, resbufloc2, leftconn2, rightconn2, poslist2, distlist2;
@@ -2097,7 +2190,6 @@ public:
       g.newblockpos+=blocksize;
       if(g.newblockpos>N) return -1;
       b->num=0;
-      b->acceptance_prob=1.0;
     }else{
       size=g.newblockpos;
       size2=g.blocknum;
@@ -2110,14 +2202,11 @@ public:
         b=b->next;
       }
     }
-    //printvar(b->pos);
-    //printvar(b->num);
     int position=b->pos+b->num++;
     int qposition=ndof*position;
     for(int i=0;i<ndof;++i){
       g.qstorage[qposition+i]=q[offset*i];
     }
-    //surrnum[position]=0;
     if(b->num>=blocksize){
       block *bnew=&(g.blocks[g.blocknum++]);
       b->next=bnew;
@@ -2125,7 +2214,6 @@ public:
       g.newblockpos+=blocksize;
       if(g.newblockpos>N) return -1;
       bnew->num=0;
-      bnew->acceptance_prob=b->acceptance_prob/2.0;
     }
     return position;
   }
@@ -2146,12 +2234,8 @@ public:
     for(int i=0;i<ndof;++i){
         index[i]=i*offset;
     }
-    //printvar(begin->first);
-    //printvar(end->first);
     for(;!(begin==end);++begin){
-      //printvar(begin->first);
       const block *b=begin->second;
-      //printvar(b->pos);
       bool more=true;
       while(more){
         more=b->num>=blocksize;
@@ -2163,12 +2247,10 @@ public:
           float normsq=0;
           for(int i=0;i<ndof;++i){
             float diff=g.qstorage[k+i]-qref[i];
-            //printvar(diff);
             normsq+=diff*diff;
           }
           //!compare norm
           if(normsq<D2){
-            //printvar(k);
             //! store neighbour in buffer
             for(int i=0;i<ndof;++i){
               qlist[index[i]++]=g.qstorage[k+i];
@@ -2205,16 +2287,11 @@ public:
     for(int i=0;i<ndof;++i){
         index[i]=i*offset;
     }
-    //printvar(begin->first);
-    //printvar(end->first);
     for(;!(begin==end);++begin){
-      //printvar(begin->first);
       const block *b=begin->second;
-      //printvar(b->pos);
       bool more=true;
       while(more){
         more=b->num>=blocksize;
-        //printvar(b->num);
         const int pos=b->pos;
         const int max=pos+b->num;
         for(int l=pos;l<max;++l){
@@ -2223,12 +2300,10 @@ public:
           float normsq=0;
           for(int i=0;i<ndof;++i){
             float diff=g.qstorage[k+i]-qref[offsetref*i];
-            //printvar(diff);
             normsq+=diff*diff;
           }
           //!compare norm
           if(normsq<D2){
-            //printvar(k);
             //! store neighbour in buffer
             posqlist[index[0]]=l;
             distlist[index[0]]=sqrt(normsq);
@@ -2499,12 +2574,12 @@ public:
     msg("------------------------");
   }
 
-  void store_graphs(std::string path){
+  void store_results(std::string path){
     int rank, root=0;
     MPI_Comm_rank(MPI_COMM_WORLD,&rank);
     if(rank!=root)return;
 
-    msg("Storing graphs....");
+    msg("Storing results....");
     printvar(connection.index_left);
     printvar(connection.index_right);
 

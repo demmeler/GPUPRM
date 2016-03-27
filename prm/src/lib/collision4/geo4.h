@@ -7,9 +7,7 @@
 #include <iomanip>
 
 
-//#ifndef CUDA_IMPLEMENTATION
-//#ifndef __CUDA_ARCH__
-#if 0
+#ifdef NO_CUDA
   struct float4{
     float x,y,z,w;
   };

@@ -523,8 +523,8 @@ int RobotConfigspace<ndof>::indicator2_async_wait(int request){
     request_data data=requeststack[request];
     requeststack.erase(it);
 #ifdef CUDA_IMPLEMENTATION
-    //cudaassert(cudaMemcpyAsync((void*)data.res,(void*)resdevbuffers[data.resdevbuffer_id],data.N*sizeof(int), cudaMemcpyDeviceToHost, streams[data.resdevbuffer_id]));
-    cudaassert(cudaMemcpy((void*)data.res,(void*)resdevbuffers[data.resdevbuffer_id],data.N*sizeof(int), cudaMemcpyDeviceToHost));
+    cudaassert(cudaMemcpyAsync((void*)data.res,(void*)resdevbuffers[data.resdevbuffer_id],data.N*sizeof(int), cudaMemcpyDeviceToHost, streams[data.resdevbuffer_id]));
+    //cudaassert(cudaMemcpy((void*)data.res,(void*)resdevbuffers[data.resdevbuffer_id],data.N*sizeof(int), cudaMemcpyDeviceToHost));
     free_resdevbuffer_ids.insert(data.resdevbuffer_id);
 #else
 #endif

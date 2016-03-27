@@ -1,21 +1,14 @@
 #ifndef PRMSOLVER_H
 #define PRMSOLVER_H
 
-
 #include <mpi.h>
-
 #include <map>
 #include <vector>
-#include <cmath>
-#include <cfloat>
-#include <stdlib.h>
-#include <queue>
 #include <set>
 
+#define MPI_CODE
 
 #include "config.h"
-#include "util.hpp"
-#include "tictoc.h"
 
 #include "configspace.hpp"
 

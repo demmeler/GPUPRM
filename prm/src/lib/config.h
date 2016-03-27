@@ -4,7 +4,6 @@
 
 #define SILENT
 #define NO_IO
-#define MPI_CODE
 //#define CUDA_IMPLEMENTATION
 
 

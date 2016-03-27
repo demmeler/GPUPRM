@@ -2,6 +2,8 @@
 #include <time.h>
 #include <mpi.h>
 
+#define MPI_CODE
+
 #include "lib/config.h"
 #include "lib/util.hpp"
 #include "lib/tictoc.h"

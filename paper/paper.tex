@@ -1,0 +1,396 @@
+\documentclass{scrartcl} 
+\usepackage[ngerman,english]{babel}
+ \usepackage[T1]{fontenc}
+\usepackage{lmodern}
+\usepackage[applemac]{inputenc}
+
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{amstext}
+\usepackage{amsthm}
+
+\usepackage{fancyhdr}
+\usepackage{paralist}
+
+\usepackage{mathtools}
+
+
+\usepackage{hyperref}
+
+\DeclareMathOperator*{\esssup}{ess.sup}
+\DeclareMathOperator*{\defgl}{\vcentcolon=}
+
+
+%\pagestyle{fancy}
+%\fancyhead[L]{Seminar \glqq Optimale Steuerung\grqq\\ Prof. Brokate, Prof. Kuttler} %Kopfzeile links
+%\fancyhead[C]{} %zentrierte Kopfzeile
+%\fancyhead[R]{10. Dezember 2013\\ Manuel Demmeler} %Kopfzeile rechts
+\title{\vspace{-1.3cm} \textmd{\normalsize{Project description}}\\ Parallelization of the Probabilistic Roadmap Method with GPU Acceleration}
+\date{}
+\author{Manuel Demmeler}
+
+%\thispagestyle{fancy}
+
+\newcommand{\3}{ ^{3\times3} }
+\newcommand{\R}{\mathbb{R}}
+\newcommand{\N}{\mathbb{N}}
+\newcommand{\M}{\mathbb{M}}
+\newcommand{\Sym}{\mathbb{S}^3}
+\newcommand{\Mpos}{\M_+^3}
+\newcommand{\Orth}{\mathbb{O}^3}
+\newcommand{\norm}[1]{\left\lVert#1\right\rVert}
+\newcommand{\abs}[1]{\left |#1\right |}
+\newcommand{\ub}{\bar{u}}
+\newcommand{\yb}{\bar{y}}
+\newcommand{\scprod}[2]{\langle#1 , #2 \rangle}
+
+%\vspace{-3.4cm}
+
+
+\begin{document}
+\maketitle
+
+\section{Motivation}
+In trajctory optimization with obstacles, it is often necessary to provide feasible inital trajectories. 
+For example in robot motion planning, where the dimensions of the underlying spaces are rather high, this can be expensive. A further problem is that because of the transformation from work into configuration space, the obstacles are often no longer given in a closed form. An efficient approximative approach is using probabilistic roadmaps (PRMs).
+
+
+\section{Introduction}
+\subsection{Problem Statement and the Sequential PRM Method}\label{algintro}
+\newtheorem*{defi}{Definition}
+\newtheorem*{alg1}{Algorithm}
+
+
+The abstract problem is to find a path on a d-dimensional map, which avoids intersecting obstacles. The obstacles are  given by an indicator function
+\begin{equation*}
+	I: \Omega \rightarrow \{0, 1\}
+\end{equation*}
+on the domain \( \Omega = [ q_{min,1}, q_{max,1} ] \times ... \times  [ q_{min,d}, q_{max,d} ] \subset \R^d  \) and the goal is to find a continuous way
+\begin{equation*}
+	\Gamma: [0,1] \rightarrow \Omega
+\end{equation*}
+between a given start and endpoint, \(\Gamma(0)=q_b,\ \Gamma(1)=q_e \), 
+such that
+\begin{equation*}
+	I(\Gamma(s))=0 \text{\ f.a.\ } s \in [0,1].
+\end{equation*}
+The probabilistic roadmap (PRM) approach grows a graph \(G=(V,E)\) form \(q_s\) and \(q_e\) by randomly sampling nodes \(v\in V\subset \Omega\).  Two nodes \(v,w \in V\) are connected, if they are near enough each other and the linear connection in between is free from obstacles. The algorithm terminates, when there is a path from \(q_s\) to \(q_e\) on G.
+\begin{defi}
+For two points \(q_1\) and \(q_2\) we define the connection with stepsize \(h>0\) as
+	\begin{equation*}
+		[q_1,q_2]_h \defgl \{ q = \lambda q_1+(1-\lambda) q_2\ |\ \lambda \in [0,1], \norm{q-q_1} \in \N_0 h \}.
+	\end{equation*}
+	We say, \(q_1\) and \(q_2\) are connected (with stepsize \(h>0\)) on the map \(\Omega\), if
+	\(I(q)=0\) for all \(q \in [q_1, q_2]_h\).
+\end{defi}
+\begin{alg1} (Probabilistic Roadmap in general)\\
+	Input: \(q_s, q_e\in \Omega, h>0, d_0>0\)	\\
+	Output: \(q_s=q_1, ... ,q_n=q_e\in \Omega\), 
+		such that all \(q_i\) and \(q_{i+1}\) are connected with stepsize \(h\)
+	\begin{itemize}
+		\item Initialize graph \(G=(V,E)\) with \(V=\{q_s, q_e\}\), 
+			if \(q_s\) and \(q_e\) are connected, \(E \leftarrow\{ q_s, q_e\}\)
+		\item While there exists no path in G between \(q_s\) and \(q_e\) do
+		\begin{itemize}
+			\item Sample \(q\in \Omega\) from a probability density  \(p(\ \cdot\ , G)\), resample until \(I(q)=0\)
+			\item \(V \leftarrow{q}\)
+			\item For all nodes \(\tilde{q} \in V\) which are near enough (\( \norm{q- \tilde q} \le d_0 \)) and
+				connected with \(q\) with stepsize h, 
+				\(E \leftarrow \{q, \tilde{q}\}\)
+		\end{itemize}
+		\item Determine the shortest path \(q_1, ... , q_n\in V\) on \(G\) from \(q_s\) to \(q_e\).
+	\end{itemize}
+\end{alg1}
+
+
+The probability density \(p(\ \cdot\ ,G)\) (depending on the actual graph) can be for example first selecting randomly a node \(q_0 \in V\) and then sampling a new point \(q\) in the neighbourhood of \(q_0\). Theory about success probabilities and convergence results can be found in \cite{prmlec}, \cite{prm1} or \cite{prm2}.
+
+
+\subsection{Application to Robotics}
+
+\begin{figure}
+    \centering
+    \includegraphics[width=0.8\textwidth]{configspacetrafo.png}
+    \caption{Example for the transformation of obstacles into configspace. 
+    		The scattered areas on the right are the sets of points with I(q)=1, \cite{prmlec}.}
+    \label{fig:awesome_image}
+\end{figure}
+
+
+\subsection{Project Overview}
+
+Like in the stated robotics example, in many cases the most costly operation of the PRM algorithm is the evaluation of the indicator function \(I(q)\), which however can be done independently for every new \(q\).
+\begin{itemize}
+\item 
+Therefore in a first step, it is planned to implement \(I(q)\) parallely in a vectorized way, i.e. as a function \((q_1, ... , q_P) \mapsto (I(q_1),...,I(q_P))\). For example with help of the GPU. In the robotics example this means, the direct kinematic and collision calculation is made parallely for \(P\) different joint angle vectors.
+\item
+Then in a first level of parallelization, this function can be applied to the \(q_i \in [q, \tilde q]_h \) to check, if \(q\) and \(\tilde q\) are connected.
+\item
+Furthermore, a second level of parallelization could be achieved by sampling and connecting several new points \(\tilde q_i\) parallely. This is expected to be more difficult, because all new nodes have to be connected to the old graph and to each other. Therefore it has to be evaluated, if a parallel implementation stays efficient here.
+\item
+If there remains time, a next idea could be to execute the algorithm on different discretization levels \(h\). This means for example to compute a way \(q_1^0, ..., q_n^0\) which is connected with a coarse stepsize \(h_0\), then to decrease the stepsize to \(0<h_1<h_0\) and take the path nodes \(q_i^0\) as starting nodes for the next execution of the algorithm, which gives then an \(h_1\)-connected way \(q_1^1, ... , q_n^1\), etc.
+\end{itemize}
+
+
+\section{Structure of the PRM Solver}
+
+here overview over the components of the programm components: 
+
+PRMSolver 1 <-> Configspace object 1 <-> GPU 1
+
+.
+
+.
+
+.
+
+PRMSolver n <-> Configspace object 2 <-> GPU 1
+
+
+- description of the different versions:
+
+- definitions as pseudocode
+
+version 1: 
+
+	- each process generates own nodes -> exchange them, synchronous gpu kernel
+
+version 2: 
+
+	- every process generates all nodes (same by exchange of random seed)
+
+	- indicator function splitted over processes, synchronous
+
+version 3: 
+
+	- same as version 2 with some pipeline optimizations
+
+version 4:
+
+	- same as version 3 with asynchronous gpu
+
+version 5:
+
+	- each process has 2 workers which are generating their nodes an are using 1 gpu
+
+	- one worker uses the kernel time  of the other to do its work
+
+	- should give use the gpu computation time efficiently
+
+
+\section{Implementation of an Indicator Function for Robot Arms}
+
+In the project, the probabilistic roadmap algorithm is applied  to create collisionfree trajectories of a robot arm.
+For a robot with given joint angles \(q_i\) one can calculate straightforwardly all positions and orientations  of the single parts of the robot.
+For this, coordinate frames according to the Denavit Hartenberg convention are used.
+The coordinate frames of the single parts are described by transformation matrices 
+$T_i \in R^{4x4}$, which transform points of the body frame into the world frame. They depend on the state $q=(q_1,...,q_d)$ of the robot and on the geometry of the joint angles given by the Denavit-Hartenberg parameters of the robot. For the exact calculations see \cite{robodyn}.
+
+The geometry of the robot parts is defined by a set of convex polytopes, each of them belonging to one of the robots coordinate frame. Applying the corresponding $T_i$, its vertices can be transformed into the world frame. 
+Environment obstacles are also defined by convex polytopes, in the world frame.
+
+Now the movement of the robot can be described by a curve $q(t)$ in the state space. It is collisionfree, if at no time, any two polytopes of the robot intersect with each other or with the environment after transformed into the world frame.
+To apply the probabilistic roadmap algorithm, we express this by the indicator function
+
+\begin{equation*}
+	I(q)=
+	\begin{cases}
+		0,	& \text{ for no collision for all given pairs of polytopes in wold frame } \\
+		1,	& \text{ if at least one collision occurs }
+	\end{cases}
+\end{equation*}
+
+It has to be noted that the trajectories \(q(t)\) the PRM algorithm generates are piecewise linear and therefore not differentiable. Hence, they have to be smoothed before the use on a robot. This is not part of the project. The task is only to generate feasible trajectories to be passed to an optimizer.
+
+
+
+
+
+here some overview
+
+- state the principle task: movement of an robot arm through environment with obstacles
+
+- define the resulting state space: $q=(q1,...,qn) \in R^ndof$
+
+- state how the indicator function has to look like in general
+
+
+
+- describe the robot: 
+
+	- consisting of convex polytopes
+
+ 	- which are located in coordinate frames
+
+	- coordinate frames described by transformation matrices
+
+	- transformation matrices given by state q
+
+
+
+
+- collision tested by the ... algorithm
+
+
+
+\subsection{Direct Kinematics}
+
+
+
+- coordinate frames
+
+- DH-Parameters
+
+
+
+\subsection{2D and 3D Geometry Library}
+
+
+
+- vector types: float4, float2
+
+- matrix type: trafo4=float4[4]
+
+
+
+- float precision is enough for this application
+
+- everything inline 
+
+- hybrid device host functions
+
+- += etc. overloaded, + etc. to make no unnecessary temps
+
+
+
+\subsection{Polytopes}
+
+
+
+- describe polytope4 structure:
+
+	- vertices stored as float4 array
+
+	- edges stored in crs format
+
+
+
+- whole list of polytopes stored compactly in polytope4data on gpu
+
+
+
+- maybe describe interface polytope <-> polytope4data <-> polytope4
+
+
+
+\subsection{Chung-Wang Collision Algorithm}
+
+
+
+- input: polytopes P, Q and trafonsformations Tp, Tq
+
+- output: intersection or not
+
+
+
+- describe very shortly how the algorithm works
+
+- implemented as simple device function
+
+
+
+\subsection{Robot Kernel}
+
+
+- the indicator function gets:
+
+	- polytopes in coordinate frames
+
+	- data, which pairs must be tested
+
+	- q
+
+  and computes if for any pair $(i,j)$ the polytopes $P_i, P_j$ collide in the world frame
+
+
+
+- implements the indicator function for multiple requests parallely:
+
+
+
+- input: lists qstart, qend
+
+- output: res
+
+
+
+$res[i] = 0$ if indicator(q) == 0 for all q in $[ qstart[i], qend[i] ]_deltaq$
+
+	!= 0 else
+
+
+
+program:
+
+host:
+
+- computes distances between qstart, qend and resulting number of intermediate points/ threads
+
+- qstart, qend, numbers of threads sendt to gpu
+
+gpu kernel:
+
+- each gpu thread computes one intermediate point and its indicator function
+
+- indicator function computation:
+
+	- iterate over all polytope pairs and run the collision algorithm for each
+
+- reduce the indicator functions to res
+
+- send back res to host
+
+
+
+--> maybe do this in pseudo code
+
+
+
+asynchronous version:
+
+- indicator call: everything untill kernel call
+
+- wait function: res memcopy incl. waiting for kernel
+
+
+
+
+
+
+\bibliographystyle{alpha}
+\begin{thebibliography}{999}
+	\bibitem{prmlec} D. Burschka, Lecture Robot Motion Planning, source: http://robvis01.informatik.tu-muenchen.de/courses/wegtraj/index.html
+	\bibitem{prm1} H. Choset, K. Lynch, S. Hutchinson, G. Kantor, W. Burgard, L. Kavraki and S. Thrun, Principles of Robot Motion: Theory, Algorithms, and Implementation, MIT Press, 2005
+	\bibitem{prm2} S. M. LaValle, Planning Algorithms, Cambridge University Press, 2006
+	\bibitem{robodyn} T. Buschmann, Skript zur Vorlesung: Roboterdynamik SS14, Lehrstuhl für Angewandte Mechanik, TU München, 2014
+\end{thebibliography}
+
+\end{document}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

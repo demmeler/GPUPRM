@@ -5,6 +5,12 @@ description/*.log
 description/*.pdf
 description/*.synctex.gz
 description/*.out
+paper/.DS_Store
+paper/*.aux
+paper/*.log
+paper/*.pdf
+paper/*.synctex.gz
+paper/*.out
 prm/build
 *~
 *.o

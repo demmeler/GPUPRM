@@ -142,7 +142,7 @@ private:
   std::vector<int*> testposdev; //GPU length nbuftest
   int nbuftest;
 
-  std::vector<cudaStream_t_*> streams;
+  std::vector<cudaStream_t_> streams;
 
   float mins[ndof];
   float maxs[ndof];

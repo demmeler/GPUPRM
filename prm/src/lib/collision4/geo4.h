@@ -8,7 +8,7 @@
 
 
 #ifndef CUDA_CODE
-  #pragma message("NO CUDA_CODE: defining float2 and float4");
+  #warning ("NO CUDA_CODE: defining float2 and float4");
   struct float4{
     float x,y,z,w;
   };

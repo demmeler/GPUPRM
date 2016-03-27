@@ -16,7 +16,9 @@ namespace collision4{
   class polytope4;
   class polytope4data;
 }
-struct cudaStream_t;
+
+class CUstream_st;
+typedef CUstream_st* cudaStream_t_;
 
 template<int ndof>
 class RobotConfigspace : public Configspace<ndof>
@@ -140,7 +142,7 @@ private:
   std::vector<int*> testposdev; //GPU length nbuftest
   int nbuftest;
 
-  std::vector<cudaStream_t> streams;
+  std::vector<cudaStream_t_*> streams;
 
   float mins[ndof];
   float maxs[ndof];

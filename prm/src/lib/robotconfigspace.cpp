@@ -15,6 +15,7 @@
 #include <cmath>
 
 
+
 template<int ndof>
 void RobotConfigspace<ndof>::construct(const Robot<ndof>* robot_,
                  const polytope *polys_,
@@ -439,10 +440,8 @@ int RobotConfigspace<ndof>::indicator2_async(const float* qs, const float* qe, i
         msg("RobotConfigspace: adding new resdevbuffer");
         printvar(resdevbuffers.size());
         id=resdevbuffers.size();
-        cudaStream_t streamneu;
-        streams.push_back(streamneu);
+        streams.push_back(0x0);
         cudaassert(cudaStreamCreate(streams[id]));
-        streams.push_back();
         resdevbuffers.push_back(0x0);
         cudaassert(cudaMalloc((void**)&resdevbuffers[id], nbufres*sizeof(int)));
         qdevbufferfrom.push_back(0x0);
@@ -490,14 +489,14 @@ int RobotConfigspace<ndof>::indicator2_async(const float* qs, const float* qe, i
 
     for(int i=0;i<ndof;++i){
         //pointer inkrement in cuda??
-      cudaassert(cudaMemcpyAsync((void*)(qdevbufferfrom[data.resdevbuffer_id]+nbufqfrom*i),(void*)&(qs[offset*i]), N*sizeof(float), cudaMemcpyHostToDevice, streams[data.resdevbuffer_id]));
-      cudaassert(cudaMemcpyAsync((void*)(qdevbufferto[data.resdevbuffer_id]+nbufqto*i),(void*)&(qe[offset*i]), N*sizeof(float), cudaMemcpyHostToDevice, streams[data.resdevbuffer_id]));
+      cudaassert(cudaMemcpyAsync((void*)(qdevbufferfrom[data.resdevbuffer_id]+nbufqfrom*i),(void*)&(qs[offset*i]), N*sizeof(float), cudaMemcpyHostToDevice, *(streams[data.resdevbuffer_id])));
+      cudaassert(cudaMemcpyAsync((void*)(qdevbufferto[data.resdevbuffer_id]+nbufqto*i),(void*)&(qe[offset*i]), N*sizeof(float), cudaMemcpyHostToDevice, *(streams[data.resdevbuffer_id])));
     }
 
-    cudaassert(cudaMemcpyAsync((void*)testposdev[data.resdevbuffer_id],(void*)testpos.data(), N*sizeof(int), cudaMemcpyHostToDevice, streams[data.resdevbuffer_id]));
-    cudaassert(cudaMemcpyAsync((void*)testnumdev[data.resdevbuffer_id],(void*)testnum.data(), N*sizeof(int), cudaMemcpyHostToDevice, streams[data.resdevbuffer_id]));
+    cudaassert(cudaMemcpyAsync((void*)testposdev[data.resdevbuffer_id],(void*)testpos.data(), N*sizeof(int), cudaMemcpyHostToDevice, *(streams[data.resdevbuffer_id])));
+    cudaassert(cudaMemcpyAsync((void*)testnumdev[data.resdevbuffer_id],(void*)testnum.data(), N*sizeof(int), cudaMemcpyHostToDevice, *(streams[data.resdevbuffer_id])));
 
-    kernel_indicator2<ndof><<<GRID,BLOCK,0, streams[data.resdevbuffer_id]>>>(robotdev,polydatadev,qdevbufferfrom[data.resdevbuffer_id],nbufqfrom,qdevbufferto[data.resdevbuffer_id],
+    kernel_indicator2<ndof><<<GRID,BLOCK,0, *(streams[data.resdevbuffer_id])>>>(robotdev,polydatadev,qdevbufferfrom[data.resdevbuffer_id],nbufqfrom,qdevbufferto[data.resdevbuffer_id],
                                                       nbufqto,resdevbuffers[data.resdevbuffer_id],testposdev[data.resdevbuffer_id],testnumdev[data.resdevbuffer_id],N, numthreads);
 
   #else
@@ -529,7 +528,7 @@ int RobotConfigspace<ndof>::indicator2_async_wait(int request){
 #ifdef CUDA_IMPLEMENTATION
     msg("waiting for kernel...");
     printvar(data.resdevbuffer_id);
-    cudaassert(cudaMemcpyAsync((void*)data.res,(void*)resdevbuffers[data.resdevbuffer_id],data.N*sizeof(int), cudaMemcpyDeviceToHost, streams[data.resdevbuffer_id]));
+    cudaassert(cudaMemcpyAsync((void*)data.res,(void*)resdevbuffers[data.resdevbuffer_id],data.N*sizeof(int), cudaMemcpyDeviceToHost, *(streams[data.resdevbuffer_id])));
     free_resdevbuffer_ids.insert(data.resdevbuffer_id);
     msg("finished");
 #else

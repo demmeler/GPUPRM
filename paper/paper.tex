@@ -107,7 +107,7 @@ For example in robot motion planning, where the dimensions of the underlying spa
 \newtheorem*{alg1}{Algorithm}
 
 
-The abstract problem is to find a path on a d-dimensional map, which avoids intersecting obstacles. The obstacles are  given by an indicator function
+The abstract problem is to find a path on a d-dimensional space, which avoids intersecting obstacles. The obstacles are  given by an indicator function
 \begin{equation*}
 	I: \Omega \rightarrow \{0, 1\}
 \end{equation*}
@@ -154,13 +154,21 @@ The probability density \(p(\ \cdot\ ,G)\) (depending on the actual graph) can b
 
 \subsection{Application to Robotics}
 
+
 \begin{figure}
     \centering
     \includegraphics[width=0.8\textwidth]{configspacetrafo.png}
-    \caption{Example for the transformation of obstacles into configspace. 
-    		The scattered areas on the right are the sets of points with I(q)=1, \cite{prmlec}.}
+    \caption{Example for an indicator function in robotics from \cite{prmlec}. 
+    		The real obstacles on the left are transformed 
+		into occupied areas of the configuration space on the right.}
     \label{fig:awesome_image}
 \end{figure}
+
+In the project, the PRM algorithm is used to find trajectories for a robot arm, which avoid self collisions and collisions with obstacles in the environment.
+Such trajectories can be expressed as functions describing the joint variables changing over time, that means curves in the configuration space with dimension equal to the number of degrees of freedom of the robot.
+With association the trajectory finding problem becomes a path finding problem in the configuration space exactly of the form stated in the previous chapter.
+The real obstacles transform into obstacles in the configuration space, given by the indicator function, that returns for a given set of joints, if a collision occurs.
+
 
 
 \subsection{Project Overview}

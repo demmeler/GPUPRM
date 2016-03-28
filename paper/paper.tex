@@ -252,7 +252,7 @@ It has to be noted that the trajectories \(q(t)\) the PRM algorithm generates ar
 
 The indicator function is implemented in a vectorized way as an CUDA kernel, which means that, given set of states $q^1,..,q^M$, the indicator function is evaluated for each state by one CUDA thread. Therefore, the kinematics and collision algorithm have been implemented as device code for the use in the kernel.
 
-\subsection{Direct Kinematics}
+\subsection{Direct Kinematics}\label{dk}
 
 The Denavit-Hartenberg (DH) convention is a method to describe the geometry of an robots joints, 
 that is, how the transformations between the robots coordinate frames look like in dependancy of its joint values $q_1,...,q_d$.
@@ -321,32 +321,49 @@ It means, that for $i=0,...,n-1$ the vertices $dest[dsp[i]],...,dest[dsp[i]+cnt[
 
 
 
+
+
+
 \subsection{Chung-Wang Collision Algorithm}
-The indicator function is implemented in a compressed way
+
+To check if two polytopes collide an algorithm by Chung and Wang is used here. It uses the separating vector theorem and tries to find a seperating vector by iterative search. Furthermore, a subalgorithm determines in each iteration from the candidate history, if it is still theoretically possible to find a seperating vector. If not, it is returned a collision. If on the other side a seperating vector is found, the algorithm can return no collision.
+For detailed informations see \cite{chung} and \cite{ericson}, pp. 410-412.
+The method is implemented as device code for the use on GPU kernels.
 \begin{lstlisting}
 __host__ __device__ int seperating_vector_algorithm(const polytope4& P, const polytope4& Q, 
 													const trafo4& tp, const trafo4& tq);
 \end{lstlisting}
-
-- input: polytopes P, Q and trafonsformations Tp, Tq
-
-- output: intersection or not
+In our application, the polytopes are mostly parts of the robot, which are given in a body frame and have to be transformed into world frame according to section \ref{dk} first.
+However, from the structure of the Chung-Wang algorithm drops out that mostly only a small part of the polytopes vertices are needed for the computations. Therefore it would be rather time wasting to transform all vertices before passing to the algorithm. To avoid this, all polytopes are passed in their body frames together with their transformations and the algorithm transforms vertices at the time they occur in calculations.
 
 
-
-- describe very shortly how the algorithm works
-
-- implemented as simple device function
 
 
 
 \subsection{Robot Kernel}
 
-
-
+The robot configuration space is implemented in the form
 \begin{lstlisting}
-int indicator2(const float* qs, const float* qe, int *res, const int N, const int offset);\end{lstlisting}
-It gets as input a list of border points $q_{start}^j, q_{end}^j, j=0,...,N$. This are the nodes passed by the PRMSolver. The indicator function checks now for each pair, if on the line in between the indicator function is always 0.
+template<int ndof>class RobotConfigspace : public Configspace<ndof>{
+public:
+  RobotConfigspace(const Robot<ndof>* robot_,                   const polytope *polys_,                   const int* sys_,                   const int N_,                   const int *from_, const int *to_,                   const int M_,                   const float* mins_, const float* maxs_, const float dq_,                   const int nbuf_);
+  int init(const int ressource_rank=0, const int ressource_size=1);
+  int indicator2(const float* qs, const float* qe, int *res, const int N, const int offset);
+  .
+  .
+  .
+private:
+  const Robot<ndof>* robot; //host  Robot<ndof>* robotdev;    //GPU  collision4::polytope4data* polydata;            //data on host  collision4::polytope4data* polydatadev;         //pointer to GPU obj
+  .
+  .
+  .
+}
+\end{lstlisting}
+\begin{lstlisting}
+__global__ void kernel_indicator2(const Robot<ndof>* robot,                                  const collision4::polytope4data* polydata,                                  const float* qs, int offsets,                                  const float* qe, int offsete,                                  int* res,                                  const int* testpos, const int* testnum,                                  int N, int numthreads);
+\end{lstlisting}
+where the constant geometry and robot data is passed once at the beginning and copied to the GPU by an init function.
+The indicator function gets as input a list of border points $q_{start}^j, q_{end}^j, j=0,...,N$ and checks now for each pair, if on the line in between the indicator function is always 0.
 \begin{equation}
 	res[j]=\begin{cases}
 		0	&\text{if $I(q)=0$ f.a. $q \in \left[qs[j], qe[j]\right]_{\Delta q}$} \\
@@ -356,11 +373,14 @@ It gets as input a list of border points $q_{start}^j, q_{end}^j, j=0,...,N$. Th
 The border points are stored in structures of arrays.
 \begin{equation}
 \begin{aligned}
-	q_{start}^j &= \left(qs[j],qs[j+\text{offset}],...,qs[j+(d-1)*\text{offset}]\right)^T
+	q_{start}^j &= \left(qs[j],qs[j+\text{offset}],...,qs[j+(d-1)*\text{offset}]\right)^T\\
 	q_{end}^j &= \left(qe[j],qe[j+\text{offset}],...,qe[j+(d-1)*\text{offset}]\right)^T
 \end{aligned}
 \end{equation}
 
+As the PRMSolver only needs to know, which node points can be connected by a line, and not, which points on the line exactly are free, this version delivers exactly the minimal necessary information. Furthermore it saves CPU and communication time, because the intermediate points on the lines can be directly computed by the GPU threads and do not need to be exchanged.
+
+Algorithms 1 and 2 two show in pseudo code, how the work is split between host and device.
 
 
 \begin{algorithm}
@@ -392,49 +412,15 @@ The border points are stored in structures of arrays.
 	\caption{Robot kernel: code for one thread}
 \end{algorithm}
 
-
-program:
-
-host:
-
-- computes distances between qstart, qend and resulting number of intermediate points/ threads
-
-- qstart, qend, numbers of threads sendt to gpu
-
-gpu kernel:
-
-- each gpu thread computes one intermediate point and its indicator function
-
-- indicator function computation:
-
-	- iterate over all polytope pairs and run the collision algorithm for each
-
-- reduce the indicator functions to res
-
-- send back res to host
-
-
-
---> maybe do this in pseudo code
-
-
-
-asynchronous version:
-
-- indicator call: everything untill kernel call
-
-- wait function: res memcopy incl. waiting for kernel
-
-
-
-In order to overlap computation time of GPU and CPU, an asynchronous version of the indicator function was written. Here the function is split in everything until the kernel launch and a wait function, which waits until the kernel finishes and recieves the result data. The implementation allows also overlapping of multiple requests, for example two calls of the launch function and after this the two waiting calls. With this it is possible the full computation time of the GPU.
+In order to overlap computation time of GPU and CPU, an asynchronous version of the indicator function was written. Here the function is split in everything until the kernel launch and a wait function, which waits until the kernel finishes and recieves the result data. 
 
 \begin{lstlisting}
 int indicator2_async(const float* qs, const float* qe, int *res, 
 					 const int N, const int offset, int &request);int indicator2_async_wait(int request);
 \end{lstlisting}
 
-
+The implementation also allows overlapping of multiple requests, for example two calls of the launch function and after this the two corrsponding waiting calls. 
+With this it is possible to use the full computation time of the GPU.
 
 
 \bibliographystyle{alpha}
@@ -443,6 +429,8 @@ int indicator2_async(const float* qs, const float* qe, int *res,
 	\bibitem{prm1} H. Choset, K. Lynch, S. Hutchinson, G. Kantor, W. Burgard, L. Kavraki and S. Thrun, Principles of Robot Motion: Theory, Algorithms, and Implementation, MIT Press, 2005
 	\bibitem{prm2} S. M. LaValle, Planning Algorithms, Cambridge University Press, 2006
 	\bibitem{robodyn} T. Buschmann, Skript zur Vorlesung: Roboterdynamik SS14, Lehrstuhl für Angewandte Mechanik, TU München, 2014
+	\bibitem{chung} K. Chung, Wenping Wang, Quick Collision Detection of Polytopes in Virtual Environments, Proceedings of the ACM Symposium on Virtual Reality Software and Technology (VRST 96), Mark Green (ed.), 1996
+	\bibitem{ericson} C. Ericson, Real-Time Collision Detection, Elsevier, 2005
 \end{thebibliography}
 
 \end{document}

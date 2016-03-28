@@ -376,7 +376,7 @@ void kernel_indicator2(const Robot<ndof>* robot,
     //! calculate q (convex combination)
     float q[ndof];
     float c1,c2;
-    if(testnum[k]>0){
+    if(testnum[k]>0){ //TODO: 1 statt 0 ?
       c1=(float)(i-testpos[k])/(float)(testnum[k]-1);
       c2=1.0-c1;
     }else{

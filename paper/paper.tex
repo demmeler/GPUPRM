@@ -17,6 +17,7 @@
 
 \usepackage{hyperref}
 
+\usepackage[ruled]{algorithm2e}
 
 \usepackage{listings}
 \usepackage{xcolor}
@@ -249,7 +250,7 @@ To apply the probabilistic roadmap algorithm, we express this by the indicator f
 It has to be noted that the trajectories \(q(t)\) the PRM algorithm generates are piecewise linear and therefore not differentiable. Hence, they have to be smoothed before the use on a robot. This is not part of the project. The task is only to generate feasible trajectories to be passed to an optimizer.
 
 
-The indicator function is implemented in a vectorized way as an CUDA kernel, which means that, given set of states $q^1,..,q^N$, the indicator function is evaluated for each state by one CUDA thread. Therefore, the kinematics and collision algorithm have been implemented as device code for the use in the kernel.
+The indicator function is implemented in a vectorized way as an CUDA kernel, which means that, given set of states $q^1,..,q^M$, the indicator function is evaluated for each state by one CUDA thread. Therefore, the kinematics and collision algorithm have been implemented as device code for the use in the kernel.
 
 \subsection{Direct Kinematics}
 
@@ -282,10 +283,13 @@ Operators like $+$ or $*$ are not overloaded to prevent unnecessary temporary va
 
 Transformation matrices are implemented float4 arrays with inline functions for common matrix operations. Again operators with temporaries avoided.
 \begin{lstlisting}
-class trafo4{  public:    float4 col[4];
+class trafo4{
+  public:
+    float4 col[4];
     __host__ __device__ trafo4(){}
     __host__ __device__ trafo4(float a, float alpha, float q, float d);
-    __host__ __device__ inline float4& apply(float4& u) const;    __host__ __device__ inline float4& apply(const float4& u, float4& Tu) const;
+    __host__ __device__ inline float4& apply(float4& u) const;
+    __host__ __device__ inline float4& apply(const float4& u, float4& Tu) const;
     .
     .
     .
@@ -298,7 +302,15 @@ To calculate the intersection between two polytopes, the Chung-Wang algorithm on
 and the data which vertices are connected by an edge. 
 For this the adjacency matrix of the edge graph is stored compactly in the crs format.
 \begin{lstlisting}
-struct polytope4{    float4* vertices;	//length n    int n;    //!edges in crs format    int* dsp;	//length n    int* cnt;	//length n    int* dest;	//length m    int m;};
+struct polytope4{
+    float4* vertices;	//length n
+    int n;
+    //!edges in crs format
+    int* dsp;	//length n
+    int* cnt;	//length n
+    int* dest;	//length m
+    int m;
+};
 \end{lstlisting}
 It means, that for $i=0,...,n-1$ the vertices $dest[dsp[i]],...,dest[dsp[i]+cnt[i]-1]$ are the ones connected with vertex $i$ by an edge.
 
@@ -310,7 +322,7 @@ It means, that for $i=0,...,n-1$ the vertices $dest[dsp[i]],...,dest[dsp[i]+cnt[
 
 
 \subsection{Chung-Wang Collision Algorithm}
-
+The indicator function is implemented in a compressed way
 \begin{lstlisting}
 __host__ __device__ int seperating_vector_algorithm(const polytope4& P, const polytope4& Q, 
 													const trafo4& tp, const trafo4& tq);
@@ -331,32 +343,54 @@ __host__ __device__ int seperating_vector_algorithm(const polytope4& P, const po
 \subsection{Robot Kernel}
 
 
-- the indicator function gets:
 
-	- polytopes in coordinate frames
-
-	- data, which pairs must be tested
-
-	- q
-
-  and computes if for any pair $(i,j)$ the polytopes $P_i, P_j$ collide in the world frame
-
-
-
-- implements the indicator function for multiple requests parallely:
-
-
-
-- input: lists qstart, qend
-
-- output: res
+\begin{lstlisting}
+int indicator2(const float* qs, const float* qe, int *res, const int N, const int offset);\end{lstlisting}
+It gets as input a list of border points $q_{start}^j, q_{end}^j, j=0,...,N$. This are the nodes passed by the PRMSolver. The indicator function checks now for each pair, if on the line in between the indicator function is always 0.
+\begin{equation}
+	res[j]=\begin{cases}
+		0	&\text{if $I(q)=0$ f.a. $q \in \left[qs[j], qe[j]\right]_{\Delta q}$} \\
+		1	&else
+	\end{cases}
+\end{equation}
+The border points are stored in structures of arrays.
+\begin{equation}
+\begin{aligned}
+	q_{start}^j &= \left(qs[j],qs[j+\text{offset}],...,qs[j+(d-1)*\text{offset}]\right)^T
+	q_{end}^j &= \left(qe[j],qe[j+\text{offset}],...,qe[j+(d-1)*\text{offset}]\right)^T
+\end{aligned}
+\end{equation}
 
 
 
-$res[i] = 0$ if indicator(q) == 0 for all q in $[ qstart[i], qend[i] ]_deltaq$
+\begin{algorithm}
+	\KwData{qs, qe, N, offset}
+	\KwResult{res}
+	compute distances $d_j = \abs{q_{end}^j - q_{start}^j}$ \;
+	testnum[j] = $d_j/{\Delta q}$: number of threads for each line \;
+	testpos[j] = thread displacements \;
+	reset res \;
+	call kernel \;
+	\caption{Host indicator function}
+\end{algorithm}
 
-	!= 0 else
-
+\begin{algorithm}
+	\KwData{arrays qs, qe, testpos, testnum and threadindex}
+	\KwResult{res}
+	compute associated edge number $j$, defined by $testpos[j] \leq threadindex \le testpos[j]+testnum[j]$ \;
+	$c = (threadindex - testpos[j]) / (testnum[k]-1) $ \;
+	$q=c q_{start}^j + (1-c) q_{end}^j $ \;
+	calculate robot kinematics $T_0(q), ..., T_d(q) $\;
+	$res_{tmp} = 0; $ \;
+	\For{all registered pairs pairs of polytopes $P, Q$}{
+		$res_{tmp}=seperating\_vector\_algorithm(P, T_{i_P}, Q, T_{i_Q})$ \;
+		\If{$res_{tmp} \neq 0$}{
+			$res[j]=res_{tmp}$ \;
+			break \;
+		}
+	}
+	\caption{Robot kernel: code for one thread}
+\end{algorithm}
 
 
 program:
@@ -392,6 +426,13 @@ asynchronous version:
 - wait function: res memcopy incl. waiting for kernel
 
 
+
+In order to overlap computation time of GPU and CPU, an asynchronous version of the indicator function was written. Here the function is split in everything until the kernel launch and a wait function, which waits until the kernel finishes and recieves the result data. The implementation allows also overlapping of multiple requests, for example two calls of the launch function and after this the two waiting calls. With this it is possible the full computation time of the GPU.
+
+\begin{lstlisting}
+int indicator2_async(const float* qs, const float* qe, int *res, 
+					 const int N, const int offset, int &request);int indicator2_async_wait(int request);
+\end{lstlisting}
 
 
 

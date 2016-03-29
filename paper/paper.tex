@@ -103,7 +103,7 @@
 %\fancyhead[L]{Seminar \glqq Optimale Steuerung\grqq\\ Prof. Brokate, Prof. Kuttler} %Kopfzeile links
 %\fancyhead[C]{} %zentrierte Kopfzeile
 %\fancyhead[R]{10. Dezember 2013\\ Manuel Demmeler} %Kopfzeile rechts
-\title{\vspace{-1.3cm} \textmd{\normalsize{Project description}}\\ Parallelization of the Probabilistic Roadmap Method with GPU Acceleration}
+\title{\vspace{-1.3cm} \textmd{\normalsize{High Performance Computing Project}}\\ Parallelization of the Probabilistic Roadmap Method with GPU Acceleration}
 \date{}
 \author{Manuel Demmeler}
 
@@ -245,90 +245,39 @@ whose indicator function is read from a black-and-white image.
 \end{tikzpicture}
 \ \\ 
 
-Then in a first level of parallelization, this function can be applied to the \(q_i \in [q, \tilde q]_h \) to check, if \(q\) and \(\tilde q\) are connected.
+While the distribution of the indicator function to different CUDA threads is a first level of parallelization, 
+a second level can be achieved by sampling and connecting several new nodes parallely. 
+This is more difficult, because all new nodes have to be connected 
+and the graph data has to be updated on all processes. 
+For this, different approaches have been implemented, which are described in chapter \ref{solver}.
 
+Before that, chapter \ref{indicator} gives more details about the robotics indicator function.
 
-
-Furthermore, a second level of parallelization could be achieved by sampling and connecting several new points \(\tilde q_i\) parallely. This is expected to be more difficult, because all new nodes have to be connected to the old graph and to each other. Therefore it has to be evaluated, if a parallel implementation stays efficient here.
-
-
-If there remains time, a next idea could be to execute the algorithm on different discretization levels \(h\). This means for example to compute a way \(q_1^0, ..., q_n^0\) which is connected with a coarse stepsize \(h_0\), then to decrease the stepsize to \(0<h_1<h_0\) and take the path nodes \(q_i^0\) as starting nodes for the next execution of the algorithm, which gives then an \(h_1\)-connected way \(q_1^1, ... , q_n^1\), etc.
-
-
-
-
-\section{Structure of the PRM Solver}
-
-here overview over the components of the programm components: 
-
-PRMSolver 1 <-> Configspace object 1 <-> GPU 1
-
-.
-
-.
-
-.
-
-PRMSolver n <-> Configspace object 2 <-> GPU 1
-
-
-- description of the different versions:
-
-- definitions as pseudocode
-
-version 1: 
-
-	- each process generates own nodes -> exchange them, synchronous gpu kernel
-
-version 2: 
-
-	- every process generates all nodes (same by exchange of random seed)
-
-	- indicator function splitted over processes, synchronous
-
-version 3: 
-
-	- same as version 2 with some pipeline optimizations
-
-version 4:
-
-	- same as version 3 with asynchronous gpu
-
-version 5:
-
-	- each process has 2 workers which are generating their nodes an are using 1 gpu
-
-	- one worker uses the kernel time  of the other to do its work
-
-	- should give use the gpu computation time efficiently
-
-
-\section{Implementation of an Indicator Function for Robot Arms}
+\section{Implementation of an Indicator Function for Robot Arms}\label{indicator}.
 
 In the project, the probabilistic roadmap algorithm is applied  to create collisionfree trajectories of a robot arm.
 For a robot with given joint angles \(q_i\) one can calculate straightforwardly all positions and orientations  of the single parts of the robot.
 For this, coordinate frames according to the Denavit-Hartenberg convention are used.
 The coordinate frames of the single parts are described by transformation matrices 
-$T_i \in R^{4x4}$, which transform points of the body frame into the world frame. They depend on the state $q=(q_1,...,q_d)$ of the robot and on the geometry of the joint angles given by the Denavit-Hartenberg parameters of the robot. 
+$T_i \in R^{4x4}$, which transform points from the body frame frame into the world frame. They depend on the state $q=(q_1,...,q_d)$ of the robot and on the geometry of the joint angles given by the Denavit-Hartenberg parameters of the robot. 
 
-The geometry of the robot parts is defined by a set of convex polytopes, each of them belonging to one of the robots coordinate frame. Applying the corresponding $T_i$, its vertices can be transformed into the world frame. 
+The geometry of the robot parts is defined by a set of convex polytopes, each of them belonging to one of the robots coordinate frame. Applying the corresponding transformation $T_i$, its vertices can be transformed into the world frame. 
 Environment obstacles are also defined by convex polytopes, in the world frame.
 
-Now the movement of the robot can be described by a curve $q(t)$ in the state space. It is collisionfree, if at no time, any two polytopes of the robot intersect with each other or with the environment after transformed into the world frame.
+Now the movement of the robot can be described by a curve $q(t) \in \R^d$ in the configuration space. It is collisionfree, if at no time, any two polytopes of the robot intersect with each other or with the environment after being transformed into the world frame.
 To apply the probabilistic roadmap algorithm, we express this by the indicator function
 
 \begin{equation*}
 	I(q)=
 	\begin{cases}
-		0,	& \text{ for no collision for all given pairs of polytopes in wold frame } \\
+		0,	& \text{ for no collision for all given pairs of polytopes } \\
 		1,	& \text{ if at least one collision occurs }
 	\end{cases}
 \end{equation*}
 
 It has to be noted that the trajectories \(q(t)\) the PRM algorithm generates are piecewise linear and therefore not differentiable. Hence, they have to be smoothed before the use on a robot. This is not part of the project. The task is only to generate feasible trajectories to be passed to an optimizer.
 
-
-The indicator function is implemented in a vectorized way as an CUDA kernel, which means that, given set of states $q^1,..,q^M$, the indicator function is evaluated for each state by one CUDA thread. Therefore, the kinematics and collision algorithm have been implemented as device code for the use in the kernel.
+The indicator function is implemented in a vectorized way as an CUDA kernel, which means that, given set of states $q^1,..,q^M$, the indicator function is evaluated for each state by one CUDA thread. Therefore, the kinematics and collision algorithm are implemented as device code for the use in the kernel.
 
 \subsection{Direct Kinematics}\label{dk}
 
@@ -336,14 +285,15 @@ The Denavit-Hartenberg (DH) convention is a method to describe the geometry of a
 that is, how the transformations between the robots coordinate frames look like in dependancy of its joint values $q_1,...,q_d$.
 For this it is assumed that each joint is either rotational, that means an rotation around a fixed axis, 
 or prismatic, a translation along an axis.
-The robot consists of $d+1$ bodies each of which has an body fixed coordinate frame $B_i$, which is described by the transformation matrix $T_i$ into the world frame.
-For an robot with DH parameters $a_{i-1}, \alpha_{i-1}, d_i \in \R$, $i=1,...,d$, 
-the relative transformations $T_{i-1,i}=T_{i-1}^{-1} T_{i}$ between two bodies now is defined as
+The robot consists of $d+1$ bodies each of which has an body fixed coordinate frame $B_i$, which is described by a transformation matrix $T_i$ into the world frame.
+For a robot with DH parameters $a_{i-1}, \alpha_{i-1}, d_i, \theta_i \in \R$, $i=1,...,d$, 
+it is now defined, that the relative transformations $T_{i-1,i}=T_{i-1}^{-1} T_{i}$ between two bodies are
 \begin{equation}
 	T_{i-1,i} = R_z(\theta_i) T_z(d_i) R_x(\alpha_{i-1}) R_x(a_{i-1})
 \end{equation}
 where $R_x, R_z$ are rotations and $T_x, T_z$ translations around the $x$ and $z$ axes.
-By an proper choice of the body frames, every robot with rotational or prismatic joint can be described by DH parameters.
+From this follows, that from given DH parameters all transformations are determined.
+The other way round, one can show, that by an proper choice of the body frames, every robot with rotational or prismatic joints can be described by a set of DH parameters.
 For the exact calculations, see \cite{robodyn}.
 
 
@@ -359,7 +309,7 @@ __host__ __device__ inline float4& add(const float4& u, const float4& v, float4&
 \end{lstlisting}
 Operators like $+$ or $*$ are not overloaded to prevent unnecessary temporary variables.
 
-Transformation matrices are implemented float4 arrays with inline functions for common matrix operations. Again operators with temporaries avoided.
+Transformation matrices are implemented as float4 arrays with inline functions for common matrix operations. Again operators with temporaries were avoided, wherever possible.
 \begin{lstlisting}
 class trafo4{
   public:
@@ -500,6 +450,57 @@ int indicator2_async(const float* qs, const float* qe, int *res,
 The implementation also allows overlapping of multiple requests, for example two calls of the launch function and after this the two corrsponding waiting calls. 
 With this it is possible to use the full computation time of the GPU.
 
+
+\section{Structure of the PRM Solver}\label{solver}
+
+here overview over the components of the programm components: 
+
+PRMSolver 1 <-> Configspace object 1 <-> GPU 1
+
+.
+
+.
+
+.
+
+PRMSolver n <-> Configspace object 2 <-> GPU 1
+
+
+- description of the different versions:
+
+- definitions as pseudocode
+
+version 1: 
+
+	- each process generates own nodes -> exchange them, synchronous gpu kernel
+
+version 2: 
+
+	- every process generates all nodes (same by exchange of random seed)
+
+	- indicator function splitted over processes, synchronous
+
+version 3: 
+
+	- same as version 2 with some pipeline optimizations
+
+version 4:
+
+	- same as version 3 with asynchronous gpu
+
+version 5:
+
+	- each process has 2 workers which are generating their nodes an are using 1 gpu
+
+	- one worker uses the kernel time  of the other to do its work
+
+	- should give use the gpu computation time efficiently
+
+\section{Results}
+
+- timings of different versions at same conditions
+
+\section{Conclusion}
 
 \bibliographystyle{alpha}
 \begin{thebibliography}{999}

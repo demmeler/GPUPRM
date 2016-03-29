@@ -17,7 +17,13 @@
 
 \usepackage{hyperref}
 
+
+% PSEUDOCODE
+
 \usepackage[ruled]{algorithm2e}
+
+
+% C++ CODE
 
 \usepackage{listings}
 \usepackage{xcolor}
@@ -62,6 +68,32 @@
 }
 
 \lstset{escapechar=@,style=customcpp}
+
+
+% TIKZ DIAGRAMS
+
+\usepackage{tikz}
+\usetikzlibrary{arrows}
+\usetikzlibrary{positioning}
+
+\tikzset{
+    block/.style={
+           rectangle,
+           rounded corners,
+           draw=black, very thick,
+           minimum height=2em,
+           inner sep=2pt,
+           text centered,
+           },
+}
+
+\usepackage{tikz-cd}
+\tikzset{
+  shift left/.style ={commutative diagrams/shift left={#1}},
+  shift right/.style={commutative diagrams/shift right={#1}}
+}
+
+
 
 \DeclareMathOperator*{\esssup}{ess.sup}
 \DeclareMathOperator*{\defgl}{\vcentcolon=}
@@ -166,24 +198,63 @@ The probability density \(p(\ \cdot\ ,G)\) (depending on the actual graph) can b
 
 In the project, the PRM algorithm is used to find trajectories for a robot arm, which avoid self collisions and collisions with obstacles in the environment.
 Such trajectories can be expressed as functions describing the joint variables changing over time, that means curves in the configuration space with dimension equal to the number of degrees of freedom of the robot.
-With association the trajectory finding problem becomes a path finding problem in the configuration space exactly of the form stated in the previous chapter.
-The real obstacles transform into obstacles in the configuration space, given by the indicator function, that returns for a given set of joints, if a collision occurs.
+With this association, the trajectory finding problem becomes a path finding problem in the configuration space exactly of the form stated in the previous chapter.
+The real obstacles transform into obstacles in the configuration space, given by the indicator function, that returns for a given set of joints, if the configuration is feasible or a collision occurs.
 
 
 
 \subsection{Project Overview}
 
-Like in the stated robotics example, in many cases the most costly operation of the PRM algorithm is the evaluation of the indicator function \(I(q)\), which however can be done independently for every new \(q\).
-\begin{itemize}
-\item 
-Therefore in a first step, it is planned to implement \(I(q)\) parallely in a vectorized way, i.e. as a function \((q_1, ... , q_P) \mapsto (I(q_1),...,I(q_P))\). For example with help of the GPU. In the robotics example this means, the direct kinematic and collision calculation is made parallely for \(P\) different joint angle vectors.
-\item
+Like in the stated robotics example, in many cases the most costly operation of the PRM algorithm are the many evaluations of the indicator function \(I(q)\), 
+which however can be done independently for every new \(q\).
+Therefore $I(q)$ is implemented in a vectorized way as a function \((q_1, ... , q_P) \mapsto (I(q_1),...,I(q_P))\) by a CUDA kernel, where every thread computes one evaluation.
+In the robotics case, this means, the direct kinematic and collision calculation are made on the GPU parallely for different joint angle configurations.
+Although this will the only major application in the project, the PRM solver and the configuration space are implemented seperated from each other and connected by an interface to be free to simply add other applications. As an example and for testing, additionally a simple 2D configuration space is provided, 
+whose indicator function is read from a black-and-white image.
+
+\ \\ 
+\begin{tikzpicture}[auto]%node distance=0.5cm and 1.8cm]
+	\node[block] (prm) {
+		\begin{tabular}{c}
+		\textbf{PRMSolver}\\
+		generate nodes\\
+		store graph
+		\end{tabular}
+	};
+	\node [block, right=of prm] (config) {
+		\begin{tabular}{c}
+		\textbf{Configpace}\\
+		indicator fct. \\
+		interface
+		\end{tabular}
+	};
+	\node [block, right=of config] (robo) {
+		\begin{tabular}{c}
+		\textbf{RobotConfigspace}\\
+		robot kinematics\\
+		collision detection
+		\end{tabular}
+	};
+	\node [block, right=of robo] (gpu) {\textbf{GPU}};
+	
+	\path[-stealth,thick, shift left=1.0ex]	(prm) edge (config) ;
+	\path[-stealth,thick, shift left=1.0ex]	(config) edge  (prm) ;
+	\path[-stealth,thick, shift left=1.0ex]	(config) edge (robo);
+	\path[-stealth,thick, shift left=1.0ex]	(robo) edge  (config);
+	\path[-,thick]					(robo) edge (gpu);
+\end{tikzpicture}
+\ \\ 
+
 Then in a first level of parallelization, this function can be applied to the \(q_i \in [q, \tilde q]_h \) to check, if \(q\) and \(\tilde q\) are connected.
-\item
+
+
+
 Furthermore, a second level of parallelization could be achieved by sampling and connecting several new points \(\tilde q_i\) parallely. This is expected to be more difficult, because all new nodes have to be connected to the old graph and to each other. Therefore it has to be evaluated, if a parallel implementation stays efficient here.
-\item
+
+
 If there remains time, a next idea could be to execute the algorithm on different discretization levels \(h\). This means for example to compute a way \(q_1^0, ..., q_n^0\) which is connected with a coarse stepsize \(h_0\), then to decrease the stepsize to \(0<h_1<h_0\) and take the path nodes \(q_i^0\) as starting nodes for the next execution of the algorithm, which gives then an \(h_1\)-connected way \(q_1^1, ... , q_n^1\), etc.
-\end{itemize}
+
+
 
 
 \section{Structure of the PRM Solver}
@@ -239,7 +310,6 @@ For a robot with given joint angles \(q_i\) one can calculate straightforwardly 
 For this, coordinate frames according to the Denavit-Hartenberg convention are used.
 The coordinate frames of the single parts are described by transformation matrices 
 $T_i \in R^{4x4}$, which transform points of the body frame into the world frame. They depend on the state $q=(q_1,...,q_d)$ of the robot and on the geometry of the joint angles given by the Denavit-Hartenberg parameters of the robot. 
-%For the exact calculations see \cite{robodyn}.
 
 The geometry of the robot parts is defined by a set of convex polytopes, each of them belonging to one of the robots coordinate frame. Applying the corresponding $T_i$, its vertices can be transformed into the world frame. 
 Environment obstacles are also defined by convex polytopes, in the world frame.
@@ -274,7 +344,7 @@ the relative transformations $T_{i-1,i}=T_{i-1}^{-1} T_{i}$ between two bodies n
 \end{equation}
 where $R_x, R_z$ are rotations and $T_x, T_z$ translations around the $x$ and $z$ axes.
 By an proper choice of the body frames, every robot with rotational or prismatic joint can be described by DH parameters.
-
+For the exact calculations, see \cite{robodyn}.
 
 
 \subsection{2D and 3D Geometry Library}

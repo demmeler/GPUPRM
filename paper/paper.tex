@@ -18,6 +18,8 @@
 \usepackage{hyperref}
 
 
+\usepackage{graphicx}
+
 % PSEUDOCODE
 
 \usepackage[ruled]{algorithm2e}
@@ -81,6 +83,23 @@
            rectangle,
            rounded corners,
            draw=black, very thick,
+           minimum height=2em,
+           inner sep=2pt,
+           text centered,
+           },
+     block2/.style={
+           %rectangle,
+           %rounded corners,
+           fill=black!20,
+           %draw=black, very thick,
+           minimum height=2em,
+           inner sep=2pt,
+           text centered,
+           },
+     frameless/.style={
+           %rectangle,
+           %rounded corners,
+           %draw=black, very thick,
            minimum height=2em,
            inner sep=2pt,
            text centered,
@@ -212,7 +231,8 @@ In the robotics case, this means, the direct kinematic and collision calculation
 Although this will the only major application in the project, the PRM solver and the configuration space are implemented seperated from each other and connected by an interface to be free to simply add other applications. As an example and for testing, additionally a simple 2D configuration space is provided, 
 whose indicator function is read from a black-and-white image.
 
-\ \\ 
+%\ \\
+\begin{center} 
 \begin{tikzpicture}[auto]%node distance=0.5cm and 1.8cm]
 	\node[block] (prm) {
 		\begin{tabular}{c}
@@ -243,7 +263,8 @@ whose indicator function is read from a black-and-white image.
 	\path[-stealth,thick, shift left=1.0ex]	(robo) edge  (config);
 	\path[-,thick]					(robo) edge (gpu);
 \end{tikzpicture}
-\ \\ 
+\end{center}
+%\ \\ 
 
 While the distribution of the indicator function to different CUDA threads is a first level of parallelization, 
 a second level can be achieved by sampling and connecting several new nodes parallely. 
@@ -253,7 +274,7 @@ For this, different approaches have been implemented, which are described in cha
 
 Before that, chapter \ref{indicator} gives more details about the robotics indicator function.
 
-\section{Implementation of an Indicator Function for Robot Arms}\label{indicator}.
+\section{Implementation of an Indicator Function for Robot Arms}\label{indicator}
 
 In the project, the probabilistic roadmap algorithm is applied  to create collisionfree trajectories of a robot arm.
 For a robot with given joint angles \(q_i\) one can calculate straightforwardly all positions and orientations  of the single parts of the robot.
@@ -326,7 +347,7 @@ class trafo4{
 
 \subsection{Polytopes}
 
-To calculate the intersection between two polytopes, the Chung-Wang algorithm only needs their vertices 
+To calculate the intersection between two convex polytopes, the Chung-Wang algorithm only needs their vertices 
 and the data which vertices are connected by an edge. 
 For this the adjacency matrix of the edge graph is stored compactly in the crs format.
 \begin{lstlisting}
@@ -341,15 +362,7 @@ struct polytope4{
 };
 \end{lstlisting}
 It means, that for $i=0,...,n-1$ the vertices $dest[dsp[i]],...,dest[dsp[i]+cnt[i]-1]$ are the ones connected with vertex $i$ by an edge.
-
-
-- whole list of polytopes stored compactly in polytope4data on gpu
-
-- maybe describe interface polytope <-> polytope4data <-> polytope4
-
-
-
-
+The polytopes used in this projects are given by the user as convex hull of a list of vertices. However, to determine the edge graph only from the vertices is a nontrivial task, which is done by Matlab here using provided high level functions.
 
 
 \subsection{Chung-Wang Collision Algorithm}
@@ -453,34 +466,145 @@ With this it is possible to use the full computation time of the GPU.
 
 \section{Structure of the PRM Solver}\label{solver}
 
+
+\subsection{Storage of the Graph}
+
+
+\subsection{Parallelization Models}
+
+
+
+
 here overview over the components of the programm components: 
-
-PRMSolver 1 <-> Configspace object 1 <-> GPU 1
-
-.
-
-.
-
-.
-
-PRMSolver n <-> Configspace object 2 <-> GPU 1
 
 
 - description of the different versions:
 
-- definitions as pseudocode
+- mpi
 
-version 1: 
+- every process has its own GPU 
 
-	- each process generates own nodes -> exchange them, synchronous gpu kernel
+\subsubsection*{Version 1} 
 
-version 2: 
+In the first approach, that was evaluated, every process generates independantly from each other new nodes.
+Then the possible neighbors are determined and the connections, which have to be tested.
+The indicator function is called and returnes the edges.
+After this the graph must be synchronized on every processes, which leads to an alltoall communication.
+As in this graph building does not need the edge data, it is sufficient to exchange only the nodes in this phase.
+
+	
+	\begin{center}
+\begin{tikzpicture}[auto, node distance=0.5cm and 1.8cm]
+	\node[block, minimum width=3cm] (prm) {
+		\begin{tabular}{c}
+		\textbf{PRMSolver 1}
+		\end{tabular}
+	};
+	
+	\node[frameless, below=of prm, minimum width=3cm] (space) {$\vdots$};
+	
+	\node[block, below=of space, minimum width=3cm] (prm2) {
+		\begin{tabular}{c}
+		\textbf{PRMSolver n}
+		\end{tabular}
+	};
+	
+	\node [block, right=of prm] (config) {
+		\begin{tabular}{c}
+		\textbf{Configpace 1}
+		\end{tabular}
+	};
+	\node[frameless, below=of config] (space2) {$\vdots$};
+	\node [block, below=of space2] (config2) {
+		\begin{tabular}{c}
+		\textbf{Configpace n}
+		\end{tabular}
+	};
+	
+	
+	
+	\node [block, right=of config] (gpu) {\textbf{GPU 1}};
+	\node [block, right=of config2] (gpu2) {\textbf{GPU n}};
+	
+	
+	\path[-latex',thick, shift left=1.0ex]	(prm) edge (config) 
+								(config) edge (prm);
+	\path[-,thick]					(config) edge (gpu);
+	
+	\path[-latex',thick, shift left=1.0ex]	(prm2) edge (config2) 
+								(config2) edge (prm2) ;
+	\path[-,thick]					(config2) edge (gpu2);
+	
+	
+	\path[-latex',thick, shift left=1.0ex]	(prm) edge (space)
+								(space) edge (prm)
+								(prm2) edge (space)
+								(space) edge (prm2) ;
+	
+
+\end{tikzpicture}
+\end{center}
+	
+
+\subsubsection*{Version 2}
+The second approach 
 
 	- every process generates all nodes (same by exchange of random seed)
 
 	- indicator function splitted over processes, synchronous
+	
+	\begin{center}
+\begin{tikzpicture}[auto, node distance=0.5cm and 1.8cm]
+	\node[block, minimum width=3cm] (prm) {
+		\begin{tabular}{c}
+		\textbf{PRMSolver 1}
+		\end{tabular}
+	};
+	
+	\node[frameless, below=of prm, minimum width=3cm] (space) {$\vdots$};
+	
+	\node[block, below=of space, minimum width=3cm] (prm2) {
+		\begin{tabular}{c}
+		\textbf{PRMSolver n}
+		\end{tabular}
+	};
+	
+	\node [block, right=of prm] (config) {
+		\begin{tabular}{c}
+		\textbf{Configpace 1}
+		\end{tabular}
+	};
+	\node[frameless, below=of config] (space2) {$\vdots$};
+	\node [block, below=of space2] (config2) {
+		\begin{tabular}{c}
+		\textbf{Configpace n}
+		\end{tabular}
+	};
+	
+	
+	
+	\node [block, right=of config] (gpu) {\textbf{GPU 1}};
+	\node [block, right=of config2] (gpu2) {\textbf{GPU n}};
+	
+	
+	\path[-latex',thick, shift left=1.5ex]	(prm) edge (config) ;
+	\path[-,thick]					(config) edge (gpu);
+	
+	\path[-latex',thick, shift right=1.5ex]	(prm2) edge (config2) ;
+	\path[-,thick]					(config2) edge (gpu2);
+	
+	
+	\path[-latex',thick]				(config.west) edge  (prm.east) 
+								(config.west) edge (space.east)
+								(config.west) edge (prm2.east)
+								(config2.west) edge  (prm.east) 
+								(config2.west) edge (space.east)
+								(config2.west) edge (prm2.east);
 
-version 3: 
+\end{tikzpicture}
+\end{center}
+
+\subsubsection*{Version 3}
 
 	- same as version 2 with some pipeline optimizations
 
@@ -495,10 +619,93 @@ version 5:
 	- one worker uses the kernel time  of the other to do its work
 
 	- should give use the gpu computation time efficiently
+	
+Stateflow for each PRMSolver instance:
+
+\begin{center}
+\begin{tikzpicture}
+	\tikzset{mywidth/.style={minimum width=2.5cm},};
+	\node[block, mywidth] (l1) {\textbf{Worker 1}};
+	\node[frameless, mywidth, below=of l1, minimum height=1.5cm] (l2) {$\vdots$};
+	\node[block, mywidth, below=of l2] (l3) 	{\begin{tabular}{c}
+										generate\\ nodes, \\
+										start kernel
+									\end{tabular}};
+	\node[frameless, mywidth, below=of l3, minimum height=2cm] (l6) {};
+	\node[frameless, mywidth, below=of l6] (l7) {};
+	\node[block, mywidth, below=of l7] (l11)	{\begin{tabular}{c}
+										recieve\\ result, \\
+										store nodes \\ 
+										and edges
+									\end{tabular}};
+	\node[frameless, mywidth, below=of l11] (l12) {$\vdots$};
+	
+	
+	\node[block, mywidth, right=of l1] (r1) {\textbf{Worker 2}};
+	\node[frameless, mywidth, right=of l2, minimum height=1.5cm] (r2) {$\vdots$};
+	\node[frameless, mywidth, right=of l3] (r3) {};
+	\node[block, mywidth, right=of l6] (r6)	{\begin{tabular}{c}
+										recieve\\ result, \\
+										store nodes \\
+										and edges
+									\end{tabular}};
+	\node[block, mywidth, right=of l7] (r7) 	{\begin{tabular}{c}
+										generate\\ nodes, \\
+										start kernel
+									\end{tabular}};
+	\node[frameless, mywidth, right=of l12] (r12) {$\vdots$};
+	
+	\node[frameless, left=of l1] (g1) {};
+	\node[block, below=of g1, minimum height=14cm] (graph) {\rotatebox{90}{\textbf{Graph}}};
+	
+	
+	%gpu column
+	\tikzset{gpuwidth/.style={minimum width=0.8cm},};
+	
+	\node[block, right=2cm of r1, minimum width=2.5cm] {\textbf{GPU}};
+	\node[frameless, right=2cm of r2, gpuwidth] (topa) {$\vdots$};
+	\node[frameless, right=of topa, gpuwidth] (topb) {$\vdots$};
+	\node[block2, below=0.7cm of topa, gpuwidth, minimum height=4.3cm] (stream1a) {\rotatebox{90}{kernel}};
+	\node[block2, below=2.3cm of stream1a, gpuwidth, minimum height=4.2cm] (stream1b) {\rotatebox{90}{kernel}};
+	\node[frameless, below=0.3cm of stream1b, gpuwidth] (bota) {$\vdots$};
+	
+	\node[block2, below=2.2cm of topb, gpuwidth, minimum height=7.6cm] (stream2) {\rotatebox{90}{kernel}};
+	\node[frameless, right=of bota, gpuwidth] (botb) {$\vdots$};
+	
+	
+	
+	%EDGES
+	
+	\path[-latex',thick]	(graph.east |- l3.west) edge (l3.west)
+					(l11.west) edge (graph.east |- l11.west);
+	\path[-latex',thick]	(graph.east |- r7.west) edge (r7.west)
+					(r6.west) edge (graph.east |- r6.west);
+	\path[dotted,thick]	(l2) edge (l3)
+					(l3) edge (l11)
+					(l11) edge (l12)
+					(r2) edge (r6)
+					(r6) edge (r7)
+					(r7) edge (r12);
+	
+	\path[-latex',thick]	(r6.east -| stream1b.west) edge (r6.east);
+	\path[-latex',thick]	(r7.east) edge (r7.east -| stream1b.west);
+	
+	\path[-,thick]		(l3.east) edge (l3.east -| stream1a.west);
+	\path[-latex',thick]	(stream1a.east |- l3.east) edge (l3.east -| stream2.west);
+	\path[latex'-,thick]		(l11.east) edge (l11.east -| stream1b.west);
+	\path[-,thick]		(stream1b.east |- l11.east) edge (l11.east -| stream2.west);
+	
+	
+\end{tikzpicture}
+\end{center}
 
 \section{Results}
 
 - timings of different versions at same conditions
+
+- difficult to test because
+	- not deterministic
+	- dependant on density of nodes: how many neighbours have to be tested per connection
 
 \section{Conclusion}
 

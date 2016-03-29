@@ -180,25 +180,25 @@ For two points \(q_1\) and \(q_2\) we define the connection with stepsize \(h>0\
 	We say, \(q_1\) and \(q_2\) are connected (with stepsize \(h>0\)) on the map \(\Omega\), if
 	\(I(q)=0\) for all \(q \in [q_1, q_2]_h\).
 \end{defi}
-\begin{alg1} (Probabilistic Roadmap in general)\\
-	Input: \(q_s, q_e\in \Omega, h>0, d_0>0\)	\\
-	Output: \(q_s=q_1, ... ,q_n=q_e\in \Omega\), 
-		such that all \(q_i\) and \(q_{i+1}\) are connected with stepsize \(h\)
-	\begin{itemize}
-		\item Initialize graph \(G=(V,E)\) with \(V=\{q_s, q_e\}\), 
-			if \(q_s\) and \(q_e\) are connected, \(E \leftarrow\{ q_s, q_e\}\)
-		\item While there exists no path in G between \(q_s\) and \(q_e\) do
-		\begin{itemize}
-			\item Sample \(q\in \Omega\) from a probability density  \(p(\ \cdot\ , G)\), resample until \(I(q)=0\)
-			\item \(V \leftarrow{q}\)
-			\item For all nodes \(\tilde{q} \in V\) which are near enough (\( \norm{q- \tilde q} \le d_0 \)) and
-				connected with \(q\) with stepsize h, 
-				\(E \leftarrow \{q, \tilde{q}\}\)
-		\end{itemize}
-		\item Determine the shortest path \(q_1, ... , q_n\in V\) on \(G\) from \(q_s\) to \(q_e\).
-	\end{itemize}
-\end{alg1}
 
+\begin{algorithm} 
+	\caption{Probabilistic Roadmap in general}
+	\KwData{ \(q_s, q_e\in \Omega, h>0, d_0>0\)}
+	\KwResult{ \(q_s=q_1, ... ,q_n=q_e\in \Omega\), 
+		such that all \(q_i\) and \(q_{i+1}\) are connected with stepsize \(h\)}
+	Initialize graph \(G=(V,E)\) with \(V=\{q_s, q_e\}\) \\
+	If \(q_s\) and \(q_e\) are connected, \(E \leftarrow\{ q_s, q_e\}\) \\
+	\While{ there exists no path in G between \(q_s\) and \(q_e\)}{
+		Sample \(q\in \Omega\) from a probability density  \(p(\ \cdot\ , G)\), resample until \(I(q)=0\) \\
+		\For{ all nodes \(\tilde{q} \in V\), with \( \norm{q- \tilde q} \le d_0 \) }{
+			\If { $q$ and $\tilde q$ connected with stepsize h} {
+				\(E \leftarrow \{q, \tilde{q}\}\)
+			}
+		}
+		\(V \leftarrow{q}\), if at least one edge was inserted \\
+	}
+	Determine the shortest path \(q_1, ... , q_n\in V\) on \(G\) from \(q_s\) to \(q_e\).
+\end{algorithm}
 
 The probability density \(p(\ \cdot\ ,G)\) (depending on the actual graph) can be for example first selecting randomly a node \(q_0 \in V\) and then sampling a new point \(q\) in the neighbourhood of \(q_0\). Theory about success probabilities and convergence results can be found in \cite{prmlec}, \cite{prm1} or \cite{prm2}.
 
@@ -231,7 +231,7 @@ In the robotics case, this means, the direct kinematic and collision calculation
 Although this will the only major application in the project, the PRM solver and the configuration space are implemented seperated from each other and connected by an interface to be free to simply add other applications. As an example and for testing, additionally a simple 2D configuration space is provided, 
 whose indicator function is read from a black-and-white image.
 
-%\ \\
+
 \begin{center} 
 \begin{tikzpicture}[auto]%node distance=0.5cm and 1.8cm]
 	\node[block] (prm) {
@@ -264,7 +264,7 @@ whose indicator function is read from a black-and-white image.
 	\path[-,thick]					(robo) edge (gpu);
 \end{tikzpicture}
 \end{center}
-%\ \\ 
+
 
 While the distribution of the indicator function to different CUDA threads is a first level of parallelization, 
 a second level can be achieved by sampling and connecting several new nodes parallely. 
@@ -354,7 +354,7 @@ For this the adjacency matrix of the edge graph is stored compactly in the crs f
 struct polytope4{
     float4* vertices;	//length n
     int n;
-    //!edges in crs format
+    //edges
     int* dsp;	//length n
     int* cnt;	//length n
     int* dest;	//length m
@@ -466,28 +466,32 @@ With this it is possible to use the full computation time of the GPU.
 
 \section{Structure of the PRM Solver}\label{solver}
 
+- introduction
+
+- dijkstra at the end makes almost no contribution to the whole time
+
+	- can be parallelized, but this is again complicated
+	
+- focus on building the graph
+
 
 \subsection{Storage of the Graph}
 
+- describe
+
+- compare different models...?
 
 \subsection{Parallelization Models}
 
-
-
-
-here overview over the components of the programm components: 
-
-
-- description of the different versions:
-
-- mpi
-
-- every process has its own GPU 
+The parallelization is done with MPI. All processes store their own versions of the graph, which are hold up to date between each other.
+Furthermore, it is assumed that every process has its own GPU.
+The work of the single MPI processes could be parallelized further with OpenMP, but this has not been done here.
+Instead only different approaches to distribute the work on several GPUs have been investigated.
 
 \subsubsection*{Version 1} 
 
-In the first approach, that was evaluated, every process generates independantly from each other new nodes.
-Then the possible neighbors are determined and the connections, which have to be tested.
+In the first approach, that was evaluated, every process generates new nodes independantly from each other.
+Then the possible neighbours are determined and the connections, which have to be tested.
 The indicator function is called and returnes the edges.
 After this the graph must be synchronized on every processes, which leads to an alltoall communication.
 As in this graph building does not need the edge data, it is sufficient to exchange only the nodes in this phase.
@@ -547,11 +551,16 @@ As in this graph building does not need the edge data, it is sufficient to excha
 	
 
 \subsubsection*{Version 2}
-The second approach 
+The second approach uses the fact, that by synchronizing the random seed, 
+different processes can produce the same sequence of random numbers independently from each other.
+By using this, every process can generate all new nodes and determine the connection data. 
+Then the indicator function computation is splitted over their configuration space instances and the returned data shared afterwards with each other.
+With this data, all graphs can be updated and it is guaranteed, that they are the same on each process.
+The purpose of this version compared to the first one is, that less data has to be sent. 
+Furthermore, in the first version it can occur, that the different generated nodes can result in very different counts of neighbours and therefore different loads on the GPUs.
+Here, the distribution of the computation amount over the different GPUs can be chosen almost freely.
 
-	- every process generates all nodes (same by exchange of random seed)
 
-	- indicator function splitted over processes, synchronous
 	
 	\begin{center}
 \begin{tikzpicture}[auto, node distance=0.5cm and 1.8cm]
@@ -606,21 +615,9 @@ The second approach
 
 \subsubsection*{Version 3}
 
-	- same as version 2 with some pipeline optimizations
-
-version 4:
-
-	- same as version 3 with asynchronous gpu
-
-version 5:
-
-	- each process has 2 workers which are generating their nodes an are using 1 gpu
-
-	- one worker uses the kernel time  of the other to do its work
-
-	- should give use the gpu computation time efficiently
-	
-Stateflow for each PRMSolver instance:
+The third version does a further optimization by using the asynchronous version of the indicator function.
+Here, every process runs two workers overlapped. Here, in the time, when the first worker has generated his indicator function request and launched the kernel and is waiting until it has finished, the second worker updates the graph and sends his new request, and the other way round.
+With this it is possible, that the computation time of the GPU is fully used, and overlapped with the communication.
 
 \begin{center}
 \begin{tikzpicture}
@@ -704,7 +701,9 @@ Stateflow for each PRMSolver instance:
 - timings of different versions at same conditions
 
 - difficult to test because
+
 	- not deterministic
+	
 	- dependant on density of nodes: how many neighbours have to be tested per connection
 
 \section{Conclusion}

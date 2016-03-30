@@ -77,3 +77,4 @@ src/lib/robotspace/robotconfigspace.cpp
 src/lib/robotspace/robotconfigspace.h
 src/lib/collision4/polytope.h
 src/lib/collision4/cuda_head.h
+src/bench.cpp

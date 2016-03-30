@@ -1,3 +1,4 @@
+
 #include <iostream>
 #include <time.h>
 #include <mpi.h>
@@ -27,8 +28,6 @@ int main(int argc, char** argv)
   const int ndof=4;
 
 
-  tick(tinit);
-
   //! Parameters
 
   int num=(argc>=2 ? atoi(argv[1]) : 32 );
@@ -39,12 +38,11 @@ int main(int argc, char** argv)
   int seed=(argc>=6 ? atoi(argv[5]) : 0 );
   int blocksize=(argc>=7 ? atoi(argv[6]) : 256);
   int prmversion=(argc>=8 ? atoi(argv[7]) : 5 );
-  int maxstorage=1024*1024;//(argc>=8 ? atoi(argv[7]) : 1024*1024);
+  int maxstorage=1024*1024;
   int maxsteps=100000;
 
-  //srand(time(NULL));
-  //srand(clock());
-  //srand(rank+time(NULL));
+
+
   srand(seed+rank*10);
   int firstrand=rand();
 
@@ -64,16 +62,8 @@ int main(int argc, char** argv)
     qend[dof]=3;
   }
 
-  if(rank==0){
-    printvar(space.indicator(&qstart[0]));
-    printvar(space.indicator(&qend[0]));
-  }
-
   prm.init(&qstart[0],&qend[0]);
 
-  //prm.print();
-
-  tock(tinit);
 
 
   //! run
@@ -81,10 +71,10 @@ int main(int argc, char** argv)
   tick(trun);
 
 
+  int version;
+
   //prm.process_mpi(num,nbuf,maxsteps);
-  if(prmversion==1){
-    prm.process_mpi(num,nbuf,maxsteps, seed);
-  }if(prmversion==2){
+  if(prmversion==2){
     prm.process_mpi2(num,nbuf,maxsteps, seed);
   }else if(prmversion==3){
     prm.process_mpi3(num,nbuf,maxsteps, seed);
@@ -99,35 +89,17 @@ int main(int argc, char** argv)
 
   tock(trun);
 
-
   //! write output
-
-  //prm.print();
 
   MPI_Barrier(MPI_COMM_WORLD);
   int numthreads=space.get_numthreads_all();
   int numthreadsall;
   MPI_Reduce(&numthreads, &numthreadsall,1,MPI_INT,MPI_SUM,0,MPI_COMM_WORLD);
   if(rank==0){
-
-      tick(twrite);
-
-      prm.store_results("prmoutput");
-
-      tock(twrite);
-
-      printvar(numthreadsall);
-
-      printvar(rand());
-      printvar(firstrand);
-
-      printvar(num);
-      printvar(nbuf);
-      printvar(dq);
-      printvar(D);
-      printvar(seed);
-      printvar(blocksize);
-      printvar(prmversion);
+    ofstream file;
+    file.open("results.txt",ios::app);
+    file<<size<<"\t"<<prmversion<<"\"
+    file.close();
   }
 
   MPI_Finalize();

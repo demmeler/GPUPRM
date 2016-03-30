@@ -12,6 +12,10 @@
 #define tock(t1) {std::chrono::high_resolution_clock::time_point endtime___=std::chrono::high_resolution_clock::now(); \
                  int time=std::chrono::duration_cast<std::chrono::milliseconds>(endtime___-t1).count();                \
                  std::cout << "Since " << #t1 << ": \t" << time << "ms" << std::endl; }
+#define tockval(t1,time__) {std::chrono::high_resolution_clock::time_point endtime___=std::chrono::high_resolution_clock::now(); \
+                 time__=std::chrono::duration_cast<std::chrono::milliseconds>(endtime___-t1).count();                \
+                 std::cout << "Since " << #t1 << ": \t" << time__ << "ms" << std::endl; }
+
 #define timedelta(t1,t2) {int time=std::chrono::duration_cast<std::chrono::millizseconds>(endtime___-t1).count(); \
                           std::cout << "Since " << #t1 << ": \t" << time << "ms" << std::endl;}
 

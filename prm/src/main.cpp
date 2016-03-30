@@ -47,7 +47,7 @@ int main(int argc, char** argv)
   //srand(rank+time(NULL));
   srand(seed+rank*10);
   int firstrand=rand();
-  printvar(firstrand);
+  //printvar(firstrand);
 
 
   //! Initialization
@@ -66,8 +66,8 @@ int main(int argc, char** argv)
   }
 
   if(rank==0){
-    printvar(space.indicator(&qstart[0]));
-    printvar(space.indicator(&qend[0]));
+    assert(space.indicator(&qstart[0])==0);
+    assert(space.indicator(&qend[0])==0);
   }
 
   prm.init(&qstart[0],&qend[0]);
@@ -94,7 +94,8 @@ int main(int argc, char** argv)
     return 0;
   }
 
-  tock(trun);
+  int time;
+  tockval(trun,time);
 
 
   //! write output
@@ -125,6 +126,11 @@ int main(int argc, char** argv)
       printvar(seed);
       printvar(blocksize);
       printvar(prmversion);
+
+      ofstream file;
+      file.open("stats.txt",ios::app);
+      file<<size<<"\t"<<prmversion<<"\t"<<time<<"\t"<<numthreads<<"\t"<<(time*1000000)/numthreads<<"\n";
+      file.close();
   }
 
   MPI_Finalize();

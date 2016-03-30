@@ -71,3 +71,4 @@ robotconfigspacecuda0.o: robotconfigspacecuda0
 prmsolver.o: prmsolver
 test10.o: test10o
 main.o: maino
+bench.o: bencho

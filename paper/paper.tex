@@ -495,14 +495,13 @@ With this it is possible to use the full computation time of the GPU.
 \newpage
 \section{The PRM Solver}\label{solver}
 
-- introduction
+The solver builds in the first phase the roadmap graph from both the start and the end node, until it is connected.
+It is always ensured that the graph consists of two connected components containing the start and the end.
+With this, it can be easily determined at each time, if the whole graph has become connected.
 
-- dijkstra at the end makes almost no contribution to the whole time
-
-	- can be parallelized, but this is again complicated
-	
-- focus on building the graph
-
+At the end a shortest path from the start to the end node is searched by the Dijkstra algorithm.
+It has shown that this part a neglectible amount of time compared to the graph building phase.
+Therefore it is not parallelized here and the focus lies on building the roadmap.
 
 \subsection{Storing the Graph}
 
@@ -528,7 +527,7 @@ struct graph{    std::map<int,block*> map; //map for accessing blocks    std::
 
 The key of an block is computed by the mapping
 \begin{equation*}
-	key(q) = \lfloor q(1)/H \rfloor
+	key(q) = \left\lfloor \frac{q_1}{H} \right\rfloor
 \end{equation*}
 such that $H>0$ becomes a parameter to adjust the grid density.
 This has to be chosen so large that enough nodes are stored in one block in order to have efficient memory access.
@@ -550,7 +549,8 @@ For illustration the following pseudocode shows the insertion of a node.
 	\caption{Inserting a node}
 \end{algorithm}
 
-
+For getting the neighbors of a node $q$ it is then enough to look at the keys from $key(q-cD)$ to $key(q+cD)$. For $D=H$, $c=1$ is possible.
+The key mapping could be generalized by taking more components of $q$ into account, but that was not done here.
 
 \subsection{Parallelization Models}
 
@@ -564,8 +564,8 @@ Instead only different approaches to distribute the work on several GPUs have be
 In the first approach, that was evaluated, every process generates new nodes independantly from each other.
 Then the possible neighbours are determined and the connections, which have to be tested.
 The indicator function is called and returnes the edges.
-After this the graph must be synchronized on every processes, which leads to an alltoall communication.
-As in this graph building does not need the edge data, it is sufficient to exchange only the nodes in this phase.
+After this, the graph must be synchronized between all processes, which needs an all-to-all communication.
+As the graph building phase does not need the edge data, it is sufficient to exchange only the nodes and collect the edges at the end.
 
 	
 	\begin{center}
@@ -626,10 +626,10 @@ The second approach uses the fact, that by synchronizing the random seed,
 different processes can produce the same sequence of random numbers independently from each other.
 By using this, every process can generate all new nodes and determine the connection data. 
 Then the indicator function computation is splitted over their configuration space instances and the returned data shared afterwards with each other.
-With this data, all graphs can be updated and it is guaranteed, that they are the same on each process.
+With this data, all graphs can be updated and it is guaranteed, that they grow exactly in the same way on each process.
 The purpose of this version compared to the first one is, that less data has to be sent. 
-Furthermore, in the first version it can occur, that the different generated nodes can result in very different counts of neighbours and therefore different loads on the GPUs.
-Here, the distribution of the computation amount over the different GPUs can be chosen almost freely.
+Furthermore, in the first version it can occur, that the different generated nodes can result in very different counts of neighbors and therefore uneven loads on the GPUs.
+Here, the distribution of the computation amount over the GPUs can be chosen almost freely.
 
 
 	
@@ -786,13 +786,13 @@ One can see, that while the versions with node communication has a better time t
 The versions with less communication however have better absolute times.
 Furthermore, one sees the improvement from version 2 to version 3 from the asynchronous indicator function.
 
-\ \\ 
+
 \begin{table}[h]\label{resulttable}
 \centering
 \begin{tabular}{| c | c | r | r | r |}
 
 \hline
-version	&  processes/	& time (ms)	& GPU  		& time per 1e6  \\ 
+version	&  processes/	& time (ms)	& GPU 		& time per 1e6  \\ 
 		& GPUs		& 			& threads		& GPU threads (ms) \\ 
 \hline
 		& 1			& 1002		& 696413		& 1448	\\ 
@@ -809,9 +809,13 @@ version	&  processes/	& time (ms)	& GPU  		& time per 1e6  \\
 \hline
 
 \end{tabular}
-\caption{Timing results for the parallelization versions from chapter \ref{solver}}
+\caption{Timing results for the parallelization versions from chapter \ref{solver} on a machine with 4 GeForce GTX 480}
 \end{table}
 
+As the indicator function has also been implemented on the CPU, all versions could be run without GPU.
+In most cases, the GPU code was around 10 times faster. However, the robot code is not optimized for the CPU version, such that this comparison is not quite fair.
+
+\newpage
 
 \bibliographystyle{alpha}
 \begin{thebibliography}{999}

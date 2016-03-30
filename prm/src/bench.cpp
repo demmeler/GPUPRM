@@ -103,7 +103,7 @@ int main(int argc, char** argv)
   if(rank==0){
     ofstream file;
     file.open("results.txt",ios::app);
-    file<<size<<"\t"<<prmversion<<"\"
+    file<<size<<"\t"<<prmversion<<"\n";
     file.close();
   }
 

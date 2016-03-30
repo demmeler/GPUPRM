@@ -8,7 +8,7 @@ CUDA_INCLUDE= -L$(CUDA_PATH)/lib64 -L$(CUDA_PATH2)/lib64 -lcudart
 #WRN_OPT=-Wall
 WRN_OPT=
 
-all: robo arrayconfigspace main maincuda test10 test10cuda
+all: robo arrayconfigspace main maincuda test10 test10cuda bench benchcuda
 
 test10o:
 	mpicxx $(WRN_OPT) -O3 -g -I $(SRC)/lib -c -std=c++0x -o test10.o $(SRC)/test10.cpp
@@ -28,6 +28,15 @@ maincuda: robotconfigspacecuda.o prmsolver.o main.o
 
 main: robotconfigspacecuda0.o prmsolver.o main.o
 	mpicxx -g -o main main.o prmsolver.o robotconfigspacecuda0.o $(CUDA_INCLUDE)
+
+bencho:
+	mpicxx $(WRN_OPT) -O3 -g -I $(SRC)/lib -c -std=c++0x -o bench.o $(SRC)/bench.cpp
+
+benchcuda: robotconfigspacecuda.o prmsolver.o bench.o
+	mpicxx -g -o benchcuda bench.o prmsolver.o robotconfigspacecuda.o $(CUDA_INCLUDE)
+
+bench: robotconfigspacecuda0.o prmsolver.o bench.o
+	mpicxx -g -o bench bench.o prmsolver.o robotconfigspacecuda0.o $(CUDA_INCLUDE)
 
 
 

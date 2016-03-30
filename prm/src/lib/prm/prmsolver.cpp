@@ -1872,7 +1872,7 @@
     delete distlist2;
 
 
-    msg("process_mpi5 finished");
+    //msg("process_mpi5 finished");
     return 0;
   }
 

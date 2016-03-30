@@ -75,7 +75,7 @@ int main(int argc, char** argv)
   if(prmversion==1){
     prm.process_mpi(num,nbuf,maxsteps);
     version=1;
-  }if(prmversion==2){
+  }else if(prmversion==2){
     prm.process_mpi2(num,nbuf,maxsteps, seed);
     version=-1;
   }else if(prmversion==3){

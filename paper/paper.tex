@@ -148,8 +148,11 @@
 \maketitle
 
 \section{Motivation}
-In trajctory optimization with obstacles, it is often necessary to provide feasible inital trajectories. 
+In trajectory optimization with obstacles, it is often necessary to provide feasible initial trajectories. 
 For example in robot motion planning, where the dimensions of the underlying spaces are rather high, this can be expensive. A further problem is that because of the transformation from work into configuration space, the obstacles are often no longer given in a closed form. An efficient approximative approach is using probabilistic roadmaps (PRMs).
+
+In this project, a parallelized version of the PRM method has been developed in general.
+The robotics application then was implemented as an special case of this with GPU support.
 
 
 \section{Introduction}
@@ -385,23 +388,41 @@ However, from the structure of the Chung-Wang algorithm drops out that mostly on
 
 The robot configuration space is implemented in the form
 \begin{lstlisting}
-template<int ndof>class RobotConfigspace : public Configspace<ndof>{
+template<int ndof>
+class RobotConfigspace : public Configspace<ndof>
+{
 public:
-  RobotConfigspace(const Robot<ndof>* robot_,                   const polytope *polys_,                   const int* sys_,                   const int N_,                   const int *from_, const int *to_,                   const int M_,                   const float* mins_, const float* maxs_, const float dq_,                   const int nbuf_);
+  RobotConfigspace(const Robot<ndof>* robot_,
+                   const polytope *polys_,
+                   const int* sys_,
+                   const int N_,
+                   const int *from_, const int *to_,
+                   const int M_,
+                   const float* mins_, const float* maxs_, const float dq_,
+                   const int nbuf_);
   int init(const int ressource_rank=0, const int ressource_size=1);
   int indicator2(const float* qs, const float* qe, int *res, const int N, const int offset);
   .
   .
   .
 private:
-  const Robot<ndof>* robot; //host  Robot<ndof>* robotdev;    //GPU  collision4::polytope4data* polydata;            //data on host  collision4::polytope4data* polydatadev;         //pointer to GPU obj
+  const Robot<ndof>* robot; //host
+  Robot<ndof>* robotdev;    //GPU
+  collision4::polytope4data* polydata;            //data on host
+  collision4::polytope4data* polydatadev;         //pointer to GPU obj
   .
   .
   .
 }
 \end{lstlisting}
 \begin{lstlisting}
-__global__ void kernel_indicator2(const Robot<ndof>* robot,                                  const collision4::polytope4data* polydata,                                  const float* qs, int offsets,                                  const float* qe, int offsete,                                  int* res,                                  const int* testpos, const int* testnum,                                  int N, int numthreads);
+__global__ void kernel_indicator2(const Robot<ndof>* robot,
+                                  const collision4::polytope4data* polydata,
+                                  const float* qs, int offsets,
+                                  const float* qe, int offsete,
+                                  int* res,
+                                  const int* testpos, const int* testnum,
+                                  int N, int numthreads);
 \end{lstlisting}
 where the constant geometry and robot data is passed once at the beginning and copied to the GPU by an init function.
 The indicator function gets as input a list of border points $q_{start}^j, q_{end}^j, j=0,...,N$ and checks now for each pair, if on the line in between the indicator function is always 0.
@@ -457,7 +478,8 @@ In order to overlap computation time of GPU and CPU, an asynchronous version of 
 
 \begin{lstlisting}
 int indicator2_async(const float* qs, const float* qe, int *res, 
-					 const int N, const int offset, int &request);int indicator2_async_wait(int request);
+					 const int N, const int offset, int &request);
+int indicator2_async_wait(int request);
 \end{lstlisting}
 
 The implementation also allows overlapping of multiple requests, for example two calls of the launch function and after this the two corrsponding waiting calls. 
@@ -475,11 +497,54 @@ With this it is possible to use the full computation time of the GPU.
 - focus on building the graph
 
 
-\subsection{Storage of the Graph}
+\subsection{Storing the Graph}
 
-- describe
+Apart from the indicator function evaluation, the main problem in building the probabilistic roadmap is, that for each new node $q$ it have to be determined all possible neighbors. That is the set of all nodes $\tilde q$ of the graph, with $\norm{\tilde q - q} \le D$.
+If no special order of the nodes is given, one has to calculate the norms for all nodes of the graph, which is rather time consuming.
 
-- compare different models...?
+Therefore a special indexing is used here. 
+The nodes are stored in a vector, which is organized in blocks with fixed sizes. The blocks are referred to by ids which are stored in a map.
+
+\begin{lstlisting}
+struct block{	int pos;	 //! position of first vertex
+	int num;	 //! current number of vertices stored
+	block* next; //! if num==blocksize -> pointer to next block
+};
+\end{lstlisting}
+
+
+\begin{lstlisting}
+struct graph{    std::map<int,block*> map; //map for accessing blocks    std::vector<block> blocks;    std::vector<float> qstorage; //length ndof*N    int newblockpos;  //position of next new block    int blocknum;     //number of used blocks
+    .
+    .
+    .};
+\end{lstlisting}
+
+The key of an block is computed by the mapping
+\begin{equation*}
+	key(q) = \lfloor q(1)/H \rfloor
+\end{equation*}
+such that $H>0$ becomes a parameter to adjust the grid density.
+This has to be chosen so large that enough nodes are stored in one block in order to have efficient memory access.
+On the other side, the smaller it is, the less computations have to be done for the neighborhood requests.
+For illustration the following pseudocode shows the insertion of a node.
+
+\begin{algorithm}[H]
+	\KwData{$q\in\R^d$}
+	Compute key=key(q)\\ 
+	\eIf{key exists in map}{
+		block=map[key]\\ 
+		\While{ block full }{
+			block=block->next
+		}
+	}{
+		insert new block at map[key]
+	}
+	Insert node in block
+	\caption{Inserting a node}
+\end{algorithm}
+
+
 
 \subsection{Parallelization Models}
 
@@ -697,6 +762,10 @@ With this it is possible, that the computation time of the GPU is fully used, an
 \end{center}
 
 \section{Results}
+
+Tested have been made on a scenario with a robot with 4 joints. For creating and plotting the environment and the resulting trajectories, Matlab functions are provided.
+
+
 
 - timings of different versions at same conditions
 

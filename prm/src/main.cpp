@@ -47,6 +47,7 @@ int main(int argc, char** argv)
   //srand(rank+time(NULL));
   srand(seed+rank*10);
   int firstrand=rand();
+  printvar(firstrand);
 
 
   //! Initialization
@@ -71,8 +72,6 @@ int main(int argc, char** argv)
 
   prm.init(&qstart[0],&qend[0]);
 
-  //prm.print();
-
   tock(tinit);
 
 
@@ -80,10 +79,8 @@ int main(int argc, char** argv)
 
   tick(trun);
 
-
-  //prm.process_mpi(num,nbuf,maxsteps);
   if(prmversion==1){
-    prm.process_mpi(num,nbuf,maxsteps, seed);
+    prm.process_mpi(num,nbuf,maxsteps);
   }if(prmversion==2){
     prm.process_mpi2(num,nbuf,maxsteps, seed);
   }else if(prmversion==3){

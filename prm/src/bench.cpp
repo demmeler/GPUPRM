@@ -65,18 +65,15 @@ int main(int argc, char** argv)
   prm.init(&qstart[0],&qend[0]);
 
 
-
   //! run
 
   tick(trun);
 
 
-  int version;
-
-  //prm.process_mpi(num,nbuf,maxsteps);
+  int version=-1;
 
   if(prmversion==1){
-    prm.process_mpi(num,nbuf,maxsteps, seed);
+    prm.process_mpi(num,nbuf,maxsteps);
     version=1;
   }if(prmversion==2){
     prm.process_mpi2(num,nbuf,maxsteps, seed);

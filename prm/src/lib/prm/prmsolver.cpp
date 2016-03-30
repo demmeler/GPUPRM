@@ -10,6 +10,7 @@
 #include <tictoc.h>
 
 
+#define NO_IO
 
 
     //! *******************

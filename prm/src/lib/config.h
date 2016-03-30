@@ -3,7 +3,6 @@
 
 
 #define SILENT
-#define NO_IO
 
 
 #endif // CONFIG_H

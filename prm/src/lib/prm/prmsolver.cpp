@@ -1815,7 +1815,7 @@
     processor1.processing_step_part1();
     processor2.processing_step_part1();
 
-    tick(tloop);
+    //tick(tloop);
     for(int i=0;i<maxsteps;++i){
       //tick(evaluating1);
       processor1.processing_step_part2();
@@ -1847,7 +1847,7 @@
         printvar(i);
       }
     }
-    tock(tloop);
+    //tock(tloop);
 
     delete qnew;
     delete qstartlist;

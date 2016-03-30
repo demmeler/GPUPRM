@@ -123,10 +123,7 @@ int RobotConfigspace<ndof>::load_config(std::string path, Robot<ndof>* &robot, p
   read_file(path+"/mins.bin",mins,ndof);
   read_file(path+"/maxs.bin",maxs,ndof);
 
-  printvar(mins[0]+pi);
-  printvar(maxs[0]-1.5*pi);
-
-    //! Polytopes
+  //! Polytopes
 
   read_file(path+"/polys/N.bin",&N,1);
   if(N<=0){

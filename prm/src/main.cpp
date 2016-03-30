@@ -107,13 +107,14 @@ int main(int argc, char** argv)
   int numthreadsall;
   MPI_Reduce(&numthreads, &numthreadsall,1,MPI_INT,MPI_SUM,0,MPI_COMM_WORLD);
   if(rank==0){
-      printvar(numthreadsall);
 
       tick(twrite);
 
       prm.store_results("prmoutput");
 
       tock(twrite);
+
+      printvar(numthreadsall);
 
       printvar(rand());
       printvar(firstrand);

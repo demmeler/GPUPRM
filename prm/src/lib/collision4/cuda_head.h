@@ -27,7 +27,7 @@
 #endif
 
 #ifndef GPU_VERSION
-  #warning ("GPU_VERSION not defined: version without gpu");
+  //#warning ("GPU_VERSION not defined: version without gpu");
 #endif
 
 

@@ -4,11 +4,16 @@ function [] = pathplot( dhparams, ndof, polys, N, Q, dt, infinite)
         polys{i}.K=convhulln(polys{i}.vertices);
     end
     
-    colors=repmat([1,1,0.5; 0.5,0.5,1],ndof+1,1);
-    
+    colors=[0.8,0.8,0.8;
+            repmat([1,1,0.5; 0.5,0.5,1],ndof+1,1)];
+     
+    clf;
     l=size(Q,2);
     while 1
-    for t=[1:l,l:-1:1]
+    for t=[1:l]%,l:-1:1]
+        %colors=repmat([t/l,1,0.5; 0.5,0.5,t/l],ndof+1,1);
+        %colors=repmat([t/l,1,0.5],ndof+1,1);
+    
         lim=[xlim;ylim;zlim];
         
         clf;

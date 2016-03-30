@@ -44,7 +44,7 @@ function [] = stateplot( dhparams, ndof, polys, N, q , colors)
     text(x,y,z,labels, 'HorizontalAlignment', 'right');
     for i=1:(ndof+1)
         l=1000;
-        plot3(x(:,i)+[1,-1]*l*xr(:,i),y(:,i)+[1,-1]*l*yr(:,i),z(:,i)+[1,-1]*l*zr(:,i),'-.');
+        %plot3(x(:,i)+[1,-1]*l*xr(:,i),y(:,i)+[1,-1]*l*yr(:,i),z(:,i)+[1,-1]*l*zr(:,i),'-.');
     end
     xlim(lim(1,:));
     ylim(lim(2,:));

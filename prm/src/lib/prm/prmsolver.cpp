@@ -1795,14 +1795,14 @@
     float *distlist2=new float[nbuf];
 
 
-    processor5 processor1(rank,size,
+    worker processor1(rank,size,
                          qnew, num, dsp, cnt,
                          leftconn, rightconn,
                          poslist, distlist,
                          qstartlist,qendlist,resbuf, resbufloc,nbuf,offset,
                          this);
 
-    processor5 processor2(rank,size,
+    worker processor2(rank,size,
                          qnew2, num, dsp, cnt,
                          leftconn2, rightconn2,
                          poslist2, distlist2,
@@ -1878,7 +1878,7 @@
 
 
   template<int ndof>
-  PRMSolver<ndof>::processor5::processor5( const int mpirank_, const int mpisize_,
+  PRMSolver<ndof>::worker::worker( const int mpirank_, const int mpisize_,
                                    float* qnew_, const int num_, const int *dsp_, const int *cnt_,
                                    int *leftconn_, int *rightconn_,
                                    int *poslist_, float *distlist_,
@@ -1905,7 +1905,7 @@
     }
 
     template<int ndof>
-    PRMSolver<ndof>::processor5::~processor5(){
+    PRMSolver<ndof>::worker::~worker(){
         delete posqlist;
         delete numqlist;
         delete numqlistleft;
@@ -1917,7 +1917,7 @@
 
 
     template<int ndof>
-    int PRMSolver<ndof>::processor5::processing_step_part1()
+    int PRMSolver<ndof>::worker::processing_step_part1()
     {
 
 
@@ -2001,7 +2001,7 @@
 
 
     template<int ndof>
-    int PRMSolver<ndof>::processor5::processing_step_part2(){
+    int PRMSolver<ndof>::worker::processing_step_part2(){
 
 #ifndef NO_IO
     printarr(dsp,mpisize);
@@ -2042,7 +2042,7 @@
 
 
     template<int ndof>
-    int PRMSolver<ndof>::processor5::processing_step_part3(){
+    int PRMSolver<ndof>::worker::processing_step_part3(){
 
       for(int j=0;j<num;++j){
 

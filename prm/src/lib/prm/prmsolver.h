@@ -164,9 +164,9 @@ public:
   int process_mpi5(const int numall, const int nbuf, const int maxsteps, int seed);
 
 
-  friend class processor5;
+  friend class worker;
 
-  class processor5{
+  class worker{
   private:
       const int mpirank;
       const int mpisize;
@@ -210,13 +210,13 @@ public:
       graph &graphr;
 
   public:
-    processor5( const int mpirank_, const int mpisize_,
+    worker( const int mpirank_, const int mpisize_,
                                    float* qnew_, const int num_, const int *dsp_, const int *cnt_,
                                    int *leftconn_, int *rightconn_,
                                    int *poslist_, float *distlist_,
                                    float* qstart_, float* qend_, int* resbuf_, int *resbufloc_, const int nbuf_, const int offset_,
                                    PRMSolver *instance_);
-    ~processor5();
+    ~worker();
         inline int processing_step_part1();
         inline int processing_step_part2();
         inline int processing_step_part3();

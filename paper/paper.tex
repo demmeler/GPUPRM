@@ -1,4 +1,7 @@
 \documentclass{scrartcl} 
+%\documentclass[a4paper]{article}
+%\usepackage{a4wide}
+
 \usepackage[ngerman,english]{babel}
  \usepackage[T1]{fontenc}
 \usepackage{lmodern}
@@ -19,6 +22,10 @@
 
 
 \usepackage{graphicx}
+
+
+\usepackage{wrapfig}
+
 
 % PSEUDOCODE
 
@@ -761,9 +768,16 @@ With this it is possible, that the computation time of the GPU is fully used, an
 \end{tikzpicture}
 \end{center}
 
+\newpage
 \section{Results}
 
-Tested have been made on a scenario with a robot with 4 joints. For creating and plotting the environment and the resulting trajectories, Matlab functions are provided.
+\begin{wrapfigure}{r}{0.5\textwidth}\label{robotsolution}
+	\centering
+	\includegraphics[width=0.5\textwidth]{robotsolution.pdf}
+	\caption{PRM generated collisionfree movement for a 4-axis robot}
+\end{wrapfigure}
+
+Tests have been made for a scenario with a robot with 4 joints. For creating and plotting the environment and the resulting trajectories, Matlab functions are provided.
 
 
 
@@ -773,7 +787,7 @@ Tested have been made on a scenario with a robot with 4 joints. For creating and
 
 	- not deterministic
 	
-	- dependant on density of nodes: how many neighbours have to be tested per connection
+	- dependant on density of nodes: how many neighbors have to be tested per connection
 
 \section{Conclusion}
 

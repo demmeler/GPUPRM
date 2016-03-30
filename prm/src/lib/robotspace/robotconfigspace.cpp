@@ -439,10 +439,10 @@ int RobotConfigspace<ndof>::indicator2_async(const float* qs, const float* qe, i
 #ifdef GPU_VERSION
     int id;
     if(free_resdevbuffer_ids.empty()){
-        msg("RobotConfigspace: adding new resdevbuffer");
-        printvar(resdevbuffers.size());
+        //msg("RobotConfigspace: adding new resdevbuffer");
+        //printvar(resdevbuffers.size());
         id=resdevbuffers.size();
-        streams.resize(0x0);
+        streams.push_back(0x0);
         cudaassert(cudaStreamCreate(&streams[id]));
         resdevbuffers.push_back(0x0);
         cudaassert(cudaMalloc((void**)&resdevbuffers[id], nbufres*sizeof(int)));

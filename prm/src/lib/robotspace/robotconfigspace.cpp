@@ -454,6 +454,7 @@ int RobotConfigspace<ndof>::indicator2_async(const float* qs, const float* qe, i
         cudaassert(cudaMalloc((void**)&testnumdev[id], nbuftest*sizeof(int)));
         testposdev.push_back(0x0);
         cudaassert(cudaMalloc((void**)&testposdev[id], nbuftest*sizeof(int)));
+        printvar(resdevbuffers.size());
     }else{
         std::set<int>::iterator it=free_resdevbuffer_ids.begin();
         id=*it;

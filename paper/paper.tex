@@ -231,7 +231,7 @@ With this association, the trajectory finding problem becomes a path finding pro
 The real obstacles transform into obstacles in the configuration space, given by the indicator function, that returns for a given set of joints, if the configuration is feasible or a collision occurs.
 
 
-
+\newpage
 \subsection{Project Overview}
 
 Like in the stated robotics example, in many cases the most costly operation of the PRM algorithm are the many evaluations of the indicator function \(I(q)\), 
@@ -449,10 +449,10 @@ The border points are stored in structures of arrays.
 
 As the PRMSolver only needs to know, which node points can be connected by a line, and not, which points on the line exactly are free, this version delivers exactly the minimal necessary information. Furthermore it saves CPU and communication time, because the intermediate points on the lines can be directly computed by the GPU threads and do not need to be exchanged.
 
-Algorithms 1 and 2 two show in pseudo code, how the work is split between host and device.
+Algorithms \ref{host} and \ref{kernel} two show in pseudo code, how the work is split between host and device.
 
 
-\begin{algorithm}
+\begin{algorithm}\label{host}
 	\KwData{qs, qe, N, offset}
 	\KwResult{res}
 	compute distances $d_j = \abs{q_{end}^j - q_{start}^j}$ \;
@@ -463,7 +463,7 @@ Algorithms 1 and 2 two show in pseudo code, how the work is split between host a
 	\caption{Host indicator function}
 \end{algorithm}
 
-\begin{algorithm}
+\begin{algorithm}\label{kernel}
 	\KwData{arrays qs, qe, testpos, testnum and threadindex}
 	\KwResult{res}
 	compute associated edge number $j$, defined by $testpos[j] \leq threadindex \le testpos[j]+testnum[j]$ \;
@@ -492,8 +492,8 @@ int indicator2_async_wait(int request);
 The implementation also allows overlapping of multiple requests, for example two calls of the launch function and after this the two corrsponding waiting calls. 
 With this it is possible to use the full computation time of the GPU.
 
-
-\section{Structure of the PRM Solver}\label{solver}
+\newpage
+\section{The PRM Solver}\label{solver}
 
 - introduction
 
@@ -521,8 +521,7 @@ struct block{	int pos;	 //! position of first vertex
 
 
 \begin{lstlisting}
-struct graph{    std::map<int,block*> map; //map for accessing blocks    std::vector<block> blocks;    std::vector<float> qstorage; //length ndof*N    int newblockpos;  //position of next new block    int blocknum;     //number of used blocks
-    .
+struct graph{    std::map<int,block*> map; //map for accessing blocks    std::vector<block> blocks;    std::vector<float> qstorage; //length ndof*N    int newblockpos;  //position of next new block    int blocknum;     //number of used blocks
     .
     .};
 \end{lstlisting}
@@ -778,18 +777,41 @@ With this it is possible, that the computation time of the GPU is fully used, an
 \end{wrapfigure}
 
 Tests have been made for a scenario with a robot with 4 joints. For creating and plotting the environment and the resulting trajectories, Matlab functions are provided.
+Because of the dependancy on random numbers, the algorithm takes different amounts of time for different runs.
+Therefore, 10 runs were made for each version and number of processes.
+However, the different versions lead to a different average amount of GPU threads needed.
+So, to be able to better compare how they scale, the time per number of GPU threads used as a quantity.
+Table \ref{resulttable} shows the results.
+One can see, that while the versions with node communication has a better time to GPU threads ratio, but leads to a greater amount of threads on average.
+The versions with less communication however have better absolute times.
+Furthermore, one sees the improvement from version 2 to version 3 from the asynchronous indicator function.
 
+\ \\ 
+\begin{table}[h]\label{resulttable}
+\centering
+\begin{tabular}{| c | c | r | r | r |}
 
+\hline
+version	&  processes/	& time (ms)	& GPU  		& time per 1e6  \\ 
+		& GPUs		& 			& threads		& GPU threads (ms) \\ 
+\hline
+		& 1			& 1002		& 696413		& 1448	\\ 
+1		& 2			& 763		& 838938		& 918	\\ 
+		& 4			& 706		& 1113781	& 647	\\ 
+\hline
+		& 1			& 900		& 608172		& 1490	\\ 
+2		& 2			& 647		& 608172		& 1070	\\ 
+		& 4			& 568		& 608172		& 947	\\ 
+\hline
+		& 1			& 696		& 599847		& 1181	\\ 		
+3		& 2			& 554		& 599847		& 951	\\ 
+		& 4			& 500		& 599847		& 864	\\ 
+\hline
 
-- timings of different versions at same conditions
+\end{tabular}
+\caption{Timing results for the parallelization versions from chapter \ref{solver}}
+\end{table}
 
-- difficult to test because
-
-	- not deterministic
-	
-	- dependant on density of nodes: how many neighbors have to be tested per connection
-
-\section{Conclusion}
 
 \bibliographystyle{alpha}
 \begin{thebibliography}{999}

@@ -135,7 +135,7 @@ int main(int argc, char** argv)
 
       ofstream file;
       file.open("stats.txt",ios::app);
-      file<<size<<"\t"<<version<<"\t"<<seed<<"\t"<<time<<"\t"<<numthreads<<"\t"<<((long)time*1000000)/numthreadsall<<"\n";
+      file<<size<<"\t"<<version<<"\t"<<seed<<"\t"<<time<<"\t"<<numthreadsall<<"\t"<<((long)time*1000000)/numthreadsall<<"\n";
       file.close();
   }
 

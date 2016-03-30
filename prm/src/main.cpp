@@ -79,16 +79,22 @@ int main(int argc, char** argv)
 
   tick(trun);
 
+  int version=-1;
   if(prmversion==1){
     prm.process_mpi(num,nbuf,maxsteps);
+    version=1;
   }if(prmversion==2){
     prm.process_mpi2(num,nbuf,maxsteps, seed);
+    version=-1;
   }else if(prmversion==3){
     prm.process_mpi3(num,nbuf,maxsteps, seed);
+    version=-1;
   }else if(prmversion==4){
     prm.process_mpi4(num,nbuf,maxsteps, seed);
+    version=2;
   }else if(prmversion==5){
-      prm.process_mpi5(num,nbuf,maxsteps, seed);
+    prm.process_mpi5(num,nbuf,maxsteps, seed);
+    version=3;
   }else {
     msg("Error: prmprocess not valid");
     return 0;
@@ -129,7 +135,7 @@ int main(int argc, char** argv)
 
       ofstream file;
       file.open("stats.txt",ios::app);
-      file<<size<<"\t"<<prmversion<<"\t"<<time<<"\t"<<numthreads<<"\t"<<((long)time*1000000)/numthreads<<"\n";
+      file<<size<<"\t"<<version<<"\t"<<time<<"\t"<<numthreads<<"\t"<<((long)time*1000000)/numthreads<<"\n";
       file.close();
   }
 

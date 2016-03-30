@@ -48,6 +48,8 @@ void RobotConfigspace<ndof>::construct(const Robot<ndof>* robot_,
   devloaded=false;
 
   requeststack_id=0;
+
+  numthreads_all=0;
 }
 
 //! robot_: Robot Object with Denavit-Hartenberg data
@@ -512,6 +514,8 @@ int RobotConfigspace<ndof>::indicator2_async(const float* qs, const float* qe, i
 
     //printarr(res,N);
     //printvar(numthreads);
+
+    numthreads_all+=numthreads;
 
     return 0; //TODO error handling?
 }

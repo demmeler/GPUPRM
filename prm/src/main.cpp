@@ -103,6 +103,7 @@ int main(int argc, char** argv)
   //prm.print();
 
   MPI_Barrier(MPI_COMM_WORLD);
+  printvar(space.get_numthreads_all());
   if(rank==0){
       tick(twrite);
 

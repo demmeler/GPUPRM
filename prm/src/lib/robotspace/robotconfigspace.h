@@ -105,6 +105,8 @@ public:
   //! dimension d
   int dim(){return ndof;}
 
+  int get_numthreads_all() const {return numthreads_all;}
+
 private:
 
   Kinematics<ndof>* kin;
@@ -156,6 +158,9 @@ private:
       int N;
   };
   std::map<int,request_data> requeststack;
+
+  //!number of threads launched since creation
+  int numthreads_all;
 
 };
 

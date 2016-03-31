@@ -8,16 +8,15 @@ CUDA_INCLUDE= -L$(CUDA_PATH)/lib64 -L$(CUDA_PATH2)/lib64 -lcudart
 #WRN_OPT=-Wall
 WRN_OPT=
 
-all: robo arrayconfigspace main maincuda test10 test10cuda bench benchcuda
+all: robo arrayconfigspace main maincuda bench benchcuda array
 
-test10o:
-	mpicxx $(WRN_OPT) -O3 -g -I $(SRC)/lib -c -std=c++0x -o test10.o $(SRC)/test10.cpp
 
-test10cuda: robotconfigspacecuda.o prmsolver.o test10.o
-	mpicxx -g -o test10cuda test10.o prmsolver.o robotconfigspacecuda.o $(CUDA_INCLUDE)
+arrayo:
+	mpicxx $(WRN_OPT) -O3 -g -I $(SRC)/lib -c -std=c++0x -o array.o $(SRC)/array.cpp
 
-test10: robotconfigspacecuda0.o prmsolver.o test10.o
-	mpicxx -g -o test10 test10.o prmsolver.o robotconfigspacecuda0.o $(CUDA_INCLUDE)
+array: arrayconfigspace.o prmsolver.o array.o
+	mpicxx -g -o array array.o prmsolver.o arrayconfigspace.o $(CUDA_INCLUDE)
+
 
 
 maino:
@@ -29,6 +28,8 @@ maincuda: robotconfigspacecuda.o prmsolver.o main.o
 main: robotconfigspacecuda0.o prmsolver.o main.o
 	mpicxx -g -o main main.o prmsolver.o robotconfigspacecuda0.o $(CUDA_INCLUDE)
 
+
+
 bencho:
 	mpicxx $(WRN_OPT) -O3 -g -I $(SRC)/lib -c -std=c++0x -o bench.o $(SRC)/bench.cpp
 
@@ -37,6 +38,7 @@ benchcuda: robotconfigspacecuda.o prmsolver.o bench.o
 
 bench: robotconfigspacecuda0.o prmsolver.o bench.o
 	mpicxx -g -o bench bench.o prmsolver.o robotconfigspacecuda0.o $(CUDA_INCLUDE)
+
 
 
 
@@ -64,11 +66,12 @@ robotconfigspacecuda0: $(SRC)/lib/robotspace/robotconfigspace.cpp
 	nvcc -O3 -g -G -x=cu -arch=$(ARCHITECTURE) -I $(SRC)/lib -c -o robotconfigspacecuda0.o $(SRC)/lib/robotspace/robotconfigspace.cpp -D CUDA_CODE
 
 
-# dependancies (comment out for manual compiling...)
+# dependencies (comment out for manual compiling...)
 
 robotconfigspacecuda.o: robotconfigspacecuda
 robotconfigspacecuda0.o: robotconfigspacecuda0
 prmsolver.o: prmsolver
-test10.o: test10o
+array.o: arrayo
 main.o: maino
 bench.o: bencho
+arrayconfigspace.o:arrayconfigspace

@@ -9,11 +9,11 @@
 #include "lib/tictoc.h"
 
 #include "lib/robotspace/robotconfigspace.h"
+#include "lib/arrayspace/arrayconfigspace.hpp"
 #include "lib/prm/prmsolver.h"
 
 
 using namespace std;
-
 
 
 int main(int argc, char** argv)
@@ -25,7 +25,7 @@ int main(int argc, char** argv)
   MPI_Comm_size(MPI_COMM_WORLD, &size);
 
 
-  const int ndof=4;
+  const int ndof=2;
 
 
   tick(tinit);
@@ -48,31 +48,30 @@ int main(int argc, char** argv)
   //srand(rank+time(NULL));
   srand(seed+rank*10);
   int firstrand=rand();
+  //printvar(firstrand);
 
 
   //! Initialization
 
-  RobotConfigspace<ndof> space("config1",dq, confignbuf);
-  space.init(rank,size);
+
+  int b=640,h=480,n=b*h;
+
+  int *array=new int[n];
+  read_file("array.bin",array,n);
+  ArrayConfigspace space(array,b,h,0.0,b/(float)h,0.0,1.0);
 
   PRMSolver<ndof> prm(&space, D, D, maxstorage, blocksize);
 
 
-  float qstart[ndof];
-  float qend[ndof];
-  for(int dof=0;dof<ndof;++dof){
-    qstart[dof]=0.0;
-    qend[dof]=3;
-  }
+  float qstart[ndof]={0.1f*space.max(0),0.5f*space.max(1)};
+  float qend[ndof]={0.9f*space.max(0),0.5f*space.max(1)};
 
   if(rank==0){
-    printvar(space.indicator(&qstart[0]));
-    printvar(space.indicator(&qend[0]));
+    assert(space.indicator(&qstart[0])==0);
+    assert(space.indicator(&qend[0])==0);
   }
 
   prm.init(&qstart[0],&qend[0]);
-
-  //prm.print();
 
   tock(tinit);
 
@@ -81,22 +80,29 @@ int main(int argc, char** argv)
 
   tick(trun);
 
-
-  //prm.process_mpi(num,nbuf,maxsteps);
-  if(prmversion==2){
+  int version=-1;
+  if(prmversion==1){
+    prm.process_mpi(num,nbuf,maxsteps);
+    version=1;
+  }else if(prmversion==2){
     prm.process_mpi2(num,nbuf,maxsteps, seed);
+    version=-1;
   }else if(prmversion==3){
     prm.process_mpi3(num,nbuf,maxsteps, seed);
+    version=-1;
   }else if(prmversion==4){
     prm.process_mpi4(num,nbuf,maxsteps, seed);
+    version=2;
   }else if(prmversion==5){
-      prm.process_mpi5(num,nbuf,maxsteps, seed);
+    prm.process_mpi5(num,nbuf,maxsteps, seed);
+    version=3;
   }else {
     msg("Error: prmprocess not valid");
     return 0;
   }
 
-  tock(trun);
+  int time;
+  tockval(trun,time);
 
 
   //! write output
@@ -105,6 +111,7 @@ int main(int argc, char** argv)
 
   MPI_Barrier(MPI_COMM_WORLD);
   if(rank==0){
+
       tick(twrite);
 
       prm.store_results("prmoutput");

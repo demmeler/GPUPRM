@@ -1,6 +1,6 @@
 clear all
 
-if 0
+if 1
     A=imread('labyrinth3.jpg');
     A=A(:,:,1);
 
@@ -11,7 +11,7 @@ Ql=binread('../prmoutput/graphl/qstoragec.bin','float');
 Qr=binread('../prmoutput/graphr/qstoragec.bin','float');
 Ql=reshape(Ql,2,[]);
 Qr=reshape(Qr,2,[]);
-if 0
+if 1
 Ql=[h,0;
     0,h]*Ql;
 Qr=[h,0;
@@ -49,7 +49,7 @@ Qpathr=Qr(:,pathr);
 close all;
 pause(0.1);
 
-%image(A);
+image(A);
 hold on;
 
 Gl=graph(Elfrom,Elto);

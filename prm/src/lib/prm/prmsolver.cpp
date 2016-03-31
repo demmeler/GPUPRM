@@ -2654,6 +2654,7 @@
 
 
   template class PRMSolver<4>;
+  template class PRMSolver<2>;
 
 
 

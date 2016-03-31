@@ -237,8 +237,8 @@ The real obstacles transform into obstacles in the configuration space, given by
 Like in the stated robotics example, in many cases the most costly operation of the PRM algorithm are the many evaluations of the indicator function \(I(q)\), 
 which however can be done independently for every new \(q\).
 Therefore $I(q)$ is implemented in a vectorized way as a function \((q_1, ... , q_P) \mapsto (I(q_1),...,I(q_P))\) by a CUDA kernel, where every thread computes one evaluation.
-In the robotics case, this means, the direct kinematic and collision calculation are made on the GPU parallely for different joint angle configurations.
-Although this will the only major application in the project, the PRM solver and the configuration space are implemented seperated from each other and connected by an interface to be free to simply add other applications. As an example and for testing, additionally a simple 2D configuration space is provided, 
+In the robotics case, this means, the direct kinematic and collision calculation are made on the GPU parallelly for different joint angle configurations.
+Although this will the only major application in the project, the PRM solver and the configuration space are implemented separated from each other and connected by an interface to be free to simply add other applications. As an example and for testing, additionally a simple 2D configuration space is provided, 
 whose indicator function is read from a black-and-white image.
 
 
@@ -277,7 +277,7 @@ whose indicator function is read from a black-and-white image.
 
 
 While the distribution of the indicator function to different CUDA threads is a first level of parallelization, 
-a second level can be achieved by sampling and connecting several new nodes parallely. 
+a second level can be achieved by sampling and connecting several new nodes parallelly. 
 This is more difficult, because all new nodes have to be connected 
 and the graph data has to be updated on all processes. 
 For this, different approaches have been implemented, which are described in chapter \ref{solver}.
@@ -286,7 +286,7 @@ Before that, chapter \ref{indicator} gives more details about the robotics indic
 
 \section{Implementation of an Indicator Function for Robot Arms}\label{indicator}
 
-In the project, the probabilistic roadmap algorithm is applied  to create collisionfree trajectories of a robot arm.
+In the project, the probabilistic roadmap algorithm is applied  to create collision-free trajectories of a robot arm.
 For a robot with given joint angles \(q_i\) one can calculate straightforwardly all positions and orientations  of the single parts of the robot.
 For this, coordinate frames according to the Denavit-Hartenberg convention are used.
 The coordinate frames of the single parts are described by transformation matrices 
@@ -295,7 +295,7 @@ $T_i \in R^{4x4}$, which transform points from the body frame frame into the wor
 The geometry of the robot parts is defined by a set of convex polytopes, each of them belonging to one of the robots coordinate frame. Applying the corresponding transformation $T_i$, its vertices can be transformed into the world frame. 
 Environment obstacles are also defined by convex polytopes, in the world frame.
 
-Now the movement of the robot can be described by a curve $q(t) \in \R^d$ in the configuration space. It is collisionfree, if at no time, any two polytopes of the robot intersect with each other or with the environment after being transformed into the world frame.
+Now the movement of the robot can be described by a curve $q(t) \in \R^d$ in the configuration space. It is collision-free, if at no time, any two polytopes of the robot intersect with each other or with the environment after being transformed into the world frame.
 To apply the probabilistic roadmap algorithm, we express this by the indicator function
 
 \begin{equation*}
@@ -313,7 +313,7 @@ The indicator function is implemented in a vectorized way as an CUDA kernel, whi
 \subsection{Direct Kinematics}\label{dk}
 
 The Denavit-Hartenberg (DH) convention is a method to describe the geometry of an robots joints, 
-that is, how the transformations between the robots coordinate frames look like in dependancy of its joint values $q_1,...,q_d$.
+that is, how the transformations between the robots coordinate frames look like in dependency of its joint values $q_1,...,q_d$.
 For this it is assumed that each joint is either rotational, that means an rotation around a fixed axis, 
 or prismatic, a translation along an axis.
 The robot consists of $d+1$ bodies each of which has an body fixed coordinate frame $B_i$, which is described by a transformation matrix $T_i$ into the world frame.
@@ -377,11 +377,11 @@ The polytopes used in this projects are given by the user as convex hull of a li
 
 \subsection{Chung-Wang Collision Algorithm}
 
-To check if two polytopes collide an algorithm by Chung and Wang is used here. It uses the separating vector theorem and tries to find a seperating vector by iterative search. Furthermore, a subalgorithm determines in each iteration from the candidate history, if it is still theoretically possible to find a seperating vector. If not, it is returned a collision. If on the other side a seperating vector is found, the algorithm can return no collision.
+To check if two polytopes collide an algorithm by Chung and Wang is used here. It uses the separating vector theorem and tries to find a separating vector by iterative search. Furthermore, a sub-algorithm determines in each iteration from the candidate history, if it is still theoretically possible to find a separating vector. If not, it is returned a collision. If on the other side a separating vector is found, the algorithm can return no collision.
 For detailed informations see \cite{chung} and \cite{ericson}, pp. 410-412.
 The method is implemented as device code for the use on GPU kernels.
 \begin{lstlisting}
-__host__ __device__ int seperating_vector_algorithm(const polytope4& P, const polytope4& Q, 
+__host__ __device__ int separating_vector_algorithm(const polytope4& P, const polytope4& Q, 
 													const trafo4& tp, const trafo4& tq);
 \end{lstlisting}
 In our application, the polytopes are mostly parts of the robot, which are given in a body frame and have to be transformed into world frame according to section \ref{dk} first.
@@ -472,7 +472,7 @@ Algorithms \ref{host} and \ref{kernel} two show in pseudo code, how the work is 
 	calculate robot kinematics $T_0(q), ..., T_d(q) $\;
 	$res_{tmp} = 0; $ \;
 	\For{all registered pairs pairs of polytopes $P, Q$}{
-		$res_{tmp}=seperating\_vector\_algorithm(P, T_{i_P}, Q, T_{i_Q})$ \;
+		$res_{tmp}=separating\_vector\_algorithm(P, T_{i_P}, Q, T_{i_Q})$ \;
 		\If{$res_{tmp} \neq 0$}{
 			$res[j]=res_{tmp}$ \;
 			break \;
@@ -481,7 +481,7 @@ Algorithms \ref{host} and \ref{kernel} two show in pseudo code, how the work is 
 	\caption{Robot kernel: code for one thread}
 \end{algorithm}
 
-In order to overlap computation time of GPU and CPU, an asynchronous version of the indicator function was written. Here the function is split in everything until the kernel launch and a wait function, which waits until the kernel finishes and recieves the result data. 
+In order to overlap computation time of GPU and CPU, an asynchronous version of the indicator function was written. Here the function is split in everything until the kernel launch and a wait function, which waits until the kernel finishes and receives the result data. 
 
 \begin{lstlisting}
 int indicator2_async(const float* qs, const float* qe, int *res, 
@@ -489,7 +489,7 @@ int indicator2_async(const float* qs, const float* qe, int *res,
 int indicator2_async_wait(int request);
 \end{lstlisting}
 
-The implementation also allows overlapping of multiple requests, for example two calls of the launch function and after this the two corrsponding waiting calls. 
+The implementation also allows overlapping of multiple requests, for example two calls of the launch function and after this the two corresponding waiting calls. 
 With this it is possible to use the full computation time of the GPU.
 
 \newpage
@@ -500,7 +500,7 @@ It is always ensured that the graph consists of two connected components contain
 With this, it can be easily determined at each time, if the whole graph has become connected.
 
 At the end a shortest path from the start to the end node is searched by the Dijkstra algorithm.
-It has shown that this part a neglectible amount of time compared to the graph building phase.
+It has shown that this part a neglectable amount of time compared to the graph building phase.
 Therefore it is not parallelized here and the focus lies on building the roadmap.
 
 \subsection{Storing the Graph}
@@ -568,9 +568,9 @@ Instead only different approaches to distribute the work on several GPUs have be
 
 \subsubsection*{Version 1} 
 
-In the first approach, that was evaluated, every process generates new nodes independantly from each other.
-Then the possible neighbours are determined and the connections, which have to be tested.
-The indicator function is called and returnes the edges.
+In the first approach, that was evaluated, every process generates new nodes independently from each other.
+Then the possible neighbors are determined and the connections, which have to be tested.
+The indicator function is called and returns the edges.
 After this, the graph must be synchronized between all processes, which needs an all-to-all communication.
 As the graph building phase does not need the edge data, it is sufficient to exchange only the nodes and collect the edges at the end.
 
@@ -632,7 +632,7 @@ As the graph building phase does not need the edge data, it is sufficient to exc
 The second approach uses the fact, that by synchronizing the random seed, 
 different processes can produce the same sequence of random numbers independently from each other.
 By using this, every process can generate all new nodes and determine the connection data. 
-Then the indicator function computation is splitted over their configuration space instances and the returned data shared afterwards with each other.
+Then the indicator function computation is split over their configuration space instances and the returned data shared afterwards with each other.
 With this data, all graphs can be updated and it is guaranteed, that they grow exactly in the same way on each process.
 The purpose of this version compared to the first one is, that less data has to be sent. 
 Furthermore, in the first version it can occur, that the different generated nodes can result in very different counts of neighbors and therefore uneven loads on the GPUs.
@@ -709,7 +709,7 @@ With this it is possible, that the computation time of the GPU is fully used, an
 	\node[frameless, mywidth, below=of l3, minimum height=2cm] (l6) {};
 	\node[frameless, mywidth, below=of l6] (l7) {};
 	\node[block, mywidth, below=of l7] (l11)	{\begin{tabular}{c}
-										recieve\\ result, \\
+										receive\\ result, \\
 										store nodes \\ 
 										and edges
 									\end{tabular}};
@@ -720,7 +720,7 @@ With this it is possible, that the computation time of the GPU is fully used, an
 	\node[frameless, mywidth, right=of l2, minimum height=1.5cm] (r2) {$\vdots$};
 	\node[frameless, mywidth, right=of l3] (r3) {};
 	\node[block, mywidth, right=of l6] (r6)	{\begin{tabular}{c}
-										recieve\\ result, \\
+										receive\\ result, \\
 										store nodes \\
 										and edges
 									\end{tabular}};
@@ -780,11 +780,11 @@ With this it is possible, that the computation time of the GPU is fully used, an
 \begin{wrapfigure}{r}{0.5\textwidth}\label{robotsolution}
 	\centering
 	\includegraphics[width=0.5\textwidth]{robotsolution.pdf}
-	\caption{PRM generated collisionfree movement for a 4-axis robot}
+	\caption{PRM generated collision-free movement for a 4-axis robot}
 \end{wrapfigure}
 
 Tests have been made for a scenario with a robot with 4 joints. For creating and plotting the environment and the resulting trajectories, Matlab functions are provided.
-Because of the dependancy on random numbers, the algorithm takes different amounts of time for different runs.
+Because of the dependency on random numbers, the algorithm takes different amounts of time for different runs.
 Therefore, 10 runs were made for each version and number of processes.
 However, the different versions lead to a different average amount of GPU threads needed.
 So, to be able to better compare how they scale, the time per number of GPU threads used as a quantity.

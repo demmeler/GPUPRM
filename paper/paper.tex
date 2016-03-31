@@ -512,7 +512,8 @@ Therefore a special indexing is used here.
 The nodes are stored in a vector, which is organized in blocks with fixed sizes. The blocks are referred to by ids which are stored in a map.
 
 \begin{lstlisting}
-struct block{	int pos;	 //! position of first vertex
+struct block{
+	int pos;	 //! position of first vertex
 	int num;	 //! current number of vertices stored
 	block* next; //! if num==blocksize -> pointer to next block
 };
@@ -520,9 +521,15 @@ struct block{	int pos;	 //! position of first vertex
 
 
 \begin{lstlisting}
-struct graph{    std::map<int,block*> map; //map for accessing blocks    std::vector<block> blocks;    std::vector<float> qstorage; //length ndof*N    int newblockpos;  //position of next new block    int blocknum;     //number of used blocks
+struct graph{
+    std::map<int,block*> map; //map for accessing blocks
+    std::vector<block> blocks;
+    std::vector<float> qstorage; //length ndof*N
+    int newblockpos;  //position of next new block
+    int blocknum;     //number of used blocks
     .
-    .};
+    .
+};
 \end{lstlisting}
 
 The key of an block is computed by the mapping
@@ -809,7 +816,7 @@ version	&  processes/	& time (ms)	& GPU 		& time per 1e6  \\
 \hline
 
 \end{tabular}
-\caption{Timing results for the parallelization versions from chapter \ref{solver} on a machine with 4 GeForce GTX 480}
+\caption{Timing results for the parallelization versions from chapter \ref{solver} on a cluster node with 2x Intel Xeon Six-Core CPU X5650 @2.67GHz and 4x GeForce GTX 480}
 \end{table}
 
 As the indicator function has also been implemented on the CPU, all versions could be run without GPU.

@@ -1,2 +1,0 @@
-test8 - configread mit ndof=2
-test9 - configread mit ndof beliebig

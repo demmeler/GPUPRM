@@ -39,6 +39,7 @@ int main(int argc, char** argv)
   int seed=(argc>=6 ? atoi(argv[5]) : 0 );
   int blocksize=(argc>=7 ? atoi(argv[6]) : 256);
   int prmversion=(argc>=8 ? atoi(argv[7]) : 5 );
+  int makestats=(argc>=9 ? atoi(argv[7]) : 0 );
   int maxstorage=1024*1024;//(argc>=8 ? atoi(argv[7]) : 1024*1024);
   int maxsteps=100000;
 
@@ -132,11 +133,14 @@ int main(int argc, char** argv)
       printvar(seed);
       printvar(blocksize);
       printvar(prmversion);
+      printvar(makestats);
 
-      ofstream file;
-      file.open("stats.txt",ios::app);
-      file<<version<<"\t"<<size<<"\t"<<seed<<"\t"<<time<<"\t"<<numthreadsall<<"\t"<<((long)time*1000000)/numthreadsall<<"\n";
-      file.close();
+      if(makestats!=0){
+          ofstream file;
+          file.open("stats.txt",ios::app);
+          file<<version<<"\t"<<size<<"\t"<<seed<<"\t"<<time<<"\t"<<numthreadsall<<"\t"<<((long)time*1000000)/numthreadsall<<"\n";
+          file.close();
+      }
   }
 
   MPI_Finalize();

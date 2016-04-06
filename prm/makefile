@@ -7,8 +7,8 @@ CUDA_PATH2=/share/apps/cuda-5.5
 CUDA_INCLUDE= -L$(CUDA_PATH)/lib64 -L$(CUDA_PATH2)/lib64 -lcudart
 #WRN_OPT=-Wall
 WRN_OPT=
-#OPT=-O3
-OPT=
+OPT=-O3
+#OPT=
 
 
 all: robo arrayconfigspace main maincuda maincuda0 bench benchcuda array

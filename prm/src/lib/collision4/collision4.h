@@ -16,7 +16,7 @@ namespace collision4{
 
   #define max_for_loop 10
   #define max_for_loop_whole 10
-  #define max_vertices_number 10
+  #define max_vertices_number 100
   #define collision_eps 0.000001
 
 

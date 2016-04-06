@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE QtCreatorProject>
-<!-- Written by QtCreator 3.0.1, 2016-04-04T14:28:14. -->
+<!-- Written by QtCreator 3.0.1, 2016-04-07T00:00:26. -->
 <qtcreator>
  <data>
   <variable>ProjectExplorer.Project.ActiveTarget</variable>
@@ -60,19 +60,7 @@
    <valuemap type="QVariantMap" key="ProjectExplorer.Target.BuildConfiguration.0">
     <value type="QString" key="ProjectExplorer.BuildConfiguration.BuildDirectory">/home/manuel/scproj/prm</value>
     <valuemap type="QVariantMap" key="ProjectExplorer.BuildConfiguration.BuildStepList.0">
-     <valuemap type="QVariantMap" key="ProjectExplorer.BuildStepList.Step.0">
-      <valuelist type="QVariantList" key="GenericProjectManager.GenericMakeStep.BuildTargets">
-       <value type="QString">all</value>
-      </valuelist>
-      <value type="bool" key="GenericProjectManager.GenericMakeStep.Clean">false</value>
-      <value type="QString" key="GenericProjectManager.GenericMakeStep.MakeArguments"></value>
-      <value type="QString" key="GenericProjectManager.GenericMakeStep.MakeCommand"></value>
-      <value type="bool" key="ProjectExplorer.BuildStep.Enabled">true</value>
-      <value type="QString" key="ProjectExplorer.ProjectConfiguration.DefaultDisplayName">Make</value>
-      <value type="QString" key="ProjectExplorer.ProjectConfiguration.DisplayName"></value>
-      <value type="QString" key="ProjectExplorer.ProjectConfiguration.Id">GenericProjectManager.GenericMakeStep</value>
-     </valuemap>
-     <value type="int" key="ProjectExplorer.BuildStepList.StepsCount">1</value>
+     <value type="int" key="ProjectExplorer.BuildStepList.StepsCount">0</value>
      <value type="QString" key="ProjectExplorer.ProjectConfiguration.DefaultDisplayName">Build</value>
      <value type="QString" key="ProjectExplorer.ProjectConfiguration.DisplayName"></value>
      <value type="QString" key="ProjectExplorer.ProjectConfiguration.Id">ProjectExplorer.BuildSteps.Build</value>
@@ -155,10 +143,10 @@
     <value type="int" key="PE.EnvironmentAspect.Base">2</value>
     <valuelist type="QVariantList" key="PE.EnvironmentAspect.Changes"/>
     <value type="QString" key="ProjectExplorer.CustomExecutableRunConfiguration.Arguments"></value>
-    <value type="QString" key="ProjectExplorer.CustomExecutableRunConfiguration.Executable"></value>
+    <value type="QString" key="ProjectExplorer.CustomExecutableRunConfiguration.Executable">%{buildDir}/main</value>
     <value type="bool" key="ProjectExplorer.CustomExecutableRunConfiguration.UseTerminal">false</value>
     <value type="QString" key="ProjectExplorer.CustomExecutableRunConfiguration.WorkingDirectory">%{buildDir}</value>
-    <value type="QString" key="ProjectExplorer.ProjectConfiguration.DefaultDisplayName">Custom Executable</value>
+    <value type="QString" key="ProjectExplorer.ProjectConfiguration.DefaultDisplayName">Run %{buildDir}/main</value>
     <value type="QString" key="ProjectExplorer.ProjectConfiguration.DisplayName"></value>
     <value type="QString" key="ProjectExplorer.ProjectConfiguration.Id">ProjectExplorer.CustomExecutableRunConfiguration</value>
     <value type="uint" key="RunConfiguration.QmlDebugServerPort">3768</value>

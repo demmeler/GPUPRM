@@ -187,7 +187,9 @@ namespace collision4{
         dspn=new int[N];
         dspm=new int[N];
         dspsys=new int[ndof+1];
-        for(int dof=0;dof<ndof+1;++dof){dspsys[dof]=N;}
+        for(int dof=0;dof<ndof+1;++dof){
+            dspsys[dof]=N;
+        }
         numsys=new int[ndof+1]();
         sumn=summ=0;
         for(int k=0;k<N;++k){

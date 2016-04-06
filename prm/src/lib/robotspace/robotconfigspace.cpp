@@ -13,6 +13,7 @@
 
 #include <vector>
 #include <cmath>
+#include <assert.h>
 
 
 template<int ndof>
@@ -38,6 +39,17 @@ void RobotConfigspace<ndof>::construct(const Robot<ndof>* robot_,
   polylist.from=from_;
   polylist.to=to_;
   polylist.M=M_;
+
+
+  //perform checks of the polytope list
+  for(int k=0;k<N_;++k){
+    for(int i=0;i<polys_[k].n;++i){
+      //nodes without edges not allowed: they do not work for the collision algorithm
+      assert(polys_[k].cnt[i]>0);
+    }
+	assert(polys_[k].n<=max_vertices_number);
+  }
+
 
   nbufres=nbuf_;
   nbufqto=ndof*nbuf_;

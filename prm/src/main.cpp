@@ -96,7 +96,7 @@ int main(int argc, char** argv)
     prm.process_mpi5(num,nbuf,maxsteps, seed);
     version=3;
   }else {
-    msg("Error: prmprocess not valid");
+    msg("Error: prmversion not valid");
     return 0;
   }
 

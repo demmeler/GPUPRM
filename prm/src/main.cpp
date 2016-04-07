@@ -53,7 +53,7 @@ int main(int argc, char** argv)
 
   //! Initialization
 
-  RobotConfigspace<ndof> space("config1",dq, confignbuf);
+  RobotConfigspace<ndof> space("../config1",dq, confignbuf);
   space.init(rank,size);
 
   PRMSolver<ndof> prm(&space, D, D, maxstorage, blocksize);
@@ -117,7 +117,7 @@ int main(int argc, char** argv)
 
       tick(twrite);
 
-      prm.store_results("prmoutput");
+      prm.store_results("../prmoutput");
 
       tock(twrite);
 

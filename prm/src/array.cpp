@@ -57,7 +57,7 @@ int main(int argc, char** argv)
   int b=640,h=480,n=b*h;
 
   int *array=new int[n];
-  read_file("array.bin",array,n);
+  read_file("../array.bin",array,n);
   ArrayConfigspace space(array,b,h,0.0,b/(float)h,0.0,1.0);
 
   PRMSolver<ndof> prm(&space, D, D, maxstorage, blocksize);

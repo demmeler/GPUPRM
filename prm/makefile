@@ -12,7 +12,7 @@ OPT=-O3
 
 
 all: robo arrayconfigspace main maincuda maincuda0 bench benchcuda array
-
+	
 
 arrayo:
 	mpicxx $(WRN_OPT) $(OPT) -g -I $(SRC)/lib -c -std=c++0x -o array.o $(SRC)/array.cpp
@@ -61,6 +61,7 @@ arrayconfigspace:
 
 
 robo: robotconfigspace robotconfigspacecuda robotconfigspacecuda0
+	
 
 robotconfigspace:
 	g++ $(WRN_OPT) $(OPT) -g -I $(SRC)/lib -c -o robotconfigspace.o $(SRC)/lib/robotspace/robotconfigspace.cpp
@@ -75,10 +76,18 @@ robotconfigspacecuda0: $(SRC)/lib/robotspace/robotconfigspace.cpp
 # dependencies (comment out for manual compiling...)
 
 robotconfigspacecuda.o: robotconfigspacecuda
+	
 robotconfigspacecuda0.o: robotconfigspacecuda0
+	
 robotconfigspace.o: robotconfigspace
+	
 prmsolver.o: prmsolver
+	
 array.o: arrayo
+	
 main.o: maino
+	
 bench.o: bencho
+	
 arrayconfigspace.o:arrayconfigspace
+	

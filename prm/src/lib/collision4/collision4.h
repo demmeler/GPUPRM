@@ -206,8 +206,12 @@ namespace collision4{
     int combsp[max_for_loop];
     int combsq[max_for_loop];
 #if 0
-    int* vmarks_buffer_P=new int[P.n];
-    int* vmarks_buffer_Q=new int[Q.n];
+    //int* vmarks_buffer_P=new int[P.n];
+    //int* vmarks_buffer_Q=new int[Q.n];
+    const int Pn=P.n;
+    int vmarks_buffer_P[Pn];
+    const int Qn=Q.n;
+    int vmarks_buffer_Q[Qn];
 #else
     int vmarks_buffer_P[max_vertices_number];
     int vmarks_buffer_Q[max_vertices_number];

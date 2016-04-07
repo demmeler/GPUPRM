@@ -63,7 +63,7 @@ namespace geo4{
   ///   *    implementations     *
   ///   **************************
 
-  qualifier float cross2(float2& v, float2& w){
+  qualifier float cross2(const float2& v, const float2& w){
     return v.x*w.y-v.y*w.x;
   }
 

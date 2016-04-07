@@ -32,7 +32,8 @@ if 1
     dhparams.d=[4,3,2.25,1];
     dhparams.types=[0,0,0,0];
     
-    P1.vertices=quaderm(0,0,1.75,1,1,3.5);
+    %P1.vertices=quaderm(0,0,1.75,1,1,3.5);
+    P1.vertices=readstl('geodata/base.stl');
     P1.sys=0;
     P2.vertices=quaderm(0,1,0,1,3.0,1);
     P2.sys=1;
@@ -45,23 +46,27 @@ if 1
     P6.vertices=quaderm(0,0,-0.5+0.15,1,1,0.3);
     P6.sys=4;
     
-    Pe0.vertices=quaderm(0,0,-0.25,12,12,0.5);
+    Pe0.vertices=readstl('geodata/bodenplatte.stl');
     Pe0.sys=0;
-    Pe1.vertices=quader(0,3.7,0,1,1,3);
+    Pe1.vertices=readstl('geodata/pfahl1.stl');
     Pe1.sys=0;
-    Pe2.vertices=quader(-3,-3,0,1,1,2);
+    Pe2.vertices=readstl('geodata/bigblock.stl');
     Pe2.sys=0;
-    Pe3.vertices=quader(-6,0.6,5,8,1,1);
+    %Pe3.vertices=quader(-6,0.6,5,8,1,1);
+    Pe3.vertices=readstl('geodata/deckenbalken.stl');
     Pe3.sys=0;
-    Pe4.vertices=movevertices( readstl('geodata/testobj2.stl') , [1,0,0]);
+    Pe4.vertices= readstl('geodata/huegel.stl');
     Pe4.sys=0;
+    Pe5.vertices= readstl('geodata/wand.stl');
+    Pe5.sys=0;
     
+    
+    polysenv={Pe0,Pe1,Pe2,Pe3,Pe4,Pe5};
+    Nenv=length(polysenv);
     polysbase={P1};
     Nbase=length(polysbase);
     polysself={P2,P3,P4,P5,P6};
     Nself=length(polysself);
-    polysenv={Pe0,Pe1,Pe2,Pe3,Pe4};
-    Nenv=length(polysenv);
     polys=[polysenv, polysbase, polysself];
     
     pairsenv=[repelem((1:Nenv)',Nself,1),repmat(Nenv+Nbase+(1:Nself)',Nenv,1)];

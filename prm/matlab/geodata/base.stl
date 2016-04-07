@@ -1,0 +1,86 @@
+solid umgebung
+facet normal 0.0 0.0 1.0
+  outer loop
+    vertex 0.5 -0.5 3.5000000000000004
+    vertex -0.5 0.5 3.5000000000000004
+    vertex -0.5 -0.5 3.5000000000000004
+  endloop
+endfacet
+facet normal 0.0 0.0 1.0
+  outer loop
+    vertex -0.5 0.5 3.5000000000000004
+    vertex 0.5 -0.5 3.5000000000000004
+    vertex 0.5 0.5 3.5000000000000004
+  endloop
+endfacet
+facet normal -0.9899494936611667 1.1747439401944188e-17 0.14142135623730948
+  outer loop
+    vertex -1.0 1.0 0.0
+    vertex -1.0 -1.0 0.0
+    vertex -0.5 -0.5 3.5000000000000004
+  endloop
+endfacet
+facet normal -0.9899494936611667 9.397951521555353e-17 0.14142135623730953
+  outer loop
+    vertex -1.0 1.0 0.0
+    vertex -0.5 -0.5 3.5000000000000004
+    vertex -0.5 0.5 3.5000000000000004
+  endloop
+endfacet
+facet normal 9.397951521555353e-17 0.9899494936611667 0.1414213562373095
+  outer loop
+    vertex 0.5 0.5 3.5000000000000004
+    vertex -1.0 1.0 0.0
+    vertex -0.5 0.5 3.5000000000000004
+  endloop
+endfacet
+facet normal -2.3494878803888377e-17 0.9899494936611667 0.14142135623730948
+  outer loop
+    vertex 0.5 0.5 3.5000000000000004
+    vertex 1.0 1.0 0.0
+    vertex -1.0 1.0 0.0
+  endloop
+endfacet
+facet normal -9.397951521555353e-17 -0.9899494936611667 0.1414213562373095
+  outer loop
+    vertex -0.5 -0.5 3.5000000000000004
+    vertex 1.0 -1.0 0.0
+    vertex 0.5 -0.5 3.5000000000000004
+  endloop
+endfacet
+facet normal 2.3494878803888377e-17 -0.9899494936611667 0.14142135623730948
+  outer loop
+    vertex -0.5 -0.5 3.5000000000000004
+    vertex -1.0 -1.0 0.0
+    vertex 1.0 -1.0 0.0
+  endloop
+endfacet
+facet normal 0.9899494936611667 -1.1747439401944188e-17 0.14142135623730948
+  outer loop
+    vertex 1.0 1.0 0.0
+    vertex 0.5 0.5 3.5000000000000004
+    vertex 1.0 -1.0 0.0
+  endloop
+endfacet
+facet normal 0.9899494936611667 -9.397951521555353e-17 0.14142135623730953
+  outer loop
+    vertex 0.5 0.5 3.5000000000000004
+    vertex 0.5 -0.5 3.5000000000000004
+    vertex 1.0 -1.0 0.0
+  endloop
+endfacet
+facet normal 0.0 0.0 -1.0
+  outer loop
+    vertex 1.0 1.0 0.0
+    vertex -1.0 -1.0 0.0
+    vertex -1.0 1.0 0.0
+  endloop
+endfacet
+facet normal 0.0 0.0 -1.0
+  outer loop
+    vertex -1.0 -1.0 0.0
+    vertex 1.0 1.0 0.0
+    vertex 1.0 -1.0 0.0
+  endloop
+endfacet
+endsolid umgebung

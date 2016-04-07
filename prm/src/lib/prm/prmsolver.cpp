@@ -1843,7 +1843,7 @@
       processor2.processing_step_part1();
       //tock(setting2);
 
-      if(i%50==0){
+      if(i%10==0){
         printvar(i);
       }
     }

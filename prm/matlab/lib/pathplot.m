@@ -10,7 +10,7 @@ function [] = pathplot( dhparams, ndof, polys, N, Q, dt, infinite)
     clf;
     l=size(Q,2);
     while 1
-    for t=[1:l]%,l:-1:1]
+    for t=[1:l,l:-1:1]
         %colors=repmat([t/l,1,0.5; 0.5,0.5,t/l],ndof+1,1);
         %colors=repmat([t/l,1,0.5],ndof+1,1);
     

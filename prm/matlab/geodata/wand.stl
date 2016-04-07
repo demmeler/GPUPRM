@@ -1,0 +1,86 @@
+solid umgebung
+facet normal 0.0 0.0 1.0
+  outer loop
+    vertex 1.9999999999999996 -1.9 5.5
+    vertex 1.4999999999999996 0.6 5.5
+    vertex 1.4999999999999996 -1.9 5.5
+  endloop
+endfacet
+facet normal 0.0 0.0 1.0
+  outer loop
+    vertex 1.4999999999999996 0.6 5.5
+    vertex 1.9999999999999996 -1.9 5.5
+    vertex 1.9999999999999996 0.6 5.5
+  endloop
+endfacet
+facet normal 0.0 1.0 0.0
+  outer loop
+    vertex 1.4999999999999996 0.6 5.5
+    vertex 1.9999999999999996 0.6 0.0
+    vertex 1.4999999999999996 0.6 0.0
+  endloop
+endfacet
+facet normal 0.0 1.0 0.0
+  outer loop
+    vertex 1.9999999999999996 0.6 0.0
+    vertex 1.4999999999999996 0.6 5.5
+    vertex 1.9999999999999996 0.6 5.5
+  endloop
+endfacet
+facet normal 1.0 0.0 0.0
+  outer loop
+    vertex 1.9999999999999996 0.6 0.0
+    vertex 1.9999999999999996 -1.9 5.5
+    vertex 1.9999999999999996 -1.9 0.0
+  endloop
+endfacet
+facet normal 1.0 0.0 0.0
+  outer loop
+    vertex 1.9999999999999996 -1.9 5.5
+    vertex 1.9999999999999996 0.6 0.0
+    vertex 1.9999999999999996 0.6 5.5
+  endloop
+endfacet
+facet normal 0.0 -1.0 0.0
+  outer loop
+    vertex 1.9999999999999996 -1.9 5.5
+    vertex 1.4999999999999996 -1.9 0.0
+    vertex 1.9999999999999996 -1.9 0.0
+  endloop
+endfacet
+facet normal 0.0 -1.0 0.0
+  outer loop
+    vertex 1.4999999999999996 -1.9 0.0
+    vertex 1.9999999999999996 -1.9 5.5
+    vertex 1.4999999999999996 -1.9 5.5
+  endloop
+endfacet
+facet normal -0.0 -0.0 -1.0
+  outer loop
+    vertex 1.9999999999999996 0.6 0.0
+    vertex 1.4999999999999996 -1.9 0.0
+    vertex 1.4999999999999996 0.6 0.0
+  endloop
+endfacet
+facet normal -0.0 -0.0 -1.0
+  outer loop
+    vertex 1.4999999999999996 -1.9 0.0
+    vertex 1.9999999999999996 0.6 0.0
+    vertex 1.9999999999999996 -1.9 0.0
+  endloop
+endfacet
+facet normal -1.0 0.0 0.0
+  outer loop
+    vertex 1.4999999999999996 0.6 5.5
+    vertex 1.4999999999999996 -1.9 0.0
+    vertex 1.4999999999999996 -1.9 5.5
+  endloop
+endfacet
+facet normal -1.0 0.0 0.0
+  outer loop
+    vertex 1.4999999999999996 -1.9 0.0
+    vertex 1.4999999999999996 0.6 5.5
+    vertex 1.4999999999999996 0.6 0.0
+  endloop
+endfacet
+endsolid umgebung

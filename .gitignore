@@ -14,3 +14,4 @@ paper/*.out
 prm/build
 *~
 *.o
+*~.skp

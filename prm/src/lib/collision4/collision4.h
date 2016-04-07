@@ -135,15 +135,18 @@ namespace collision4{
       dprintvard(i);
       df4print(R[i]);
       df2print(T);
+      float rbcross=cross2(rb,T);
       if(cross2(ra,T)>0){
-          if(cross2(rb,T)>0){
+          //if(cross2(rb,T)>0){
+          if(rbcross>0){
             rb=T;
             df2print(rb);
           }else{
             dmsg("T in < ra,rb");
           }
       }else{
-          if(cross2(rb,T)<0){
+          //if(cross2(rb,T)<0){
+          if(rbcross<0){
             ra=T;
             df2print(ra);
           }else{

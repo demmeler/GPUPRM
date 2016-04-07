@@ -59,9 +59,11 @@ if 1
     Pe4.sys=0;
     Pe5.vertices= readstl('geodata/wand.stl');
     Pe5.sys=0;
+    Pe6.vertices= readstl('geodata/seitenbalken.stl');
+    Pe6.sys=0;
     
     
-    polysenv={Pe0,Pe1,Pe2,Pe3,Pe4,Pe5};
+    polysenv={Pe0,Pe1,Pe2,Pe3,Pe4,Pe5,Pe6};
     Nenv=length(polysenv);
     polysbase={P1};
     Nbase=length(polysbase);

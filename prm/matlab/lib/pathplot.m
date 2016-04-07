@@ -15,15 +15,18 @@ function [] = pathplot( dhparams, ndof, polys, N, Q, dt, infinite)
         %colors=repmat([t/l,1,0.5],ndof+1,1);
     
         lim=[xlim;ylim;zlim];
+        [AZ,EL]=view;
         
         clf;
         stateplot(dhparams,ndof,polys,N,Q(:,t),colors);
+        
         
         limneu=[xlim;ylim;zlim];
         limneu=[min(limneu(:,1),lim(:,1)), max(limneu(:,2),lim(:,2))];
         xlim(limneu(1,:));
         ylim(limneu(2,:));
         zlim(limneu(3,:));
+        view(AZ,EL);
         
         pause(dt);
     end

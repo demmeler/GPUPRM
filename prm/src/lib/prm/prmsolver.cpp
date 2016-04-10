@@ -1748,7 +1748,7 @@
 
   //seed only relevant for root
   template<int ndof>
-  int PRMSolver<ndof>::process_mpi5(const int numall, const int nbuf, const int maxsteps, int seed){
+  int PRMSolver<ndof>::process_mpi5(const int numall, const int nbuf, const int maxsteps, int seed, int workerversion){
     //int MPI_Bcast( void *buffer, int count, MPI_Datatype datatype, int root, MPI_Comm comm );
     MPI_Bcast( &seed, 1, MPI_INT, 0, MPI_COMM_WORLD );
     srand(seed);
@@ -1801,14 +1801,14 @@
                          leftconn, rightconn,
                          poslist, distlist,
                          qstartlist,qendlist,resbuf, resbufloc,nbuf,offset,
-                         this);
+                         this, workerversion);
 
     worker processor2(rank,size,
                          qnew2, num, dsp, cnt,
                          leftconn2, rightconn2,
                          poslist2, distlist2,
                          qstartlist2,qendlist2,resbuf2, resbufloc2,nbuf,offset,
-                         this);
+                         this, workerversion);
 
 
 
@@ -1884,7 +1884,7 @@
                                    int *leftconn_, int *rightconn_,
                                    int *poslist_, float *distlist_,
                                    float* qstart_, float* qend_, int* resbuf_, int *resbufloc_, const int nbuf_, const int offset_,
-                                   PRMSolver *instance_):
+                                   PRMSolver *instance_, int workerversion):
         mpirank(mpirank_), mpisize(mpisize_), num(num_), nbuf(nbuf_), offset(offset_),
         in(instance_), D(in->D), space(in->space), graphl(in->graphl), graphr(in->graphr)
 
@@ -1903,6 +1903,17 @@
         numqlistleft=new int[num];
         counts=new int[mpisize];
         disps=new int[mpisize];
+
+        assert(1<=workerversion && workerversion<=2);
+        if(workerversion==1){
+            step1ptr=&worker::processing_step_part1a;
+            step2ptr=&worker::processing_step_part2a;
+            step3ptr=&worker::processing_step_part3a;
+        }else if(workerversion==2){
+            step1ptr=&worker::processing_step_part1b;
+            step2ptr=&worker::processing_step_part2b;
+            step3ptr=&worker::processing_step_part3b;
+        }
     }
 
     template<int ndof>
@@ -1915,10 +1926,30 @@
     }
 
 
+    template<int ndof>
+    int PRMSolver<ndof>::worker::processing_step_part1(){
+        return (this->*step1ptr)();
+    }
+
+    template<int ndof>
+    int PRMSolver<ndof>::worker::processing_step_part2(){
+        return (this->*step2ptr)();
+    }
+
+    template<int ndof>
+    int PRMSolver<ndof>::worker::processing_step_part3(){
+        return (this->*step3ptr)();
+    }
+
+
+
+    //! ***********************
+    //! *   workerversion 1   *
+    //! ***********************
 
 
     template<int ndof>
-    int PRMSolver<ndof>::worker::processing_step_part1()
+    int PRMSolver<ndof>::worker::processing_step_part1a()
     {
 
 
@@ -1947,46 +1978,6 @@
       nbufrest=nbuf;
 
 
-
-
-#if 1
-      in->find_neighbours(  0, dsp_,
-                        qnew, qstartp, qendp,
-                        poslistp, distlistp, nbufrest, index,
-                        &posqlist[0], &numqlistleft[0], &numqlist[0],
-                        nbuf, offset
-                      );
-
-      in->find_neighbours(  dsp_, dsp_+cnt_,
-                        qnew, qstartp, qendp,
-                        poslistp, distlistp, nbufrest, index,
-                        &posqlist[0], &numqlistleft[0], &numqlist[0],
-                        nbuf, offset
-                      );
-
-      in->find_neighbours(  dsp_+cnt_, num,
-                        qnew, qstartp, qendp,
-                        poslistp, distlistp, nbufrest, index,
-                        &posqlist[0], &numqlistleft[0], &numqlist[0],
-                        nbuf, offset
-                      );
-
-      Nqlist=index;
-
-      {
-          int r = Nqlist % mpisize, q = Nqlist / mpisize;
-          for(int rank=0;rank<mpisize;++rank){
-            int count = q;
-            int disp = rank * q;
-            count += rank < r ? 1 : 0;
-            disp += rank < r ? rank : r;
-            counts[rank]=count;
-            disps[rank]=disp;
-          }
-      }
-      disp=disps[mpirank];
-      count=counts[mpirank];
-#else
       in->find_neighbours(  dsp_, dsp_+cnt_,
                         qnew, qstartp, qendp,
                         poslistp, distlistp, nbufrest, index,
@@ -1998,11 +1989,10 @@
 
       disp=posqlist[dsp[mpirank]]; //==0
       count=index-disp;
-#endif
 
       space->indicator2_async(qstart+disp,qend+disp,resbufloc,count,offset,configrequest);
 
-#if 0
+
       MPI_Allgather(&count,1,MPI_INT,counts,1,MPI_INT,MPI_COMM_WORLD);
 
 
@@ -2030,7 +2020,7 @@
                       );
 
       Nqlist=index;
-#endif
+
 
       //!
       //! calculate which edges exist
@@ -2043,7 +2033,7 @@
 
 
     template<int ndof>
-    int PRMSolver<ndof>::worker::processing_step_part2(){
+    int PRMSolver<ndof>::worker::processing_step_part2a(){
 
 #ifndef NO_IO
     printarr(dsp,mpisize);
@@ -2063,7 +2053,7 @@
       MPI_Request resrequest;
       MPI_Iallgatherv(resbufloc,count,MPI_INT,resbuf,counts,disps,MPI_INT,MPI_COMM_WORLD,&resrequest);
 
-      //calc_conn(resbufloc-disp, posqlist, numqlistleft, numqlist, leftconn, rightconn, dsp_, dsp_+cnt_);
+      calc_conn(resbufloc-disp, posqlist, numqlistleft, numqlist, leftconn, rightconn, dsp_, dsp_+cnt_);
 
       MPI_Status resstatus;
       MPI_Wait(&resrequest,&resstatus);
@@ -2074,9 +2064,9 @@
       //! insert nodes and edges
       //!
 
-      //calc_conn(resbuf, posqlist, numqlistleft, numqlist, leftconn, rightconn, 0, dsp_);
-      //calc_conn(resbuf, posqlist, numqlistleft, numqlist, leftconn, rightconn, dsp_+cnt_, num);
-      calc_conn(resbuf, posqlist, numqlistleft, numqlist, leftconn, rightconn, 0, num);
+      calc_conn(resbuf, posqlist, numqlistleft, numqlist, leftconn, rightconn, 0, dsp_);
+      calc_conn(resbuf, posqlist, numqlistleft, numqlist, leftconn, rightconn, dsp_+cnt_, num);
+      //calc_conn(resbuf, posqlist, numqlistleft, numqlist, leftconn, rightconn, 0, num);
 
       return 0;
     }
@@ -2084,7 +2074,7 @@
 
 
     template<int ndof>
-    int PRMSolver<ndof>::worker::processing_step_part3(){
+    int PRMSolver<ndof>::worker::processing_step_part3a(){
 
       for(int j=0;j<num;++j){
 
@@ -2170,6 +2160,129 @@
       return 0;
 
     }
+
+
+
+
+
+    //! ***********************
+    //! *   workerversion 2   *
+    //! ***********************
+
+    template<int ndof>
+    int PRMSolver<ndof>::worker::processing_step_part1b()
+    {
+
+
+      //!
+      //! create nodes qnew randomly
+      //!
+
+
+
+      get_random_nodes(graphl,0,num/2,qnew,D,space);
+      get_random_nodes(graphr,num/2,num,qnew,D,space);
+
+
+      //!
+      //! make list of potential neighbours for all new nodes
+      //!
+
+
+      //!posqlist[i]: position in qlist buffer, at which neighbours of qnew[i] start
+
+      index=0;
+      qstartp=qstart;
+      qendp=qend;
+      poslistp=poslist;
+      distlistp=distlist;
+      nbufrest=nbuf;
+
+
+
+
+      in->find_neighbours(  0, dsp_,
+                        qnew, qstartp, qendp,
+                        poslistp, distlistp, nbufrest, index,
+                        &posqlist[0], &numqlistleft[0], &numqlist[0],
+                        nbuf, offset
+                      );
+
+      in->find_neighbours(  dsp_, dsp_+cnt_,
+                        qnew, qstartp, qendp,
+                        poslistp, distlistp, nbufrest, index,
+                        &posqlist[0], &numqlistleft[0], &numqlist[0],
+                        nbuf, offset
+                      );
+
+      in->find_neighbours(  dsp_+cnt_, num,
+                        qnew, qstartp, qendp,
+                        poslistp, distlistp, nbufrest, index,
+                        &posqlist[0], &numqlistleft[0], &numqlist[0],
+                        nbuf, offset
+                      );
+
+      Nqlist=index;
+
+      {
+          int r = Nqlist % mpisize, q = Nqlist / mpisize;
+          for(int rank=0;rank<mpisize;++rank){
+            int count = q;
+            int disp = rank * q;
+            count += rank < r ? 1 : 0;
+            disp += rank < r ? rank : r;
+            counts[rank]=count;
+            disps[rank]=disp;
+          }
+      }
+      disp=disps[mpirank];
+      count=counts[mpirank];
+
+
+      space->indicator2_async(qstart+disp,qend+disp,resbufloc,count,offset,configrequest);
+
+
+      //!
+      //! calculate which edges exist
+      //!
+
+
+      return 0;
+  }
+
+
+
+    template<int ndof>
+    int PRMSolver<ndof>::worker::processing_step_part2b(){
+
+      //tick(waiting);
+      space->indicator2_async_wait(configrequest);
+      //tock(waiting);
+
+
+      MPI_Request resrequest;
+      MPI_Iallgatherv(resbufloc,count,MPI_INT,resbuf,counts,disps,MPI_INT,MPI_COMM_WORLD,&resrequest);
+
+      MPI_Status resstatus;
+      MPI_Wait(&resrequest,&resstatus);
+
+
+
+      //!
+      //! insert nodes and edges
+      //!
+
+      calc_conn(resbuf, posqlist, numqlistleft, numqlist, leftconn, rightconn, 0, num);
+
+      return 0;
+    }
+
+    template<int ndof>
+    int PRMSolver<ndof>::worker::processing_step_part3b(){
+        return worker::processing_step_part3a();
+    }
+
+
 
 
 

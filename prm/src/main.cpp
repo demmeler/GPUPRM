@@ -94,8 +94,11 @@ int main(int argc, char** argv)
     prm.process_mpi4(num,nbuf,maxsteps, seed);
     version=2;
   }else if(prmversion==5){
-    prm.process_mpi5(num,nbuf,maxsteps, seed);
+    prm.process_mpi5(num,nbuf,maxsteps, seed,1); //workerversion 1
     version=3;
+  }else if(prmversion==6){
+    prm.process_mpi5(num,nbuf,maxsteps, seed,2); //workerversion 2
+    version=4;
   }else {
     msg("Error: prmversion not valid");
     return 0;

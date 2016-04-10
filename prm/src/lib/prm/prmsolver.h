@@ -161,13 +161,13 @@ public:
   //! *******************
 
   //seed only relevant for root
-  int process_mpi5(const int numall, const int nbuf, const int maxsteps, int seed);
+  int process_mpi5(const int numall, const int nbuf, const int maxsteps, int seed, int workerversion=1);
 
 
   friend class worker;
 
   class worker{
-  private:
+  protected:
       const int mpirank;
       const int mpisize;
       float* qnew;
@@ -202,12 +202,16 @@ public:
       int disp,count;
       int *counts, *disps;
 
-      PRMSolver *in;
+      PRMSolver<ndof> *in;
 
       float &D;
       Configspace<ndof>* &space;
       graph &graphl;
       graph &graphr;
+
+      int (worker::*step1ptr)();
+      int (worker::*step2ptr)();
+      int (worker::*step3ptr)();
 
   public:
     worker( const int mpirank_, const int mpisize_,
@@ -215,11 +219,23 @@ public:
                                    int *leftconn_, int *rightconn_,
                                    int *poslist_, float *distlist_,
                                    float* qstart_, float* qend_, int* resbuf_, int *resbufloc_, const int nbuf_, const int offset_,
-                                   PRMSolver *instance_);
+                                   PRMSolver *instance_, int workerversion=1);
     ~worker();
-        inline int processing_step_part1();
-        inline int processing_step_part2();
-        inline int processing_step_part3();
+
+    int processing_step_part1();
+    int processing_step_part2();
+    int processing_step_part3();
+
+  protected:
+    //! workerversion 1
+    int processing_step_part1a();
+    int processing_step_part2a();
+    int processing_step_part3a();
+
+    //! workerversion 2
+    int processing_step_part1b();
+    int processing_step_part2b();
+    int processing_step_part3b();
   };
 
 

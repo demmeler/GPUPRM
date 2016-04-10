@@ -1843,7 +1843,7 @@
       processor2.processing_step_part1();
       //tock(setting2);
 
-      if(i%1==0){
+      if(i%50==0){
         printvar(i);
       }
     }
@@ -1972,7 +1972,6 @@
                       );
 
       Nqlist=index;
-      printvar(Nqlist);
 
       {
           int r = Nqlist % mpisize, q = Nqlist / mpisize;
@@ -1987,9 +1986,6 @@
       }
       disp=disps[mpirank];
       count=counts[mpirank];
-
-      printarr(disps,mpisize);
-      printarr(counts,mpisize);
 #else
       in->find_neighbours(  dsp_, dsp_+cnt_,
                         qnew, qstartp, qendp,

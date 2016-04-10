@@ -1843,7 +1843,7 @@
       processor2.processing_step_part1();
       //tock(setting2);
 
-      if(i%10==0){
+      if(i%50==0){
         printvar(i);
       }
     }
@@ -1947,12 +1947,73 @@
       nbufrest=nbuf;
 
 
+
+
+#if 1
+      in->find_neighbours(  0, dsp_,
+                        qnew, qstartp, qendp,
+                        poslistp, distlistp, nbufrest, index,
+                        &posqlist[0], &numqlistleft[0], &numqlist[0],
+                        nbuf, offset
+                      );
+
       in->find_neighbours(  dsp_, dsp_+cnt_,
                         qnew, qstartp, qendp,
                         poslistp, distlistp, nbufrest, index,
                         &posqlist[0], &numqlistleft[0], &numqlist[0],
                         nbuf, offset
                       );
+
+      in->find_neighbours(  dsp_+cnt_, num,
+                        qnew, qstartp, qendp,
+                        poslistp, distlistp, nbufrest, index,
+                        &posqlist[0], &numqlistleft[0], &numqlist[0],
+                        nbuf, offset
+                      );
+
+      Nqlist=index;
+
+      {
+          int r = Nqlist % mpisize, q = Nqlist / mpisize;
+          for(int rank=0;rank<mpisize;++rank){
+            int count = q;
+            int disp = rank * q;
+            count += rank < r ? 1 : 0;
+            disp += rank < r ? rank : r;
+            counts[rank]=count;
+            disps[rank]=disp;
+          }
+      }
+      disp=disps[mpirank];
+      count=counts[mpirank];
+#else
+      in->find_neighbours(  dsp_, dsp_+cnt_,
+                        qnew, qstartp, qendp,
+                        poslistp, distlistp, nbufrest, index,
+                        &posqlist[0], &numqlistleft[0], &numqlist[0],
+                        nbuf, offset
+                      );
+
+
+
+      disp=posqlist[dsp[mpirank]]; //==0
+      count=index-disp;
+#endif
+
+      space->indicator2_async(qstart+disp,qend+disp,resbufloc,count,offset,configrequest);
+
+#if 0
+      MPI_Allgather(&count,1,MPI_INT,counts,1,MPI_INT,MPI_COMM_WORLD);
+
+
+      disps[mpirank]=0;
+      int disps_=count;
+      for(int rank=0;rank<mpisize;++rank){
+        if(rank!=mpirank){
+          disps[rank]=disps_;
+          disps_+=counts[rank];
+        }
+      }
 
 
       in->find_neighbours(  0, dsp_,
@@ -1969,30 +2030,7 @@
                       );
 
       Nqlist=index;
-
-
-
-      disp=posqlist[dsp[mpirank]]; //==0
-      count=index-disp;
-
-      space->indicator2_async(qstart+disp,qend+disp,resbufloc,count,offset,configrequest);
-
-
-      MPI_Allgather(&count,1,MPI_INT,counts,1,MPI_INT,MPI_COMM_WORLD);
-
-
-      disps[mpirank]=0;
-      int disps_=count;
-      for(int rank=0;rank<mpisize;++rank){
-        if(rank!=mpirank){
-          disps[rank]=disps_;
-          disps_+=counts[rank];
-        }
-      }
-
-
-
-
+#endif
 
       //!
       //! calculate which edges exist

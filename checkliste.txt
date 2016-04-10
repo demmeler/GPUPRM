@@ -1,0 +1,13 @@
+gpu divergenz? -> zzt beschränkt auf 10er forschleife
+
+konstanten in collision4 hässlich
+
+#makefile fehler -> linker braucht 2 anläufe
+
+eigenes assert
+
+wie speicher dynamisch und lokal anlegen?
+
+float3 -> lokaler speicher -> aligned access? oder nur, falls in register?
+
+print methoden die codestelle zurückgeben?

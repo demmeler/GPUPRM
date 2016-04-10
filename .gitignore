@@ -12,6 +12,7 @@ paper/*.log
 paper/*.synctex.gz
 paper/*.out
 prm/build
+prm/bin
 *~
 *.o
 *~.skp

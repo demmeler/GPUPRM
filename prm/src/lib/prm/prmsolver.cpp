@@ -1955,6 +1955,22 @@
                       );
 
 
+      in->find_neighbours(  0, dsp_,
+                        qnew, qstartp, qendp,
+                        poslistp, distlistp, nbufrest, index,
+                        &posqlist[0], &numqlistleft[0], &numqlist[0],
+                        nbuf, offset
+                      );
+      in->find_neighbours(  dsp_+cnt_, num,
+                        qnew, qstartp, qendp,
+                        poslistp, distlistp, nbufrest, index,
+                        &posqlist[0], &numqlistleft[0], &numqlist[0],
+                        nbuf, offset
+                      );
+
+      Nqlist=index;
+
+
 
       disp=posqlist[dsp[mpirank]]; //==0
       count=index-disp;
@@ -1975,20 +1991,7 @@
       }
 
 
-      in->find_neighbours(  0, dsp_,
-                        qnew, qstartp, qendp,
-                        poslistp, distlistp, nbufrest, index,
-                        &posqlist[0], &numqlistleft[0], &numqlist[0],
-                        nbuf, offset
-                      );
-      in->find_neighbours(  dsp_+cnt_, num,
-                        qnew, qstartp, qendp,
-                        poslistp, distlistp, nbufrest, index,
-                        &posqlist[0], &numqlistleft[0], &numqlist[0],
-                        nbuf, offset
-                      );
 
-      Nqlist=index;
 
 
       //!

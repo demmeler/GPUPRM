@@ -39,7 +39,8 @@ int main(int argc, char** argv)
   int seed=(argc>=6 ? atoi(argv[5]) : 0 );
   int blocksize=(argc>=7 ? atoi(argv[6]) : 256);
   int prmversion=(argc>=8 ? atoi(argv[7]) : 5 );
-  int maxstorage=1024*1024;//(argc>=8 ? atoi(argv[7]) : 1024*1024);
+  int store=(argc>=9 ? atoi(argv[8]) : 1 );
+  int maxstorage=1024*1024;
   int maxsteps=100000;
 
   //srand(time(NULL));
@@ -114,11 +115,11 @@ int main(int argc, char** argv)
   MPI_Reduce(&numthreads, &numthreadsall,1,MPI_INT,MPI_SUM,0,MPI_COMM_WORLD);
   if(rank==0){
 
-      tick(twrite);
-
-      prm.store_results("../prmoutput");
-
-      tock(twrite);
+      if(store){
+        tick(twrite);
+        prm.store_results("../prmoutput");
+        tock(twrite);
+      }
 
       printvar(numthreadsall);
 
@@ -132,6 +133,7 @@ int main(int argc, char** argv)
       printvar(seed);
       printvar(blocksize);
       printvar(prmversion);
+      printvar(store);
 
       ofstream file;
       file.open("stats.txt",ios::app);

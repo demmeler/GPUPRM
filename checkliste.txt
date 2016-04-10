@@ -1,5 +1,8 @@
 gpu divergenz? -> zzt beschränkt auf 10er forschleife
 
+ist sichergestellt, dass polytopdaten auch wirklich konstant sind?
+
+
 konstanten in collision4 hässlich
 
 #makefile fehler -> linker braucht 2 anläufe

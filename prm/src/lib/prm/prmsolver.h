@@ -220,7 +220,7 @@ public:
         inline int processing_step_part1();
         inline int processing_step_part2();
         inline int processing_step_part3();
-    };
+  };
 
 
 

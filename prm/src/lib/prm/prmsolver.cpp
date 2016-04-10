@@ -1843,7 +1843,7 @@
       processor2.processing_step_part1();
       //tock(setting2);
 
-      if(i%50==0){
+      if(i%1==0){
         printvar(i);
       }
     }
@@ -1972,6 +1972,7 @@
                       );
 
       Nqlist=index;
+      printvar(Nqlist);
 
       {
           int r = Nqlist % mpisize, q = Nqlist / mpisize;
@@ -1986,6 +1987,9 @@
       }
       disp=disps[mpirank];
       count=counts[mpirank];
+
+      printarr(disps,mpisize);
+      printarr(counts,mpisize);
 #else
       in->find_neighbours(  dsp_, dsp_+cnt_,
                         qnew, qstartp, qendp,
@@ -2063,7 +2067,7 @@
       MPI_Request resrequest;
       MPI_Iallgatherv(resbufloc,count,MPI_INT,resbuf,counts,disps,MPI_INT,MPI_COMM_WORLD,&resrequest);
 
-      calc_conn(resbufloc-disp, posqlist, numqlistleft, numqlist, leftconn, rightconn, dsp_, dsp_+cnt_);
+      //calc_conn(resbufloc-disp, posqlist, numqlistleft, numqlist, leftconn, rightconn, dsp_, dsp_+cnt_);
 
       MPI_Status resstatus;
       MPI_Wait(&resrequest,&resstatus);
@@ -2074,9 +2078,9 @@
       //! insert nodes and edges
       //!
 
-      calc_conn(resbuf, posqlist, numqlistleft, numqlist, leftconn, rightconn, 0, dsp_);
-      calc_conn(resbuf, posqlist, numqlistleft, numqlist, leftconn, rightconn, dsp_+cnt_, num);
-      //calc_conn(resbuf, posqlist, numqlistleft, numqlist, leftconn, rightconn, 0, num);
+      //calc_conn(resbuf, posqlist, numqlistleft, numqlist, leftconn, rightconn, 0, dsp_);
+      //calc_conn(resbuf, posqlist, numqlistleft, numqlist, leftconn, rightconn, dsp_+cnt_, num);
+      calc_conn(resbuf, posqlist, numqlistleft, numqlist, leftconn, rightconn, 0, num);
 
       return 0;
     }

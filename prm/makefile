@@ -4,7 +4,7 @@ SRC=src
 BIN=bin
 #CUDA_PATH=/usr/lib/nvidia-cuda-toolkit
 CUDA_PATH=/usr/local/cuda-7.5
-CUDA_PATH2=/share/apps/cuda-5.5
+CUDA_PATH2=/share/apps/cuda-7.0
 CUDA_INCLUDE= -L$(CUDA_PATH)/lib64 -L$(CUDA_PATH2)/lib64 -lcudart
 #WRN_OPT=-Wall
 WRN_OPT=
@@ -19,64 +19,64 @@ clean:
 	rm -f bin/*
 
 arrayo:
-	mpicxx $(WRN_OPT) $(OPT) -g -I $(SRC)/lib -c -std=c++0x -o $(BIN)/array.o $(SRC)/array.cpp
+	mpicxx $(WRN_OPT) $(OPT) -I $(SRC)/lib -c -std=c++0x -o $(BIN)/array.o $(SRC)/array.cpp
 
 $(BIN)/array: $(BIN)/arrayconfigspace.o $(BIN)/prmsolver.o $(BIN)/array.o
-	mpicxx -g -o $@ $^ $(CUDA_INCLUDE)
+	mpicxx -o $@ $^ $(CUDA_INCLUDE)
 
 
 
 maino:
-	mpicxx $(WRN_OPT) $(OPT) -g -I $(SRC)/lib -c -std=c++0x -o $(BIN)/main.o $(SRC)/main.cpp
+	mpicxx $(WRN_OPT) $(OPT) -I $(SRC)/lib -c -std=c++0x -o $(BIN)/main.o $(SRC)/main.cpp
 
 $(BIN)/maincuda: $(BIN)/robotconfigspacecuda.o $(BIN)/prmsolver.o $(BIN)/main.o
-	mpicxx -g -o $@ $^ $(CUDA_INCLUDE)
+	mpicxx -o $@ $^ $(CUDA_INCLUDE)
 
 $(BIN)/maincuda0: $(BIN)/robotconfigspacecuda0.o $(BIN)/prmsolver.o $(BIN)/main.o
-	mpicxx -g -o $@ $^ $(CUDA_INCLUDE)
+	mpicxx -o $@ $^ $(CUDA_INCLUDE)
 
 $(BIN)/main: $(BIN)/robotconfigspace.o $(BIN)/prmsolver.o $(BIN)/main.o
-	mpicxx -g -o $@ $^
+	mpicxx -o $@ $^
 
 
 
 bencho:
-	mpicxx $(WRN_OPT) $(OPT) -g -I $(SRC)/lib -c -std=c++0x -o $(BIN)/bench.o $(SRC)/bench.cpp
+	mpicxx $(WRN_OPT) $(OPT) -I $(SRC)/lib -c -std=c++0x -o $(BIN)/bench.o $(SRC)/bench.cpp
 
 $(BIN)/benchcuda: $(BIN)/robotconfigspacecuda.o $(BIN)/prmsolver.o $(BIN)/bench.o
-	mpicxx -g -o $@ $^ $(CUDA_INCLUDE)
+	mpicxx -o $@ $^ $(CUDA_INCLUDE)
 
 $(BIN)/benchcuda0: $(BIN)/robotconfigspacecuda0.o $(BIN)/prmsolver.o $(BIN)/bench.o
-	mpicxx -g -o $@ $^ $(CUDA_INCLUDE)
+	mpicxx -o $@ $^ $(CUDA_INCLUDE)
 
 $(BIN)/bench: $(BIN)/robotconfigspace.o $(BIN)/prmsolver.o $(BIN)/bench.o
-	mpicxx -g -o $@ $^ $(CUDA_INCLUDE)
+	mpicxx -o $@ $^ $(CUDA_INCLUDE)
 
 
 
 # solver
 
 prmsolver:
-	mpicxx $(WRN_OPT) $(OPT) -g -std=c++0x -I $(SRC)/lib -c -o $(BIN)/prmsolver.o $(SRC)/lib/prm/prmsolver.cpp
+	mpicxx $(WRN_OPT) $(OPT) -std=c++0x -I $(SRC)/lib -c -o $(BIN)/prmsolver.o $(SRC)/lib/prm/prmsolver.cpp
 
 
 # configspaces
 
 arrayconfigspace:
-	g++ $(WRN_OPT) -std=c++0x -c -g -I $(SRC)/lib -o $(BIN)/arrayconfigspace.o $(SRC)/lib/arrayspace/arrayconfigspace.cpp
+	g++ $(WRN_OPT) -std=c++0x -c -I $(SRC)/lib -o $(BIN)/arrayconfigspace.o $(SRC)/lib/arrayspace/arrayconfigspace.cpp
 
 
 robo: robotconfigspace robotconfigspacecuda robotconfigspacecuda0
 	
 
 robotconfigspace:
-	g++ $(WRN_OPT) $(OPT) -g -I $(SRC)/lib -c -o $(BIN)/robotconfigspace.o $(SRC)/lib/robotspace/robotconfigspace.cpp
+	g++ $(WRN_OPT) $(OPT) -I $(SRC)/lib -c -o $(BIN)/robotconfigspace.o $(SRC)/lib/robotspace/robotconfigspace.cpp
 
 robotconfigspacecuda: $(SRC)/lib/robotspace/robotconfigspace.cpp
-	nvcc $(OPT) -g -G -x=cu -arch=$(ARCHITECTURE) -I $(SRC)/lib -c -o $(BIN)/robotconfigspacecuda.o $(SRC)/lib/robotspace/robotconfigspace.cpp -D CUDA_CODE -D GPU_VERSION
+	nvcc $(OPT) -x=cu -arch=$(ARCHITECTURE) -I $(SRC)/lib -c -o $(BIN)/robotconfigspacecuda.o $(SRC)/lib/robotspace/robotconfigspace.cpp -D CUDA_CODE -D GPU_VERSION
 
 robotconfigspacecuda0: $(SRC)/lib/robotspace/robotconfigspace.cpp
-	nvcc $(OPT) -g -G -x=cu -arch=$(ARCHITECTURE) -I $(SRC)/lib -c -o $(BIN)/robotconfigspacecuda0.o $(SRC)/lib/robotspace/robotconfigspace.cpp -D CUDA_CODE
+	nvcc $(OPT) -x=cu -arch=$(ARCHITECTURE) -I $(SRC)/lib -c -o $(BIN)/robotconfigspacecuda0.o $(SRC)/lib/robotspace/robotconfigspace.cpp -D CUDA_CODE
 
 
 # dependencies (comment out for manual compiling...)

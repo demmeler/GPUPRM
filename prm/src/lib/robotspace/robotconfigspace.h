@@ -162,6 +162,9 @@ private:
   //!number of threads launched since creation
   int numthreads_all;
 
+  int ressource_rank;
+  int ressource_size;
+
 };
 
 #endif // ROBOTCONFIGSPACE_H

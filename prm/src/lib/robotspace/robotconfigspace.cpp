@@ -208,11 +208,14 @@ int RobotConfigspace<ndof>::load_config(std::string path, Robot<ndof>* &robot, p
 
 //!initialization function copy polytope and robot data to gpu etc..
 template<int ndof>
-int RobotConfigspace<ndof>::init(const int ressource_rank, const int ressource_size)
+int RobotConfigspace<ndof>::init(const int ressource_rank_, const int ressource_size_)
 {
   if(devloaded){
     clear();
   }
+
+  ressource_rank=ressource_rank_;
+  ressource_size=ressource_size_;
 
   polydata=new collision4::polytope4data;
   polydata->build(polylist.polys,polylist.sys,polylist.N,ndof,polylist.from, polylist.to, polylist.M);
@@ -523,7 +526,11 @@ int RobotConfigspace<ndof>::indicator2_async(const float* qs, const float* qe, i
     request=requeststack_id;
 
     //printarr(res,N);
-    //printvar(numthreads);
+    printvar(numthreads);
+
+    std::stringstream str;
+    str<<ressource_rank<<": numthreads="<<numthreads<<std::endl;
+    std::cout<<str.str();
 
     numthreads_all+=numthreads;
 

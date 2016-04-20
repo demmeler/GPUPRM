@@ -525,9 +525,9 @@ int RobotConfigspace<ndof>::indicator2_async(const float* qs, const float* qe, i
     requeststack[requeststack_id]=data;
     request=requeststack_id;
 
-#if 0
+#if 1
     //printarr(res,N);
-    printvar(numthreads);
+    //printvar(numthreads);
 
     std::stringstream str;
     str<<ressource_rank<<": numthreads="<<numthreads<<std::endl;

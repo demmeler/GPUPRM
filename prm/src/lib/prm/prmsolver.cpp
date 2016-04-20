@@ -1817,6 +1817,9 @@
 
     //tick(tloop);
     for(int i=0;i<maxsteps;++i){
+      tick(tbarrier);
+      MPI_Barrier(MPI_COMM_WORLD);
+      tock(tbarrier);
       //tick(evaluating1);
       processor1.processing_step_part2();
       int flag1=processor1.processing_step_part3();
@@ -1843,7 +1846,7 @@
       processor2.processing_step_part1();
       //tock(setting2);
 
-      if(i%1==0){
+      if(i%50==0){
         printvar(i);
       }
     }

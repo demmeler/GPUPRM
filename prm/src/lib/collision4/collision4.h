@@ -255,7 +255,7 @@ namespace collision4{
 
         if(dp>=-collision_eps){
           //save S, p, q
-          if(iterations!=0x0)*iterations=l;
+          if(iterations!=0x0)*iterations=l+1;
           return 0;
         }
         combsp[k]=p;
@@ -275,7 +275,7 @@ namespace collision4{
           }
           if(k>=2 && find_half_plane(&R[0],k,w,*rk)==false){
             dmsg("no half plane");
-            if(iterations!=0x0)*iterations=l;
+            if(iterations!=0x0)*iterations=l+1;
             return l+1;
           }
           lin(S,-2.0*dp,*rk,S);
@@ -287,7 +287,7 @@ namespace collision4{
     }
 //dmsg("Hello");
     //hostonly(msg("maximal iterations reached!"));
-    if(iterations!=0x0)*iterations=l;
+    if(iterations!=0x0)*iterations=l+1;
     return -1;
   }
 

@@ -425,6 +425,7 @@ void kernel_indicator2(const Robot<ndof>* robot,
           int result=collision4::seperating_vector_algorithm(poly0,poly1,kin.trafos[polydata->sys[k0]],kin.trafos[polydata->sys[k1]],&iterations); //-> TODO: seperate environment? code sparen?
           if(result!=0){
             resext=result;
+            break;
           }
 
 #ifndef GPU_VERSION
@@ -433,6 +434,7 @@ void kernel_indicator2(const Robot<ndof>* robot,
 #endif
 
       }
+      if(resext!=0)break;
     }
 
     //printf("resext=%d\n",resext);

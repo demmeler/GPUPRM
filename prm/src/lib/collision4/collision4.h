@@ -185,7 +185,7 @@ namespace collision4{
 
 
   //!0 = no collision, 1 = collision, 2 = max iterations reached
-  qualifierd int seperating_vector_algorithm(const polytope4& P, const polytope4& Q, const trafo4& tp, const trafo4& tq){
+  qualifierd int seperating_vector_algorithm(const polytope4& P, const polytope4& Q, const trafo4& tp, const trafo4& tq, int* iterations=0x0){
     int p=0;
     int q=0;
     float4 S;
@@ -223,8 +223,8 @@ namespace collision4{
     support_vertex_searcher psearcher(P,&vmarks_buffer_P[0]);
     support_vertex_searcher qsearcher(Q,&vmarks_buffer_Q[0]);
 
-
-    for(int k=0, l=0; k<max_for_loop && l<max_for_loop_whole; ++l ){
+    int k,l;
+    for(k=0, l=0; k<max_for_loop && l<max_for_loop_whole; ++l ){
         float4 *rk=&R[k];
 
         /*hostonly(printvar(k);)*/
@@ -255,6 +255,7 @@ namespace collision4{
 
         if(dp>=-collision_eps){
           //save S, p, q
+          if(iterations!=0x0)*iterations=l;
           return 0;
         }
         combsp[k]=p;
@@ -274,6 +275,7 @@ namespace collision4{
           }
           if(k>=2 && find_half_plane(&R[0],k,w,*rk)==false){
             dmsg("no half plane");
+            if(iterations!=0x0)*iterations=l;
             return l+1;
           }
           lin(S,-2.0*dp,*rk,S);
@@ -285,6 +287,7 @@ namespace collision4{
     }
 //dmsg("Hello");
     //hostonly(msg("maximal iterations reached!"));
+    if(iterations!=0x0)*iterations=l;
     return -1;
   }
 

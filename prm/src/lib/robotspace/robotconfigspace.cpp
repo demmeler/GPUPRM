@@ -379,7 +379,8 @@ void kernel_indicator2(const Robot<ndof>* robot,
                        int* res,
                        const int* testpos, const int* testnum,
                        int N, int numthreads){
-  float avgresext=0.0;
+  float avgit=0.0;
+  int iterations=0;
   for(int i=0;i<numthreads;++i){
 #endif
 
@@ -420,7 +421,7 @@ void kernel_indicator2(const Robot<ndof>* robot,
           int k1=dest[l];
           collision4::polytope4 poly1;
           polydata->get_polytope(poly1, k1);
-          int result=collision4::seperating_vector_algorithm(poly0,poly1,kin.trafos[polydata->sys[k0]],kin.trafos[polydata->sys[k1]]); //-> TODO: seperate environment? code sparen?
+          int result=collision4::seperating_vector_algorithm(poly0,poly1,kin.trafos[polydata->sys[k0]],kin.trafos[polydata->sys[k1]],&iterations); //-> TODO: seperate environment? code sparen?
           if(result!=0){
             resext=result;
           }
@@ -434,13 +435,13 @@ void kernel_indicator2(const Robot<ndof>* robot,
 
 
 #ifndef GPU_VERSION
-    avgresext+=resext;
+    avgit+=iterations;
 #endif
 
   }//if/for
 #ifndef GPU_VERSION
-  avgresext=avgresext/numthreads;
-  printvar(avgresext);
+  avgit=avgit/numthreads;
+  printvar(avgit);
 #endif
 }
 

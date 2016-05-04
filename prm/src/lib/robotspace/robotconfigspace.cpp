@@ -379,6 +379,7 @@ void kernel_indicator2(const Robot<ndof>* robot,
                        int* res,
                        const int* testpos, const int* testnum,
                        int N, int numthreads){
+  float avgresext=0.0;
   for(int i=0;i<numthreads;++i){
 #endif
 
@@ -431,7 +432,15 @@ void kernel_indicator2(const Robot<ndof>* robot,
     //! reduce resext to res with ||
     if(resext!=0) res[k]=resext;
 
+
+#ifndef GPU_VERSION
+    avgresext+=resext;
+#endif
+
   }//if/for
+#ifndef GPU_VERSION
+  avgresext=avgresext/numthreads;
+#endif
 }
 
 

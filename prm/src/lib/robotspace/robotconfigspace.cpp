@@ -440,6 +440,7 @@ void kernel_indicator2(const Robot<ndof>* robot,
   }//if/for
 #ifndef GPU_VERSION
   avgresext=avgresext/numthreads;
+  printvar(avgresext);
 #endif
 }
 

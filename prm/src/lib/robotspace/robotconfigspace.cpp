@@ -380,9 +380,10 @@ void kernel_indicator2(const Robot<ndof>* robot,
                        const int* testpos, const int* testnum,
                        int N, int numthreads){
   float avgit=0.0;
-  int iterations=0;
   for(int i=0;i<numthreads;++i){
 #endif
+
+      int iterations=0;
 
     //! determine the line in which the thread is involved
     int k; //! index of the line

@@ -436,6 +436,7 @@ void kernel_indicator2(const Robot<ndof>* robot,
 
 
 #ifndef GPU_VERSION
+    printvar(iterations);
     avgit+=iterations;
 #endif
 

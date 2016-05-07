@@ -22,6 +22,8 @@ namespace collision4{
 
   class support_vertex_searcher{
   public:
+    qualifierd support_vertex_searcher(){}
+
     qualifierd support_vertex_searcher(const polytope4& P, int* vmarks_buffer){
       counter=0;
       vmarks=vmarks_buffer;
@@ -29,6 +31,16 @@ namespace collision4{
       for(int i=0;i<P.n;++i){
           vmarks[i]=0;
       }
+    }
+
+    //! init method for second version with worker below
+    qualifierd void init(const polytope4& P, int* vmarks_buffer){
+        counter=0;
+        vmarks=vmarks_buffer;
+        //dprintvard(P.n);
+        for(int i=0;i<P.n;++i){
+            vmarks[i]=0;
+        }
     }
 
     qualifierd int search_support_vertex(const polytope4& P, int p, float4& Sp){
@@ -293,6 +305,165 @@ namespace collision4{
 
 
 
+
+  //! ****************************
+  //! *                          *
+  //! *      second version      *
+  //! *        with worker       *
+  //! *                          *
+  //! ****************************
+
+  class seperating_vector_algorithm_worker{
+      bool finished;
+      int result;
+      int iterations;
+
+      int p,q;
+      int k,l;
+
+      float4 S;
+      float4 Pq, Pp;
+
+      float4 Sp,Sq,p0,q0,w;
+      float4 R[max_for_loop];
+      int combsp[max_for_loop];
+      int combsq[max_for_loop];
+
+      support_vertex_searcher psearcher;
+      support_vertex_searcher qsearcher;
+
+#if 0
+    //int* vmarks_buffer_P=new int[P.n];
+    //int* vmarks_buffer_Q=new int[Q.n];
+    const int Pn=P.n;
+    int vmarks_buffer_P[Pn];
+    const int Qn=Q.n;
+    int vmarks_buffer_Q[Qn];
+#else
+    int vmarks_buffer_P[max_vertices_number];
+    int vmarks_buffer_Q[max_vertices_number];
+#endif
+
+      const polytope4* P;
+      const polytope4* Q;
+      const trafo4* tp;
+      const trafo4* tq;
+
+  public:
+      qualifierd seperating_vector_algorithm_worker(){
+          finished=false;
+      }
+
+      qualifierd void init(const polytope4& P_, const polytope4& Q_, const trafo4& tp_, const trafo4& tq_){
+          p=0;
+          q=0;
+
+          P=&P_;
+          Q=&Q_;
+          tp=&tp_;
+          tq=&tq_;
+
+          //sub(tq.translation(),tp.translation(),S);
+          tq_.apply(Q_.vertices[0],Pq);
+          tp_.apply(P_.vertices[0],Pp);
+          sub(Pq,Pp,S);
+
+          df4print(tp_.translation());
+          df4print(tq_.translation());
+          df4print(S);
+
+          float norm=normalize(S);
+          if(norm<collision_eps){
+            S.x=1.0;
+          }
+
+          psearcher.init(P_,&vmarks_buffer_P[0]);
+          qsearcher.init(Q_,&vmarks_buffer_Q[0]);
+
+          k=0;
+          l=0;
+
+          finished=false;
+      }
+
+      qualifierd void step(){
+          if(!(k<max_for_loop && l<max_for_loop_whole)){
+              iterations=l+1;
+              result=-1;
+              finished=true;
+              return;
+          }
+
+          float4 *rk=&R[k];
+
+          /*hostonly(printvar(k);)*/
+          tp->apply_rot_inv(S,Sp);
+          S*=-1.0;
+          tq->apply_rot_inv(S,Sq);
+          S*=-1.0;
+          p=psearcher.search_support_vertex(*P,p,Sp);
+          q=qsearcher.search_support_vertex(*Q,q,Sq);
+          tp->apply(P->vertices[p],p0);
+          tq->apply(Q->vertices[q],q0);
+          sub(q0,p0,*rk); normalize(*rk);
+          float dp=sprod(S,*rk);
+
+  #if 1
+            dmsg("+++++++++++++++++++++++++++++++++++++++++");
+            dprintvard(k);
+            df4print(S);
+            dprintvarf(sprod(S,S));
+            dprintvard(p);
+            dprintvard(q);
+            df4print(p0);
+            df4print(q0);
+            df4print(R[k]);
+            dprintvarf(dp);
+            dmsg("");
+  #endif
+
+          if(dp>=-collision_eps){
+            //save S, p, q
+            iterations=l+1;
+            result=0;
+            finished=true;
+            return;
+          }
+          combsp[k]=p;
+          combsq[k]=q;
+          bool repetition=false;
+          for(int j=0;j<k;++j)if(combsp[j]==combsp[k] && combsq[j]==combsq[k]){
+              dmsg("repetition");
+              repetition=true;
+              break;
+          }
+          if(repetition){ //wenn (p,q) bereits aufgetreten
+            S=w;
+          }else{
+            if(k==1){
+              add(R[0],*rk,w); //w=<r0+r1>
+              normalize(w);
+            }
+            if(k>=2 && find_half_plane(&R[0],k,w,*rk)==false){
+              dmsg("no half plane");
+              iterations=l+1;
+              result=l+1;
+              finished=true;
+              return;
+            }
+            lin(S,-2.0*dp,*rk,S);
+            ++k;
+          }
+
+          df4print(w);
+
+          ++l;
+      }
+
+      qualifierd const bool& get_finished() const{return finished;}
+      qualifierd const int& get_result() const {return result;}
+      qualifierd const int& get_iterations() const {return iterations;}
+  };
 
 
 

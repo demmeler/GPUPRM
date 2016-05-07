@@ -8,8 +8,9 @@ CUDA_PATH2=/share/apps/cuda-7.0
 CUDA_INCLUDE= -L$(CUDA_PATH)/lib64 -L$(CUDA_PATH2)/lib64 -lcudart
 #WRN_OPT=-Wall
 WRN_OPT=
-OPT=-O3
-#OPT=
+#OPT=-O3
+OPT=-g -O3
+#OPT=-g
 #PREP=scorep
 #PREP=scalasca -instrument
 PREP=
@@ -17,8 +18,8 @@ PREP=
 #COMPILER=icpc -g
 COMPILER=g++
 
-#MPICXX=mpicxx
-MPICXX=$(COMPILER) -I/usr/mpi/gcc/openmpi-1.8.4/include/openmpi/opal/mca/hwloc/hwloc191/hwloc/include -I/usr/mpi/gcc/openmpi-1.8.4/include/openmpi/opal/mca/event/libevent2021/libevent -I/usr/mpi/gcc/openmpi-1.8.4/include/openmpi/opal/mca/event/libevent2021/libevent/include -I/usr/mpi/gcc/openmpi-1.8.4/include -I/usr/mpi/gcc/openmpi-1.8.4/include/openmpi -pthread -Wl,-rpath -Wl,/usr/mpi/gcc/openmpi-1.8.4/lib64 -Wl,--enable-new-dtags -L/usr/mpi/gcc/openmpi-1.8.4/lib64 -lmpi_cxx -lmpi
+MPICXX=mpicxx
+#MPICXX=$(COMPILER) -I/usr/mpi/gcc/openmpi-1.8.4/include/openmpi/opal/mca/hwloc/hwloc191/hwloc/include -I/usr/mpi/gcc/openmpi-1.8.4/include/openmpi/opal/mca/event/libevent2021/libevent -I/usr/mpi/gcc/openmpi-1.8.4/include/openmpi/opal/mca/event/libevent2021/libevent/include -I/usr/mpi/gcc/openmpi-1.8.4/include -I/usr/mpi/gcc/openmpi-1.8.4/include/openmpi -pthread -Wl,-rpath -Wl,/usr/mpi/gcc/openmpi-1.8.4/lib64 -Wl,--enable-new-dtags -L/usr/mpi/gcc/openmpi-1.8.4/lib64 -lmpi_cxx -lmpi
 
 
 

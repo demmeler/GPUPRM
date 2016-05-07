@@ -449,6 +449,151 @@ void kernel_indicator2(const Robot<ndof>* robot,
 #endif
 }
 
+#if 1
+
+//! ****************************
+//! *                          *
+//! *   new collision kernel   *
+//! *                          *
+//! ****************************
+
+template<int ndof>
+#ifdef GPU_VERSION
+__global__ void kernel_indicator2_1(const Robot<ndof>* robot,
+                                  const collision4::polytope4data* polydata,
+                                  const float* qs, int offsets,
+                                  const float* qe, int offsete,
+                                  int* res,
+                                  const int* testpos, const int* testnum,
+                                  int N, int numthreads){
+  int i = blockDim.x * blockIdx.x + threadIdx.x;
+  if(i<numthreads){
+#else
+void kernel_indicator2_1(const Robot<ndof>* robot,
+                       const collision4::polytope4data* polydata,
+                       const float* qs, int offsets,
+                       const float* qe, int offsete,
+                       int* res,
+                       const int* testpos, const int* testnum,
+                       int N, int numthreads){
+  float avgit=0.0;
+  int i;
+  for(i=0;i<numthreads;++i){
+#endif
+
+    //int iterations=0;
+
+    //! determine the line in which the thread is involved
+    int k; //! index of the line
+           //! line k is handled by threads testpos[k], ...., testpos[k]+numpos[k]
+    for(k=N-1;testpos[k]>i;--k); //binaersuche machen?
+
+    //! calculate q (convex combination)
+    float q[ndof];
+    float c1,c2;
+    if(testnum[k]>0){ //TODO: 1 statt 0 ?
+      c1=(float)(i-testpos[k])/(float)(testnum[k]-1);
+      c2=1.0-c1;
+    }else{
+      c1=1.0;
+      c2=0.0;
+    }
+    for(int j=0;j<ndof;++j){
+      q[j]=c1*qs[k+offsets*j]+c2*qe[k+offsete*j];
+    }
+
+
+    Kinematics<ndof> kin(robot);
+    int resext=0;
+    kin.calculate(&q[0],1);
+
+
+    //! collision algorithm
+
+    collision4::seperating_vector_algorithm_worker worker;
+    collision4::polytope4 poly0;
+    collision4::polytope4 poly1;
+    int k0=-1,l=0;
+    int *dest;
+    int destnum=0;
+
+    bool takenextpair=true;
+
+    while(true){
+#ifndef GPU_VERSION
+        //printvar(k0);
+        //printvar(l);
+        //printvar(destnum);
+#endif
+        if(takenextpair){
+            ++l;
+            bool end_reached=false;
+            while(l>=destnum){
+                ++k0;
+                if(k0>=polydata->N){
+                    end_reached=true;
+                    break;
+                }
+                polydata->get_polytope(poly0, k0);
+                polydata->get_collision_list(k0,dest,destnum);
+                l=0;
+            }
+            if(end_reached){
+                break;
+            }
+            int k1=dest[l];
+            polydata->get_polytope(poly1, k1);
+
+            worker.init(poly0,poly1,kin.trafos[polydata->sys[k0]],kin.trafos[polydata->sys[k1]]);
+
+            takenextpair=false;
+        }
+
+        worker.step();
+
+        if(worker.get_finished()){
+#ifndef GPU_VERSION
+            //printvar(iterations);
+            avgit+=worker.get_iterations();
+#endif
+
+            int result=worker.get_result();
+            if(result!=0){
+                resext=result;
+                break;
+            }else{
+                takenextpair=true;
+            }
+        }
+    }
+
+    //printf("resext=%d\n",resext);
+
+    //! reduce resext to res with ||
+    if(resext!=0) res[k]=resext;
+
+  }//if/for
+#ifndef GPU_VERSION
+  avgit=avgit/numthreads;
+  printvar(avgit);
+#endif
+}
+
+
+#endif
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 //! checks if indicator function = 1 somewhere on the line between (qs[i],qs[i+N]) and (qe[i],qe[i+N]) for all i=1,...,N-1
 //! res is return value
@@ -524,7 +669,7 @@ int RobotConfigspace<ndof>::indicator2_async(const float* qs, const float* qe, i
     cudaassert(cudaMemcpyAsync((void*)testposdev[data.resdevbuffer_id],(void*)testpos.data(), N*sizeof(int), cudaMemcpyHostToDevice, streams[data.resdevbuffer_id]));
     cudaassert(cudaMemcpyAsync((void*)testnumdev[data.resdevbuffer_id],(void*)testnum.data(), N*sizeof(int), cudaMemcpyHostToDevice, streams[data.resdevbuffer_id]));
 
-    kernel_indicator2<ndof><<<GRID,BLOCK,0, streams[data.resdevbuffer_id]>>>(robotdev,polydatadev,qdevbufferfrom[data.resdevbuffer_id],nbufqfrom,qdevbufferto[data.resdevbuffer_id],
+    kernel_indicator2_1<ndof><<<GRID,BLOCK,0, streams[data.resdevbuffer_id]>>>(robotdev,polydatadev,qdevbufferfrom[data.resdevbuffer_id],nbufqfrom,qdevbufferto[data.resdevbuffer_id],
                                                       nbufqto,resdevbuffers[data.resdevbuffer_id],testposdev[data.resdevbuffer_id],testnumdev[data.resdevbuffer_id],N, numthreads);
 
   #else
@@ -532,7 +677,7 @@ int RobotConfigspace<ndof>::indicator2_async(const float* qs, const float* qe, i
       res[k]=0;
     }
 
-    kernel_indicator2<ndof>(robot,polydata,qs,offset,qe,offset,res,testpos.data(),testnum.data(),N, numthreads);
+    kernel_indicator2_1<ndof>(robot,polydata,qs,offset,qe,offset,res,testpos.data(),testnum.data(),N, numthreads);
 
   #endif
 

@@ -101,6 +101,7 @@ int main(int argc, char** argv)
     version=4;
   }else {
     msg("Error: prmversion not valid");
+    printvar(prmversion);
     return 0;
   }
 

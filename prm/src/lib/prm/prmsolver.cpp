@@ -1817,9 +1817,9 @@
 
     //tick(tloop);
     for(int i=0;i<maxsteps;++i){
-      tick(tbarrier);
-      printvar(MPI_Barrier(MPI_COMM_WORLD));
-      tock(tbarrier);
+      //tick(tbarrier);
+      //printvar(MPI_Barrier(MPI_COMM_WORLD));
+      //tock(tbarrier);
       //tick(evaluating1);
       processor1.processing_step_part2();
       int flag1=processor1.processing_step_part3();

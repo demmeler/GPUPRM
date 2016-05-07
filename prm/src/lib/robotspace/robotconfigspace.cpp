@@ -575,7 +575,7 @@ void kernel_indicator2_1(const Robot<ndof>* robot,
   }//if/for
 #ifndef GPU_VERSION
   avgit=avgit/numthreads;
-  printvar(avgit);
+  //printvar(avgit);
 #endif
 }
 
@@ -685,7 +685,7 @@ int RobotConfigspace<ndof>::indicator2_async(const float* qs, const float* qe, i
     requeststack[requeststack_id]=data;
     request=requeststack_id;
 
-#if 1
+#if 0
     //printarr(res,N);
     //printvar(numthreads);
 

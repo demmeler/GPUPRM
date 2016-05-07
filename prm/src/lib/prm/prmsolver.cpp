@@ -2078,7 +2078,7 @@
 
     template<int ndof>
     int PRMSolver<ndof>::worker::processing_step_part3a(){
-      tick(tpart3a);
+      //tick(tpart3a);
 
       for(int j=0;j<num;++j){
 
@@ -2161,7 +2161,7 @@
 
       }//for
 
-      tock(tpart3a);
+      //tock(tpart3a);
 
       return 0;
 
@@ -2185,7 +2185,7 @@
       //!
 
 
-      tick(tnodes);
+      //tick(tnodes);
       get_random_nodes(graphl,0,num/2,qnew,D,space);
       get_random_nodes(graphr,num/2,num,qnew,D,space);
 
@@ -2244,12 +2244,12 @@
       disp=disps[mpirank];
       count=counts[mpirank];
 
-      tock(tnodes);
-      tick(tindicatorcall);
+      //tock(tnodes);
+      //tick(tindicatorcall);
 
       space->indicator2_async(qstart+disp,qend+disp,resbufloc,count,offset,configrequest);
 
-      tock(tindicatorcall);
+      //tock(tindicatorcall);
       //!
       //! calculate which edges exist
       //!
@@ -2263,11 +2263,11 @@
     template<int ndof>
     int PRMSolver<ndof>::worker::processing_step_part2b(){
 
-      tick(twaiting);
+      //tick(twaiting);
       space->indicator2_async_wait(configrequest);
-      tock(twaiting);
+      //tock(twaiting);
 
-      tick(tmpigather);
+      //tick(tmpigather);
 
       MPI_Request resrequest;
       MPI_Iallgatherv(resbufloc,count,MPI_INT,resbuf,counts,disps,MPI_INT,MPI_COMM_WORLD,&resrequest);
@@ -2275,15 +2275,15 @@
       MPI_Status resstatus;
       MPI_Wait(&resrequest,&resstatus);
 
-      tock(tmpigather);
+      //tock(tmpigather);
 
       //!
       //! insert nodes and edges
       //!
 
-      tick(tcalcconn);
+      //tick(tcalcconn);
       calc_conn(resbuf, posqlist, numqlistleft, numqlist, leftconn, rightconn, 0, num);
-      tock(tcalcconn);
+      //tock(tcalcconn);
       return 0;
     }
 

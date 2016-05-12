@@ -669,15 +669,24 @@ int RobotConfigspace<ndof>::indicator2_async(const float* qs, const float* qe, i
     cudaassert(cudaMemcpyAsync((void*)testposdev[data.resdevbuffer_id],(void*)testpos.data(), N*sizeof(int), cudaMemcpyHostToDevice, streams[data.resdevbuffer_id]));
     cudaassert(cudaMemcpyAsync((void*)testnumdev[data.resdevbuffer_id],(void*)testnum.data(), N*sizeof(int), cudaMemcpyHostToDevice, streams[data.resdevbuffer_id]));
 
+#ifdef NEW_COLLISION_KERNEL
     kernel_indicator2_1<ndof><<<GRID,BLOCK,0, streams[data.resdevbuffer_id]>>>(robotdev,polydatadev,qdevbufferfrom[data.resdevbuffer_id],nbufqfrom,qdevbufferto[data.resdevbuffer_id],
                                                       nbufqto,resdevbuffers[data.resdevbuffer_id],testposdev[data.resdevbuffer_id],testnumdev[data.resdevbuffer_id],N, numthreads);
-
+#else
+    kernel_indicator2<ndof><<<GRID,BLOCK,0, streams[data.resdevbuffer_id]>>>(robotdev,polydatadev,qdevbufferfrom[data.resdevbuffer_id],nbufqfrom,qdevbufferto[data.resdevbuffer_id],
+                                                      nbufqto,resdevbuffers[data.resdevbuffer_id],testposdev[data.resdevbuffer_id],testnumdev[data.resdevbuffer_id],N, numthreads);
+#endif
   #else
     for(int k=0;k<N;++k){
       res[k]=0;
     }
 
+#ifdef NEW_COLLISION_KERNEL
+
     kernel_indicator2_1<ndof>(robot,polydata,qs,offset,qe,offset,res,testpos.data(),testnum.data(),N, numthreads);
+#else
+    kernel_indicator2<ndof>(robot,polydata,qs,offset,qe,offset,res,testpos.data(),testnum.data(),N, numthreads);
+#endif
 
   #endif
 

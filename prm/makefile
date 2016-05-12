@@ -2,15 +2,22 @@ ARCHITECTURE=sm_20
 #SRC=$(PWD)/src
 SRC=src
 BIN=bin
+
 #CUDA_PATH=/usr/lib/nvidia-cuda-toolkit
-CUDA_PATH=/usr/local/cuda-7.5
-CUDA_PATH2=/share/apps/cuda-7.0
-CUDA_INCLUDE= -L$(CUDA_PATH)/lib64 -L$(CUDA_PATH2)/lib64 -lcudart
+#CUDA_PATH=/usr/local/cuda-7.5
+#CUDA_PATH2=/share/apps/cuda-7.0
+#CUDA_INCLUDE= -L$(CUDA_PATH)/lib64 -L$(CUDA_PATH2)/lib64 -lcudart
+
+#NVCC_FLAGS=-lineinfo
+NVCC_FLAGS=-lineinfo -DNEW_COLLISION_KERNEL
+
 #WRN_OPT=-Wall
 WRN_OPT=
+
 OPT=-O3
 #OPT=-g -O3
 #OPT=-g
+
 #PREP=scorep
 #PREP=scalasca -instrument
 PREP=

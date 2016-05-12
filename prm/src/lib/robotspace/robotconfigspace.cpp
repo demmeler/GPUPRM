@@ -575,7 +575,7 @@ void kernel_indicator2_1(const Robot<ndof>* robot,
   }//if/for
 #ifndef GPU_VERSION
   avgit=avgit/numthreads;
-  //printvar(avgit);
+  printvar(avgit);
 #endif
 }
 

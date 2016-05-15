@@ -387,12 +387,14 @@ namespace collision4{
       }
 
       qualifierd void step(){
+#if 0
           if(!(k<max_for_loop && l<max_for_loop_whole)){
               iterations=l+1;
               result=-1;
               finished=true;
               return;
           }
+#endif
 
           float4 *rk=&R[k];
 
@@ -458,6 +460,16 @@ namespace collision4{
           df4print(w);
 
           ++l;
+
+#if 1
+          if(!(k<max_for_loop && l<max_for_loop_whole)){
+              iterations=l+1;
+              result=-1;
+              finished=true;
+              return;
+          }
+#endif
+
       }
 
       qualifierd const bool& get_finished() const{return finished;}

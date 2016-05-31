@@ -31,7 +31,7 @@ int main(int argc, char** argv)
 
   //! Parameters
 
-  int num=(argc>=2 ? atoi(argv[9]) : 32 );
+  int num=(argc>=10 ? atoi(argv[9]) : 32 );
   int nbuf=(argc>=3 ? atoi(argv[2]) : 2048);
   int confignbuf=(argc>=3 ? 2*atoi(argv[2]) : 4096);
   float dq=(argc>=4 ? atof(argv[3]) : 0.01);

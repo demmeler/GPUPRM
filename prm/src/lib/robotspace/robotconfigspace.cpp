@@ -210,7 +210,7 @@ int RobotConfigspace<ndof>::load_config(std::string path, Robot<ndof>* &robot, p
 
 //!initialization function copy polytope and robot data to gpu etc..
 template<int ndof>
-int RobotConfigspace<ndof>::init(const int ressource_rank_, const int ressource_size_, const bool new_kernel)
+int RobotConfigspace<ndof>::init_(const int ressource_rank_, const int ressource_size_, const bool new_kernel)
 {
   if(devloaded){
     clear();

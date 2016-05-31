@@ -56,7 +56,7 @@ int main(int argc, char** argv)
   //! Initialization
 
   RobotConfigspace<ndof> space("../config1",dq, confignbuf);
-  space.init(rank,size,new_kernel);
+  space.init_(rank,size,new_kernel);
 
   PRMSolver<ndof> prm(&space, D, D, maxstorage, blocksize);
 

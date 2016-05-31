@@ -62,6 +62,8 @@ void RobotConfigspace<ndof>::construct(const Robot<ndof>* robot_,
   requeststack_id=0;
 
   numthreads_all=0;
+
+  use_new_kernel=false;
 }
 
 //! robot_: Robot Object with Denavit-Hartenberg data
@@ -208,7 +210,7 @@ int RobotConfigspace<ndof>::load_config(std::string path, Robot<ndof>* &robot, p
 
 //!initialization function copy polytope and robot data to gpu etc..
 template<int ndof>
-int RobotConfigspace<ndof>::init(const int ressource_rank_, const int ressource_size_)
+int RobotConfigspace<ndof>::init_(const int ressource_rank_, const int ressource_size_, const bool new_kernel)
 {
   if(devloaded){
     clear();
@@ -260,10 +262,9 @@ int RobotConfigspace<ndof>::init(const int ressource_rank_, const int ressource_
   resdevbuffers.resize(1,0x0);
   cudaassert(cudaMalloc((void**)&resdevbuffers[0], nbufres*sizeof(int)));
   free_resdevbuffer_ids.insert(0);
-#else
-
-
 #endif
+
+  use_new_kernel=new_kernel;
 
   devloaded=true;
 
@@ -669,25 +670,24 @@ int RobotConfigspace<ndof>::indicator2_async(const float* qs, const float* qe, i
     cudaassert(cudaMemcpyAsync((void*)testposdev[data.resdevbuffer_id],(void*)testpos.data(), N*sizeof(int), cudaMemcpyHostToDevice, streams[data.resdevbuffer_id]));
     cudaassert(cudaMemcpyAsync((void*)testnumdev[data.resdevbuffer_id],(void*)testnum.data(), N*sizeof(int), cudaMemcpyHostToDevice, streams[data.resdevbuffer_id]));
 
-#ifdef NEW_COLLISION_KERNEL
-    kernel_indicator2_1<ndof><<<GRID,BLOCK,0, streams[data.resdevbuffer_id]>>>(robotdev,polydatadev,qdevbufferfrom[data.resdevbuffer_id],nbufqfrom,qdevbufferto[data.resdevbuffer_id],
+    if(use_new_kernel){
+        kernel_indicator2_1<ndof><<<GRID,BLOCK,0, streams[data.resdevbuffer_id]>>>(robotdev,polydatadev,qdevbufferfrom[data.resdevbuffer_id],nbufqfrom,qdevbufferto[data.resdevbuffer_id],
                                                       nbufqto,resdevbuffers[data.resdevbuffer_id],testposdev[data.resdevbuffer_id],testnumdev[data.resdevbuffer_id],N, numthreads);
-#else
-    kernel_indicator2<ndof><<<GRID,BLOCK,0, streams[data.resdevbuffer_id]>>>(robotdev,polydatadev,qdevbufferfrom[data.resdevbuffer_id],nbufqfrom,qdevbufferto[data.resdevbuffer_id],
+    }else{
+        kernel_indicator2<ndof><<<GRID,BLOCK,0, streams[data.resdevbuffer_id]>>>(robotdev,polydatadev,qdevbufferfrom[data.resdevbuffer_id],nbufqfrom,qdevbufferto[data.resdevbuffer_id],
                                                       nbufqto,resdevbuffers[data.resdevbuffer_id],testposdev[data.resdevbuffer_id],testnumdev[data.resdevbuffer_id],N, numthreads);
-#endif
+    }
   #else
     for(int k=0;k<N;++k){
       res[k]=0;
     }
 
-#ifdef NEW_COLLISION_KERNEL
+    if(use_new_kernel){
+        kernel_indicator2_1<ndof>(robot,polydata,qs,offset,qe,offset,res,testpos.data(),testnum.data(),N, numthreads);
 
-    kernel_indicator2_1<ndof>(robot,polydata,qs,offset,qe,offset,res,testpos.data(),testnum.data(),N, numthreads);
-#else
-    kernel_indicator2<ndof>(robot,polydata,qs,offset,qe,offset,res,testpos.data(),testnum.data(),N, numthreads);
-#endif
-
+    }else{
+        kernel_indicator2<ndof>(robot,polydata,qs,offset,qe,offset,res,testpos.data(),testnum.data(),N, numthreads);
+    }
   #endif
 
 

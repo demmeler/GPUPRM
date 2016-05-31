@@ -1,15 +1,15 @@
-ARCHITECTURE=sm_20
+ARCHITECTURE=sm_35
 #SRC=$(PWD)/src
 SRC=src
 BIN=bin
 
 #CUDA_PATH=/usr/lib/nvidia-cuda-toolkit
-#CUDA_PATH=/usr/local/cuda-7.5
-#CUDA_PATH2=/share/apps/cuda-7.0
-#CUDA_INCLUDE= -L$(CUDA_PATH)/lib64 -L$(CUDA_PATH2)/lib64 -lcudart
+CUDA_PATH=/usr/local/cuda-7.5
+CUDA_PATH2=/share/apps/cuda-7.0
+CUDA_INCLUDE= -L$(CUDA_PATH)/lib64 -L$(CUDA_PATH2)/lib64 -lcudart
 
-#NVCC_FLAGS=-lineinfo
-NVCC_FLAGS=-lineinfo -DNEW_COLLISION_KERNEL
+NVCC_FLAGS=-lineinfo
+#NVCC_FLAGS=-lineinfo -DNEW_COLLISION_KERNEL
 
 #WRN_OPT=-Wall
 WRN_OPT=
@@ -91,10 +91,10 @@ robotconfigspace:
 	$(PREP) g++ $(WRN_OPT) $(OPT) -I $(SRC)/lib -c -o $(BIN)/robotconfigspace.o $(SRC)/lib/robotspace/robotconfigspace.cpp
 
 robotconfigspacecuda: $(SRC)/lib/robotspace/robotconfigspace.cpp
-	$(PREP) nvcc -lineinfo $(OPT) -x=cu -arch=$(ARCHITECTURE) -I $(SRC)/lib -c -o $(BIN)/robotconfigspacecuda.o $(SRC)/lib/robotspace/robotconfigspace.cpp -D CUDA_CODE -D GPU_VERSION
+	$(PREP) nvcc $(NVCC_FLAGS) $(OPT) -x=cu -arch=$(ARCHITECTURE) -I $(SRC)/lib -c -o $(BIN)/robotconfigspacecuda.o $(SRC)/lib/robotspace/robotconfigspace.cpp -D CUDA_CODE -D GPU_VERSION
 
 robotconfigspacecuda0: $(SRC)/lib/robotspace/robotconfigspace.cpp
-	$(PREP) nvcc $(OPT) -x=cu -arch=$(ARCHITECTURE) -I $(SRC)/lib -c -o $(BIN)/robotconfigspacecuda0.o $(SRC)/lib/robotspace/robotconfigspace.cpp -D CUDA_CODE
+	$(PREP) nvcc $(NVCC_FLAGS) $(OPT) -x=cu -arch=$(ARCHITECTURE) -I $(SRC)/lib -c -o $(BIN)/robotconfigspacecuda0.o $(SRC)/lib/robotspace/robotconfigspace.cpp -D CUDA_CODE
 
 
 # dependencies (comment out for manual compiling...)

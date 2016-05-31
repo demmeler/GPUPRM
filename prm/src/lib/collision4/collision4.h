@@ -43,17 +43,16 @@ namespace collision4{
         }
     }
 
-    qualifierd int search_support_vertex(const polytope4& P, int p, float4& Sp){
-      int newp=p;
+    qualifierd void search_support_vertex(const polytope4& P, int& p, const float4& Sp){
       float max=sprod(P.vertices[p],Sp);
       ++counter;
       vmarks[p]=counter;
       //msg("start supp vert");
       //printarr(Sp,3);
       //printvar(max);
-      do{
+      while(true){
         //printvar(p);
-        p=newp;
+        bool cont=false;
         int imax=P.dsp[p]+P.cnt[p];
         for(int i=P.dsp[p];i<imax;++i){
           //printvar(i);
@@ -64,15 +63,18 @@ namespace collision4{
             //printvar(dp);
             if(dp>max){
               max=dp;
-              newp=v;
+              p=v;
+              cont=true;
+              break;
             }
             vmarks[v]=counter;
           }
         }
-      }while(newp!=p);
+        if(!cont)break;
+      }
       //printvar(p);
       //msg("end supp vert");
-      return p;
+      //return p;
     }
 
   private:
@@ -216,7 +218,7 @@ namespace collision4{
       S.x=1.0;
     }
 
-    float4 Sp,Sq,p0,q0,w;
+    float4 w;
     float4 R[max_for_loop];
     int combsp[max_for_loop];
     int combsq[max_for_loop];
@@ -240,12 +242,13 @@ namespace collision4{
         float4 *rk=&R[k];
 
         /*hostonly(printvar(k);)*/
+        float4 Sp,Sq,p0,q0;
         tp.apply_rot_inv(S,Sp);
         S*=-1.0;
         tq.apply_rot_inv(S,Sq);
         S*=-1.0;
-        p=psearcher.search_support_vertex(P,p,Sp);
-        q=qsearcher.search_support_vertex(Q,q,Sq);
+        psearcher.search_support_vertex(P,p,Sp);
+        qsearcher.search_support_vertex(Q,q,Sq);
         tp.apply(P.vertices[p],p0);
         tq.apply(Q.vertices[q],q0);
         sub(q0,p0,*rk); normalize(*rk);
@@ -322,9 +325,8 @@ namespace collision4{
       int k,l;
 
       float4 S;
-      float4 Pq, Pp;
 
-      float4 Sp,Sq,p0,q0,w;
+      float4 w;
       float4 R[max_for_loop];
       int combsp[max_for_loop];
       int combsq[max_for_loop];
@@ -364,6 +366,7 @@ namespace collision4{
           tq=&tq_;
 
           //sub(tq.translation(),tp.translation(),S);
+          float4 Pq, Pp;
           tq_.apply(Q_.vertices[0],Pq);
           tp_.apply(P_.vertices[0],Pp);
           sub(Pq,Pp,S);
@@ -399,12 +402,13 @@ namespace collision4{
           float4 *rk=&R[k];
 
           /*hostonly(printvar(k);)*/
+          float4 Sp,Sq,p0,q0;
           tp->apply_rot_inv(S,Sp);
           S*=-1.0;
           tq->apply_rot_inv(S,Sq);
           S*=-1.0;
-          p=psearcher.search_support_vertex(*P,p,Sp);
-          q=qsearcher.search_support_vertex(*Q,q,Sq);
+          psearcher.search_support_vertex(*P,p,Sp);
+          qsearcher.search_support_vertex(*Q,q,Sq);
           tp->apply(P->vertices[p],p0);
           tq->apply(Q->vertices[q],q0);
           sub(q0,p0,*rk); normalize(*rk);

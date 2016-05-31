@@ -11,6 +11,9 @@ paper/*.log
 #paper/*.pdf
 paper/*.synctex.gz
 paper/*.out
+paper/*.nav
+paper/*.snm
+paper/*.toc
 prm/build
 prm/bin
 *~

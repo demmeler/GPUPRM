@@ -55,7 +55,7 @@ private:
 public:
 
   //!initialization function copy polydata to gpu etc..
-  int init(const int ressource_rank=0, const int ressource_size=1);
+  int init(const int ressource_rank=0, const int ressource_size=1, const bool new_kernel=false);
   int clear();
 
   //!
@@ -164,6 +164,8 @@ private:
 
   int ressource_rank;
   int ressource_size;
+
+  bool use_new_kernel;
 
 };
 

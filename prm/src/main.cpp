@@ -31,7 +31,7 @@ int main(int argc, char** argv)
 
   //! Parameters
 
-  int num=32;//(argc>=2 ? atoi(argv[1]) : 32 );
+  int num=(argc>=2 ? atoi(argv[9]) : 32 );
   int nbuf=(argc>=3 ? atoi(argv[2]) : 2048);
   int confignbuf=(argc>=3 ? 2*atoi(argv[2]) : 4096);
   float dq=(argc>=4 ? atof(argv[3]) : 0.01);
@@ -41,7 +41,9 @@ int main(int argc, char** argv)
   int prmversion=(argc>=8 ? atoi(argv[7]) : 5 );
   int store=(argc>=9 ? atoi(argv[8]) : 1 );
   int maxstorage=1024*1024;
-  int maxsteps=(argc>=2 ? atoi(argv[1]) : 100000 );
+  int maxsteps=10000;//(argc>=2 ? atoi(argv[1]) : 100000 );
+
+  bool new_kernel=(argc>=2 ? atoi(argv[1]) : 1 );
 
   //srand(time(NULL));
   //srand(clock());
@@ -54,7 +56,7 @@ int main(int argc, char** argv)
   //! Initialization
 
   RobotConfigspace<ndof> space("../config1",dq, confignbuf);
-  space.init(rank,size);
+  space.init(rank,size,new_kernel);
 
   PRMSolver<ndof> prm(&space, D, D, maxstorage, blocksize);
 
@@ -138,6 +140,7 @@ int main(int argc, char** argv)
       printvar(blocksize);
       printvar(prmversion);
       printvar(store);
+      printvar(new_kernel);
 
       ofstream file;
       file.open("stats.txt",ios::app);

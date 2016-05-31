@@ -44,16 +44,15 @@ namespace collision4{
     }
 
     qualifierd void search_support_vertex(const polytope4& P, int& p, const float4& Sp){
-      int newp=p;
       float max=sprod(P.vertices[p],Sp);
       ++counter;
       vmarks[p]=counter;
       //msg("start supp vert");
       //printarr(Sp,3);
       //printvar(max);
-      do{
+      while(true){
         //printvar(p);
-        p=newp;
+        int newp=p;
         int imax=P.dsp[p]+P.cnt[p];
         for(int i=P.dsp[p];i<imax;++i){
           //printvar(i);
@@ -69,7 +68,9 @@ namespace collision4{
             vmarks[v]=counter;
           }
         }
-      }while(newp!=p);
+        if(newp!=p)p=newp;
+        else break;
+      }
       //printvar(p);
       //msg("end supp vert");
       //return p;

@@ -65,6 +65,7 @@ namespace collision4{
               max=dp;
               p=v;
               cont=true;
+              break;
             }
             vmarks[v]=counter;
           }

@@ -52,7 +52,7 @@ namespace collision4{
       //printvar(max);
       while(true){
         //printvar(p);
-        int newp=p;
+        bool cont=false;
         int imax=P.dsp[p]+P.cnt[p];
         for(int i=P.dsp[p];i<imax;++i){
           //printvar(i);
@@ -63,13 +63,13 @@ namespace collision4{
             //printvar(dp);
             if(dp>max){
               max=dp;
-              newp=v;
+              p=v;
+              cont=true;
             }
             vmarks[v]=counter;
           }
         }
-        if(newp!=p)p=newp;
-        else break;
+        if(!cont)break;
       }
       //printvar(p);
       //msg("end supp vert");

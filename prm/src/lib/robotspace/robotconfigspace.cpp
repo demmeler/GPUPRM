@@ -677,8 +677,7 @@ int RobotConfigspace<ndof>::indicator2_async(const float* qs, const float* qe, i
         kernel_indicator2<ndof><<<GRID,BLOCK,0, streams[data.resdevbuffer_id]>>>(robotdev,polydatadev,qdevbufferfrom[data.resdevbuffer_id],nbufqfrom,qdevbufferto[data.resdevbuffer_id],
                                                       nbufqto,resdevbuffers[data.resdevbuffer_id],testposdev[data.resdevbuffer_id],testnumdev[data.resdevbuffer_id],N, numthreads);
     }
-#endif
-  #else
+#else
     for(int k=0;k<N;++k){
       res[k]=0;
     }

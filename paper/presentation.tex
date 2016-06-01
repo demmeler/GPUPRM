@@ -132,7 +132,7 @@
 	\end{center}
 	\begin{itemize}
 		\item Problem: find a feasible trajectory of a robot through a setting of obstacles
-		\item often necessary to pass feasible initial tajectories to optimization algorithms
+		\item Often necessary to pass feasible initial tajectories to optimization algorithms
 	\end{itemize}
 \end{frame}
 
@@ -146,7 +146,7 @@
 		\begin{equation*}
 			I: \Omega \subset \R^d \rightarrow \{ 0,1 \}
 		\end{equation*}
-		\item collision for $q \in \Omega$, $I(q) = 1$ 
+		\item Collision for $q \in \Omega$, $I(q) = 1$ 
 	\end{itemize}
 
 \end{frame}
@@ -183,6 +183,24 @@
 		\item $\Rightarrow$ Well suited for usage of GPU
 		\item Every GPU thread can make one intermediate test
 	\end{itemize}
+\end{frame}
+
+%%%%%%%%%%%%%%%%%%%%%%%
+
+\begin{frame}
+\frametitle{Indicator Function Implementation}
+\begin{itemize}
+	\item Input: vectors of start and end nodes for each potential edge
+	\item Output: vector of feasible edges
+	\item CPU determines number of threads needed for each edge
+		 and passes nodes to GPU 
+	\item Each CUDA thread determines his intermediate configuration and checks for collsion
+	\begin{itemize}
+		\item Kinematics with Denavit-Hartenberg transformations
+		\item Geometry parts are convex polytopes
+		\item Collision detection: Chung-Wang Collision Algorithm
+	\end{itemize}
+\end{itemize}
 \end{frame}
 
 %\section{Parallelization}

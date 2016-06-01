@@ -75,6 +75,7 @@ int main(int argc, char** argv)
       {"prmversion", required_argument,      0,  'v' },
       {"store",      required_argument,      0,  'w' },
       {"maxsteps",   required_argument,      0,  'N' },
+      {"new_kernel", required_argument,      0,  'k' },
       {0,           0,                 0,        0   }
   };
 
@@ -96,6 +97,8 @@ int main(int argc, char** argv)
       case 'w' : store = atoi(optarg);
           break;
       case 'N' : maxsteps = atoi(optarg);
+          break;
+      case 'k': new_kernel = atoi(optarg);
           break;
       default:
           exit(EXIT_FAILURE);

@@ -101,6 +101,7 @@ int main(int argc, char** argv)
       case 'k': new_kernel = atoi(optarg);
           break;
       default:
+          cout<<"bad argument: "<< opt <<endl;
           exit(EXIT_FAILURE);
       }
   }

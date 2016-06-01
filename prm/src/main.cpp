@@ -2,6 +2,13 @@
 #include <time.h>
 #include <mpi.h>
 
+//for parsing parameters
+#include <unistd.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <getopt.h>
+
+
 #define MPI_CODE
 
 #include "lib/config.h"
@@ -30,7 +37,7 @@ int main(int argc, char** argv)
   tick(tinit);
 
   //! Parameters
-
+#if 0
   int num=(argc>=10 ? atoi(argv[9]) : 32 );
   int nbuf=(argc>=3 ? atoi(argv[2]) : 2048);
   int confignbuf=(argc>=3 ? 2*atoi(argv[2]) : 4096);
@@ -44,6 +51,65 @@ int main(int argc, char** argv)
   int maxsteps=10000;//(argc>=2 ? atoi(argv[1]) : 100000 );
 
   bool new_kernel=(argc>=2 ? atoi(argv[1]) : 1 );
+#else
+  int num=32;
+  int nbuf=2048;
+  float dq=0.01;
+  float D=1.0;
+  int seed=0;
+  int blocksize=256;
+  int prmversion=5;
+  int store=1;
+  int maxstorage=1024*1024;
+  int maxsteps=10000;//(argc>=2 ? atoi(argv[1]) : 100000 );
+
+  bool new_kernel=(argc>=2 ? atoi(argv[1]) : 1 );
+#endif
+
+  //! Parse inputs
+  static struct option long_options[] = {
+      {"num",      required_argument,        0,  'n' },
+      {"nbuf", required_argument,            0,  'b' },
+      {"dq",    required_argument,           0,  'q' },
+      {"seed",   required_argument,          0,  's' },
+      {"prmversion", required_argument,      0,  'v' },
+      {"store",      required_argument,      0,  'w' },
+      {"maxsteps",   required_argument,      0,  'N' },
+      {"new_kernel", required_argument,      0,  'k' },
+      {0,           0,                 0,        0   }
+  };
+
+  char opt= 0;
+  int long_index =0;
+  while ((opt = getopt_long(argc, argv,"",
+                            long_options, &long_index )) != -1) {
+      switch (opt) {
+      case 'n' : num = atoi(optarg);
+          break;
+      case 'b' : nbuf = atoi(optarg);
+          break;
+      case 'q' : dq = atof(optarg);
+          break;
+      case 's' : seed = atoi(optarg);
+          break;
+      case 'v' : prmversion = atoi(optarg);
+          break;
+      case 'w' : store = atoi(optarg);
+          break;
+      case 'N' : maxsteps = atoi(optarg);
+          break;
+      case 'k': new_kernel = atoi(optarg);
+          break;
+      default:
+          cout<<"bad argument: "<< opt <<endl;
+          exit(EXIT_FAILURE);
+      }
+  }
+
+
+
+  int confignbuf=2*nbuf;
+
 
   //srand(time(NULL));
   //srand(clock());

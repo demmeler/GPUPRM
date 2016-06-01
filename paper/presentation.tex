@@ -118,13 +118,13 @@
 \frame{\titlepage}
 
 
-\begin{frame}
-	\frametitle{Gliederung}
-	\tableofcontents
-\end{frame}
+%\begin{frame}
+%	\frametitle{Gliederung}
+%	\tableofcontents
+%\end{frame}
 
 %%%%%%%%%%%%%%%%%%%%%%%
-\section{Motivation}
+%\section{Motivation}
 \begin{frame}
 \frametitle{Motivation}
 	\begin{center}
@@ -170,7 +170,8 @@
 \end{frame}
 
 %%%%%%%%%%%%%%%%%%%%%%%
-\section{Robotics Application}
+%\section{Robotics Application}
+
 \begin{frame}
 \frametitle{Robotics Application}
 	\begin{center}
@@ -180,9 +181,11 @@
 		\item For each linear connection, every intermediate configuration has to be checked for collisions
 		\item $\Rightarrow$ Many independent and similar kinematics and collision calculations
 		\item $\Rightarrow$ Well suited for usage of GPU
+		\item Every GPU thread can make one intermediate test
 	\end{itemize}
 \end{frame}
 
+%\section{Parallelization}
 
 \begin{frame}
 \frametitle{Project Overview}
@@ -351,6 +354,93 @@
 \end{tikzpicture}
 }
 \end{center}
+\end{frame}
+
+
+\begin{frame}
+\frametitle{Second Level of Parallelization}
+Version 3: Asynchronous, overlapping kernel calls
+
+\begin{center}
+\resizebox{!}{0.8\textheight}{%
+\begin{tikzpicture}
+	\tikzset{mywidth/.style={minimum width=2.5cm},};
+	\node[block, mywidth] (l1) {\textbf{Worker 1}};
+	\node[frameless, mywidth, below=of l1, minimum height=1.5cm] (l2) {$\vdots$};
+	\node[block, mywidth, below=of l2] (l3) 	{\begin{tabular}{c}
+										generate\\ nodes, \\
+										start kernel
+									\end{tabular}};
+	\node[frameless, mywidth, below=of l3, minimum height=2cm] (l6) {};
+	\node[frameless, mywidth, below=of l6] (l7) {};
+	\node[block, mywidth, below=of l7] (l11)	{\begin{tabular}{c}
+										receive\\ result, \\
+										store nodes \\ 
+										and edges
+									\end{tabular}};
+	\node[frameless, mywidth, below=of l11] (l12) {$\vdots$};
+	
+	
+	\node[block, mywidth, right=of l1] (r1) {\textbf{Worker 2}};
+	\node[frameless, mywidth, right=of l2, minimum height=1.5cm] (r2) {$\vdots$};
+	\node[frameless, mywidth, right=of l3] (r3) {};
+	\node[block, mywidth, right=of l6] (r6)	{\begin{tabular}{c}
+										receive\\ result, \\
+										store nodes \\
+										and edges
+									\end{tabular}};
+	\node[block, mywidth, right=of l7] (r7) 	{\begin{tabular}{c}
+										generate\\ nodes, \\
+										start kernel
+									\end{tabular}};
+	\node[frameless, mywidth, right=of l12] (r12) {$\vdots$};
+	
+	\node[frameless, left=of l1] (g1) {};
+	\node[block, below=of g1, minimum height=14cm] (graph) {\rotatebox{90}{\textbf{Graph}}};
+	
+	
+	%gpu column
+	\tikzset{gpuwidth/.style={minimum width=0.8cm},};
+	
+	\node[block, right=2cm of r1, minimum width=2.5cm] {\textbf{GPU}};
+	\node[frameless, right=2cm of r2, gpuwidth] (topa) {$\vdots$};
+	\node[frameless, right=of topa, gpuwidth] (topb) {$\vdots$};
+	\node[block2, below=0.7cm of topa, gpuwidth, minimum height=4.3cm] (stream1a) {\rotatebox{90}{kernel}};
+	\node[block2, below=2.3cm of stream1a, gpuwidth, minimum height=4.2cm] (stream1b) {\rotatebox{90}{kernel}};
+	\node[frameless, below=0.3cm of stream1b, gpuwidth] (bota) {$\vdots$};
+	
+	\node[block2, below=2.2cm of topb, gpuwidth, minimum height=7.6cm] (stream2) {\rotatebox{90}{kernel}};
+	\node[frameless, right=of bota, gpuwidth] (botb) {$\vdots$};
+	
+	
+	
+	%EDGES
+	
+	\path[-latex',thick]	(graph.east |- l3.west) edge (l3.west)
+					(l11.west) edge (graph.east |- l11.west);
+	\path[-latex',thick]	(graph.east |- r7.west) edge (r7.west)
+					(r6.west) edge (graph.east |- r6.west);
+	\path[dotted,thick]	(l2) edge (l3)
+					(l3) edge (l11)
+					(l11) edge (l12)
+					(r2) edge (r6)
+					(r6) edge (r7)
+					(r7) edge (r12);
+	
+	\path[-latex',thick]	(r6.east -| stream1b.west) edge (r6.east);
+	\path[-latex',thick]	(r7.east) edge (r7.east -| stream1b.west);
+	
+	\path[-,thick]		(l3.east) edge (l3.east -| stream1a.west);
+	\path[-latex',thick]	(stream1a.east |- l3.east) edge (l3.east -| stream2.west);
+	\path[latex'-,thick]		(l11.east) edge (l11.east -| stream1b.west);
+	\path[-,thick]		(stream1b.east |- l11.east) edge (l11.east -| stream2.west);
+	
+	
+\end{tikzpicture}
+}
+\end{center}
+
+
 \end{frame}
 
 \begin{frame}

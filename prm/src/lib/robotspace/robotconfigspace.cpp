@@ -268,6 +268,10 @@ int RobotConfigspace<ndof>::init_(const int ressource_rank_, const int ressource
 
   devloaded=true;
 
+  printvar(polydata->sumn);
+  printvar(polydata->summ);
+
+
   return 0; //TODO: errorhandling?
 
 }

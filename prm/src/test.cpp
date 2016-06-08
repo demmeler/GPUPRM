@@ -57,4 +57,10 @@ int main(int argc, char** argv)
 
   set_kernel<<<GRID,BLOCK>>>(dev_array,0,n);
 
+
+  cudaMemcpy((void*)host_array, (void*)dev_array, n*sizeof(float), cudaMemcpyDeviceToHost);
+
+
+  cout<<host_array[n/2]<<endl;
+
 }

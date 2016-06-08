@@ -381,7 +381,7 @@ namespace collision4{
         }
 
 
-        for(int i=0;i<28;++i)if(res[i]!=0){printvar(i);printvar(res[i]); return 1000+i;}
+        for(int i=0;i<28;++i)if(res[i]!=0){printvar(i);printvar(res[i]);printvar(cudaGetErrorString(res[i])); return 1000+i;}
         return 0;
     }
 

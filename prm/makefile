@@ -96,6 +96,9 @@ robotconfigspacecuda: $(SRC)/lib/robotspace/robotconfigspace.cpp
 robotconfigspacecuda0: $(SRC)/lib/robotspace/robotconfigspace.cpp
 	$(PREP) nvcc $(NVCC_FLAGS) $(OPT) -x=cu -arch=$(ARCHITECTURE) -I $(SRC)/lib -c -o $(BIN)/robotconfigspacecuda0.o $(SRC)/lib/robotspace/robotconfigspace.cpp -D CUDA_CODE
 
+test:
+	nvcc $(NVCC_FLAGS) $(OPT) -x=cu -arch=$(ARCHITECTURE) -I $(SRC)/lib -o $(BIN)/test $(SRC)/test.cpp
+
 
 # dependencies (comment out for manual compiling...)
 

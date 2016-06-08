@@ -332,7 +332,7 @@ namespace collision4{
 
         //!alloc
 
-        int res[28];
+        cudaError_t res[28];
         //res[0]=cudaMalloc((void**)&(devdata.vertices.vertices), sumn * sizeof(float4));
         cudaGetSymbolAddress((void**)&(devdata.vertices), float4_storage[0]);
 

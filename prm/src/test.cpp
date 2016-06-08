@@ -9,12 +9,14 @@ using namespace std;
 #include <stdlib.h>
 #include <getopt.h>
 
+const int N=1000;
+__constant__ float carray[N];
 
 
-__global__ void set_kernel(float *array, float val, int n){
+__global__ void set_kernel(float *array, const float *src, int n){
     int i = blockDim.x * blockIdx.x + threadIdx.x;
     if(i<n){
-        array[i]=val;
+        array[i]=src[i];
     }
 }
 
@@ -48,19 +50,28 @@ int main(int argc, char** argv)
   int n=100;
   float *dev_array;
   float *host_array=new float[n];
+  float src_array[N];
 
   cudaMalloc((void**)&dev_array, n*sizeof(float));
-  cudaMemcpy((void*)dev_array, (void*)host_array, n*sizeof(float), cudaMemcpyHostToDevice);
 
+  float *carray_ptr;
+  cudaGetSymbolAddress((void**)&carray_ptr, carray[0]);
+
+  for(int i=0;i<50;++i){
+    src_array[i]=0.9;
+  }
+  cudaMemcpyToSymbol(carray, (void*)src_array, 65*sizeof(float), 0, cudaMemcpyHostToDevice);
+  cout << cudaGetErrorString(cudaGetLastError())<<endl;
 
   int BLOCK=256, GRID=(n + BLOCK - 1)/BLOCK;
 
-  set_kernel<<<GRID,BLOCK>>>(dev_array,0,n);
+  set_kernel<<<GRID,BLOCK>>>(dev_array,carray_ptr,n);
 
 
   cudaMemcpy((void*)host_array, (void*)dev_array, n*sizeof(float), cudaMemcpyDeviceToHost);
 
-
-  cout<<host_array[n/2]<<endl;
-
+  cout<<"num: "<<num<<endl;
+  for(int i=0;i<n;++i){
+  cout<<i<<" "<<host_array[i]<<" "<<src_array[i]<<endl;
+  }
 }

@@ -11,6 +11,11 @@
 
 namespace collision4{
 
+#ifdef GPU_VERSION
+    const int float4_storage_size=1000;
+    __constant__ float4 float4_storage[float4_storage_size];
+#endif
+
     class polytope4data{
     public:
         //!raw data of all polytopes
@@ -71,6 +76,7 @@ namespace collision4{
 
 #ifdef GPU_VERSION
         friend int copy_host_to_device(polytope4data& devdata, const polytope4data& hostdata, bool withpairs_=false);
+        friend int copy_host_to_device_ver2(polytope4data& devdata, const polytope4data& hostdata, bool withpairs_=false);
         friend int copy_device_to_host(polytope4data& hostdata, const polytope4data& devdata);
         //TODO: free memory
 #endif
@@ -313,6 +319,72 @@ namespace collision4{
         msg("error: copy_host_to_device(polytope4data& hostdata, const polytope4data& devdata) not implemented");
         return -1;
     }
+
+
+    inline int copy_host_to_device_ver2(polytope4data& devdata, const polytope4data& hostdata, bool withpairs){
+
+        assert(hostdata.sumn<=float4_storage_size);
+
+        int N=devdata.N=hostdata.N;
+        int sumn=devdata.sumn=hostdata.sumn;
+        int summ=devdata.summ=hostdata.summ;
+        int ndof=devdata.ndof=hostdata.ndof;
+
+        //!alloc
+
+        int res[28];
+        //res[0]=cudaMalloc((void**)&(devdata.vertices.vertices), sumn * sizeof(float4));
+        cudaGetSymbolAddress((void**)&(devdata.vertices), float4_storage[0]);
+
+        res[1]=cudaMalloc((void**)&(devdata.dsp), sumn * sizeof(int));
+        res[2]=cudaMalloc((void**)&(devdata.cnt), sumn * sizeof(int));
+        res[3]=cudaMalloc((void**)&(devdata.dest), summ * sizeof(int));
+
+        res[4]=cudaMalloc((void**)&(devdata.n), N * sizeof(int));
+        res[5]=cudaMalloc((void**)&(devdata.m), N * sizeof(int));
+        res[6]=cudaMalloc((void**)&(devdata.dspn), N * sizeof(int));
+        res[7]=cudaMalloc((void**)&(devdata.dspm), N * sizeof(int));
+
+        res[8]=cudaMalloc((void**)&(devdata.dspsys),(ndof+1) * sizeof(int));
+        res[9]=cudaMalloc((void**)&(devdata.numsys),(ndof+1) * sizeof(int));
+
+        //! copy
+
+        //res[10]=cudaMemcpy((void*)devdata.vertices, (void*)hostdata.vertices, sumn * sizeof(float4), cudaMemcpyHostToDevice);
+        res[10]=cudaMemcpyToSymbol(float4_storage, (void*)hostdata.vertices, sumn * sizeof(float4), 0, cudaMemcpyHostToDevice);
+
+        res[11]=cudaMemcpy((void*)devdata.dsp, (void*)hostdata.dsp, sumn * sizeof(int), cudaMemcpyHostToDevice);
+        res[12]=cudaMemcpy((void*)devdata.cnt, (void*)hostdata.cnt, sumn * sizeof(int), cudaMemcpyHostToDevice);
+        res[13]=cudaMemcpy((void*)devdata.dest, (void*)hostdata.dest, summ * sizeof(int), cudaMemcpyHostToDevice);
+
+        res[14]=cudaMemcpy((void*)devdata.n, (void*)hostdata.n, N * sizeof(int), cudaMemcpyHostToDevice);
+        res[15]=cudaMemcpy((void*)devdata.m, (void*)hostdata.m, N * sizeof(int), cudaMemcpyHostToDevice);
+        res[16]=cudaMemcpy((void*)devdata.dspn, (void*)hostdata.dspn, N * sizeof(int), cudaMemcpyHostToDevice);
+        res[17]=cudaMemcpy((void*)devdata.dspm, (void*)hostdata.dspm, N * sizeof(int), cudaMemcpyHostToDevice);
+
+        res[18]=cudaMemcpy((void*)devdata.dspsys, (void*)hostdata.dspsys, (ndof+1) * sizeof(int), cudaMemcpyHostToDevice);
+        res[19]=cudaMemcpy((void*)devdata.numsys, (void*)hostdata.numsys, (ndof+1) * sizeof(int), cudaMemcpyHostToDevice);
+
+
+        if(withpairs){ //TODO: weglassen
+            int M=devdata.pairs.M=hostdata.pairs.M;
+            res[20]=cudaMalloc((void**)&(devdata.pairs.dsp), N * sizeof(int));
+            res[21]=cudaMalloc((void**)&(devdata.pairs.cnt), N * sizeof(int));
+            res[22]=cudaMalloc((void**)&(devdata.pairs.dest), M * sizeof(int));
+
+            res[23]=cudaMemcpy((void*)devdata.pairs.dsp, (void*)hostdata.pairs.dsp, N * sizeof(int), cudaMemcpyHostToDevice);
+            res[24]=cudaMemcpy((void*)devdata.pairs.cnt, (void*)hostdata.pairs.cnt, N * sizeof(int), cudaMemcpyHostToDevice);
+            res[25]=cudaMemcpy((void*)devdata.pairs.dest, (void*)hostdata.pairs.dest, M * sizeof(int), cudaMemcpyHostToDevice);
+
+            res[26]=cudaMalloc((void**)&(devdata.sys), N * sizeof(int));
+            res[27]=cudaMemcpy((void*)devdata.sys, (void*)hostdata.sys, N * sizeof(int), cudaMemcpyHostToDevice);
+        }
+
+
+        for(int i=0;i<28;++i)if(res[i]!=0){printvar(i);printvar(res[i]); return 1000+i;}
+        return 0;
+    }
+
 #endif
 
 }

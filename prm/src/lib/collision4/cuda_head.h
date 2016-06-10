@@ -8,11 +8,13 @@
   #define qualifierd __host__ __device__ inline
   #define cudaonly(x) x
   #define hostonly(x)
+  #define restrict __restrict__
 #else
   #define qualifier inline
   #define qualifierd inline
   #define cudaonly(x)
   #define hostonly(x) x
+  #define restrict
 #endif
 
 #ifdef GPU_VERSION

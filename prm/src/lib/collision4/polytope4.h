@@ -12,12 +12,12 @@
 namespace collision4{
 
   struct polytope4{
-    float4* vertices;
+    float4* restrict vertices;
     int n;
     //!edges saved in crs format
-    int* dsp;
-    int* cnt;
-    int* dest;
+    int* restrict dsp;
+    int* restrict cnt;
+    int* restrict dest;
     int m;
   };
 

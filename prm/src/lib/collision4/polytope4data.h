@@ -100,7 +100,8 @@ namespace collision4{
             dspm(polydata.dspm),
             dspsys(polydata.dspsys),
             numsys(polydata.numsys),
-            ndof(polydata.ndof)
+            ndof(polydata.ndof),
+            sys(polydata.sys)
         {
             pairs.M=polydata.pairs.M;
             pairs.dsp=polydata.pairs.dsp;

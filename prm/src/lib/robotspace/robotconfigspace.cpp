@@ -374,7 +374,7 @@ __global__ void set_kernel(T *array, T val, int n){
 template<int ndof>
 #ifdef GPU_VERSION
 __global__ void kernel_indicator2(const Robot<ndof>* restrict robot,
-                                  const collision4::polytope4data_restrict* restrict polydata,
+                                  const collision4::polytope4data_restrict polydata,
                                   const float* restrict qs, int offsets,
                                   const float* restrict qe, int offsete,
                                   int* res,
@@ -384,7 +384,7 @@ __global__ void kernel_indicator2(const Robot<ndof>* restrict robot,
   if(i<numthreads){
 #else
 void kernel_indicator2(const Robot<ndof>* robot,
-                       const collision4::polytope4data* polydata,
+                       const collision4::polytope4data polydata,
                        const float* qs, int offsets,
                        const float* qe, int offsete,
                        int* res,
@@ -423,17 +423,17 @@ void kernel_indicator2(const Robot<ndof>* robot,
 
     //! collision algorithm
 
-    for(int k0=0;k0<polydata->N;++k0){
+    for(int k0=0;k0<polydata.N;++k0){
       collision4::polytope4 poly0;
-      polydata->get_polytope(poly0, k0);
+      polydata.get_polytope(poly0, k0);
       const int* restrict dest;
       int destnum;
-      polydata->get_collision_list(k0,dest,destnum);
+      polydata.get_collision_list(k0,dest,destnum);
       for(int l=0;l<destnum;++l){
           int k1=dest[l];
           collision4::polytope4 poly1;
-          polydata->get_polytope(poly1, k1);
-          int result=collision4::seperating_vector_algorithm(poly0,poly1,kin.trafos[polydata->sys[k0]],kin.trafos[polydata->sys[k1]],&iterations); //-> TODO: seperate environment? code sparen?
+          polydata.get_polytope(poly1, k1);
+          int result=collision4::seperating_vector_algorithm(poly0,poly1,kin.trafos[polydata.sys[k0]],kin.trafos[polydata.sys[k1]],&iterations); //-> TODO: seperate environment? code sparen?
           if(result!=0){
             resext=result;
             break;
@@ -471,7 +471,7 @@ void kernel_indicator2(const Robot<ndof>* robot,
 template<int ndof>
 #ifdef GPU_VERSION
 __global__ void kernel_indicator2_1(const Robot<ndof>* robot,
-                                  const collision4::polytope4data_restrict* polydata,
+                                  const collision4::polytope4data_restrict polydata,
                                   const float* qs, int offsets,
                                   const float* qe, int offsete,
                                   int* res,
@@ -481,7 +481,7 @@ __global__ void kernel_indicator2_1(const Robot<ndof>* robot,
   if(i<numthreads){
 #else
 void kernel_indicator2_1(const Robot<ndof>* robot,
-                       const collision4::polytope4data* polydata,
+                       const collision4::polytope4data polydata,
                        const float* qs, int offsets,
                        const float* qe, int offsete,
                        int* res,
@@ -541,21 +541,21 @@ void kernel_indicator2_1(const Robot<ndof>* robot,
             bool end_reached=false;
             while(l>=destnum){
                 ++k0;
-                if(k0>=polydata->N){
+                if(k0>=polydata.N){
                     end_reached=true;
                     break;
                 }
-                polydata->get_polytope(poly0, k0);
-                polydata->get_collision_list(k0,dest,destnum);
+                polydata.get_polytope(poly0, k0);
+                polydata.get_collision_list(k0,dest,destnum);
                 l=0;
             }
             if(end_reached){
                 break;
             }
             int k1=dest[l];
-            polydata->get_polytope(poly1, k1);
+            polydata.get_polytope(poly1, k1);
 
-            worker.init(poly0,poly1,kin.trafos[polydata->sys[k0]],kin.trafos[polydata->sys[k1]]);
+            worker.init(poly0,poly1,kin.trafos[polydata.sys[k0]],kin.trafos[polydata.sys[k1]]);
 
             takenextpair=false;
         }
@@ -681,10 +681,10 @@ int RobotConfigspace<ndof>::indicator2_async(const float* qs, const float* qe, i
     cudaassert(cudaMemcpyAsync((void*)testnumdev[data.resdevbuffer_id],(void*)testnum.data(), N*sizeof(int), cudaMemcpyHostToDevice, streams[data.resdevbuffer_id]));
 
     if(use_new_kernel){
-        kernel_indicator2_1<ndof><<<GRID,BLOCK,0, streams[data.resdevbuffer_id]>>>(robotdev,polydatadev,qdevbufferfrom[data.resdevbuffer_id],nbufqfrom,qdevbufferto[data.resdevbuffer_id],
+        kernel_indicator2_1<ndof><<<GRID,BLOCK,0, streams[data.resdevbuffer_id]>>>(robotdev,*polydatadev_restrict,qdevbufferfrom[data.resdevbuffer_id],nbufqfrom,qdevbufferto[data.resdevbuffer_id],
                                                       nbufqto,resdevbuffers[data.resdevbuffer_id],testposdev[data.resdevbuffer_id],testnumdev[data.resdevbuffer_id],N, numthreads);
     }else{
-        kernel_indicator2<ndof><<<GRID,BLOCK,0, streams[data.resdevbuffer_id]>>>(robotdev,polydatadev,qdevbufferfrom[data.resdevbuffer_id],nbufqfrom,qdevbufferto[data.resdevbuffer_id],
+        kernel_indicator2<ndof><<<GRID,BLOCK,0, streams[data.resdevbuffer_id]>>>(robotdev,*polydatadev_restrict,qdevbufferfrom[data.resdevbuffer_id],nbufqfrom,qdevbufferto[data.resdevbuffer_id],
                                                       nbufqto,resdevbuffers[data.resdevbuffer_id],testposdev[data.resdevbuffer_id],testnumdev[data.resdevbuffer_id],N, numthreads);
     }
   #else
@@ -693,10 +693,10 @@ int RobotConfigspace<ndof>::indicator2_async(const float* qs, const float* qe, i
     }
 
     if(use_new_kernel){
-        kernel_indicator2_1<ndof>(robot,polydata,qs,offset,qe,offset,res,testpos.data(),testnum.data(),N, numthreads);
+        kernel_indicator2_1<ndof>(robot,*polydata,qs,offset,qe,offset,res,testpos.data(),testnum.data(),N, numthreads);
 
     }else{
-        kernel_indicator2<ndof>(robot,polydata,qs,offset,qe,offset,res,testpos.data(),testnum.data(),N, numthreads);
+        kernel_indicator2<ndof>(robot,*polydata,qs,offset,qe,offset,res,testpos.data(),testnum.data(),N, numthreads);
     }
   #endif
 

@@ -136,6 +136,7 @@ namespace collision4{
     }
   }
 
+#if 0
   //!create simpley (for polytope on host)
   inline void generate_simplex(polytope4& P, float lx, float ly, float lz){
     P.n=4;
@@ -218,7 +219,7 @@ namespace collision4{
     P.dest[22]=6;
     P.dest[23]=3;
   }
-
+#endif
 
   ///   **************************
   ///   *        output          *

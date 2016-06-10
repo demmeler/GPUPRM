@@ -12,12 +12,12 @@
 namespace collision4{
 
   struct polytope4{
-    float4* restrict vertices;
+    const float4* restrict vertices;
     int n;
     //!edges saved in crs format
-    int* restrict dsp;
-    int* restrict cnt;
-    int* restrict dest;
+    const int* restrict dsp;
+    const int* restrict cnt;
+    const int* restrict dest;
     int m;
   };
 
@@ -129,13 +129,13 @@ namespace collision4{
   ///   *        example         *
   ///   *    implementations     *
   ///   **************************
-
+#if 0
   inline void transform(polytope4& P, geo4::trafo4& t){
     for(int i=0;i<P.n;++i){
       t.apply(P.vertices[i]);
     }
   }
-
+#endif
 #if 0
   //!create simpley (for polytope on host)
   inline void generate_simplex(polytope4& P, float lx, float ly, float lz){

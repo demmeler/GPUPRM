@@ -369,12 +369,12 @@ __global__ void set_kernel(T *array, T val, int n){
 
 template<int ndof>
 #ifdef GPU_VERSION
-__global__ void kernel_indicator2(const Robot<ndof>* robot,
-                                  const collision4::polytope4data* polydata,
-                                  const float* qs, int offsets,
-                                  const float* qe, int offsete,
+__global__ void kernel_indicator2(const Robot<ndof>* restrict robot,
+                                  const collision4::polytope4data* restrict polydata,
+                                  const float* restrict qs, int offsets,
+                                  const float* restrict qe, int offsete,
                                   int* res,
-                                  const int* testpos, const int* testnum,
+                                  const int* restrict testpos, const int* restrict testnum,
                                   int N, int numthreads){
   int i = blockDim.x * blockIdx.x + threadIdx.x;
   if(i<numthreads){

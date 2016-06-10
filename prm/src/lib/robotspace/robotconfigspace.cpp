@@ -312,7 +312,7 @@ int RobotConfigspace<ndof>::indicator(const float* q)
     for(int k0=0;k0<polydata->N;++k0){
       collision4::polytope4 poly0;
       polydata->get_polytope(poly0, k0);
-      int *dest;
+      const int *dest;
       int destnum;
       polydata->get_collision_list(k0,dest,destnum);
       for(int l=0;l<destnum;++l){
@@ -422,7 +422,7 @@ void kernel_indicator2(const Robot<ndof>* robot,
     for(int k0=0;k0<polydata->N;++k0){
       collision4::polytope4 poly0;
       polydata->get_polytope(poly0, k0);
-      int *dest;
+      const int* restrict dest;
       int destnum;
       polydata->get_collision_list(k0,dest,destnum);
       for(int l=0;l<destnum;++l){
@@ -521,7 +521,7 @@ void kernel_indicator2_1(const Robot<ndof>* robot,
     collision4::polytope4 poly0;
     collision4::polytope4 poly1;
     int k0=-1,l=0;
-    int *dest;
+    const int *dest;
     int destnum=0;
 
     bool takenextpair=true;

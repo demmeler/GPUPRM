@@ -67,7 +67,7 @@ namespace collision4{
         //!get methods for kernel
         qualifier void get_polytope(polytope4& poly, int dof, int i) const;
         qualifier void get_polytope(polytope4& poly, int k) const;
-        qualifier void get_collision_list(int k, int* &dest, int &num) const;
+        qualifier void get_collision_list(int k, const int* restrict &dest, int &num) const;
         qualifier int get_numsys(int dof) const{return numsys[dof];}
 
         //! init methods
@@ -108,7 +108,7 @@ namespace collision4{
         poly.dest=&dest[km];
     }
 
-    qualifier void polytope4data::get_collision_list(int k, int* &dest, int &num) const {
+    qualifier void polytope4data::get_collision_list(int k, const int* restrict &dest, int &num) const {
         num=pairs.cnt[k];
         dest=pairs.dest+pairs.dsp[k];
     }

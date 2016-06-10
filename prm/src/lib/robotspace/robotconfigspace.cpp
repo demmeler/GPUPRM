@@ -245,8 +245,12 @@ int RobotConfigspace<ndof>::init_(const int ressource_rank_, const int ressource
   assert(0==collision4::copy_host_to_device_ver2(*polydatadev_hostref,*polydata,true));
   //assert(0==collision4::copy_host_to_device(*polydatadev_hostref,*polydata,true));
 
-  cudaassert(cudaMalloc((void**)&polydatadev, sizeof(collision4::polytope4data)));
-  cudaassert(cudaMemcpy((void*)polydatadev, (void*)polydatadev_hostref, sizeof(collision4::polytope4data), cudaMemcpyHostToDevice));
+  //cudaassert(cudaMalloc((void**)&polydatadev, sizeof(collision4::polytope4data)));
+  cudaassert(cudaMalloc((void**)&polydatadev, sizeof(collision4::polytope4data_restrict)));
+
+  polydatadev_restrict=new collision4::polytope4data_restrict(*polydatadev_hostref);
+  //cudaassert(cudaMemcpy((void*)polydatadev, (void*)polydatadev_hostref, sizeof(collision4::polytope4data), cudaMemcpyHostToDevice));
+  cudaassert(cudaMemcpy((void*)polydatadev, (void*)polydatadev_restrict, sizeof(collision4::polytope4data_restrict), cudaMemcpyHostToDevice));
 
   cudaassert(cudaMalloc((void**)&robotdev, sizeof(Robot<ndof>)));
   cudaassert(cudaMemcpy((void*)robotdev,(void*)robot, sizeof(Robot<ndof>), cudaMemcpyHostToDevice));
@@ -370,7 +374,7 @@ __global__ void set_kernel(T *array, T val, int n){
 template<int ndof>
 #ifdef GPU_VERSION
 __global__ void kernel_indicator2(const Robot<ndof>* restrict robot,
-                                  const collision4::polytope4data* restrict polydata,
+                                  const collision4::polytope4data_restrict* restrict polydata,
                                   const float* restrict qs, int offsets,
                                   const float* restrict qe, int offsete,
                                   int* res,
@@ -467,7 +471,7 @@ void kernel_indicator2(const Robot<ndof>* robot,
 template<int ndof>
 #ifdef GPU_VERSION
 __global__ void kernel_indicator2_1(const Robot<ndof>* robot,
-                                  const collision4::polytope4data* polydata,
+                                  const collision4::polytope4data_restrict* polydata,
                                   const float* qs, int offsets,
                                   const float* qe, int offsete,
                                   int* res,

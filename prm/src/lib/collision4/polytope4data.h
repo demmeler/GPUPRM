@@ -20,7 +20,7 @@ namespace collision4{
     public:
         //!raw data of all polytopes
 
-        float4 *vertices; //length sumn
+        float4* vertices; //length sumn
         int *dsp;         //    "
         int *cnt;         //    "
         int *n;           //length N
@@ -84,6 +84,85 @@ namespace collision4{
     };
 
 
+    class polytope4data_restrict{
+    public:
+        polytope4data_restrict(polytope4data& polydata):
+            vertices(polydata.vertices),
+            dsp(polydata.dsp),
+            cnt(polydata.cnt),
+            n(polydata.n),
+            dest(polydata.dest),
+            m(polydata.m),
+            sumn(polydata.sumn),
+            summ(polydata.summ),
+            N(polydata.N),
+            dspn(polydata.dspn),
+            dspm(polydata.dspm),
+            dspsys(polydata.dspsys),
+            numsys(polydata.numsys),
+            ndof(polydata.ndof)
+        {
+            pairs.M=polydata.pairs.M;
+            pairs.dsp=polydata.pairs.dsp;
+            pairs.cnt=polydata.pairs.cnt;
+            pairs.dest=polydata.pairs.dest;
+        }
+
+        //!raw data of all polytopes
+
+        const float4* restrict vertices; //length sumn
+        const int* restrict dsp;         //    "
+        const int* restrict cnt;         //    "
+        const int* restrict n;           //length N
+
+        const int* restrict dest;        //length summ
+        const int* restrict m;           //length N
+
+        //!organization
+
+        //! sum over all n
+        const int sumn;
+        //! sum over all m
+        const int summ;
+
+        //!number of polytopes
+        const int N;
+        //!displacement arrays for sum(n) arrays
+        const int* restrict dspn;        //length N
+        //!and sum(m) array
+        const int* restrict dspm;        //length N
+
+        //!assignment to dof system
+        const int* restrict dspsys;      //length ndof+1
+        const int* restrict numsys;      //length ndof+1
+
+        //!number degrees of freedom
+        const int ndof;
+
+
+        //! data for pairs
+
+        //! number of pairs (crs graph)
+        //! only
+        struct{
+            int M;
+            const int* restrict dsp;   //length N
+            const int* restrict cnt;   //length N
+            const int* restrict dest;  //length M
+        }pairs;
+
+        const int* restrict sys;
+
+     public:
+        //!get methods for kernel
+        qualifier void get_polytope(polytope4& poly, int dof, int i) const;
+        qualifier void get_polytope(polytope4& poly, int k) const;
+        qualifier void get_collision_list(int k, const int* restrict &dest, int &num) const;
+        qualifier int get_numsys(int dof) const{return numsys[dof];}
+
+    };
+
+
 
     qualifier void polytope4data::get_polytope(polytope4& poly, int dof, int i) const {
         int k=dspsys[dof]+i;
@@ -109,6 +188,34 @@ namespace collision4{
     }
 
     qualifier void polytope4data::get_collision_list(int k, const int* restrict &dest, int &num) const {
+        num=pairs.cnt[k];
+        dest=pairs.dest+pairs.dsp[k];
+    }
+
+    qualifier void polytope4data_restrict::get_polytope(polytope4& poly, int dof, int i) const {
+        int k=dspsys[dof]+i;
+        poly.n=n[k];
+        poly.m=m[k];
+        int kn=dspn[k];
+        poly.vertices=&vertices[kn];
+        poly.dsp=&dsp[kn];
+        poly.cnt=&cnt[kn];
+        int km=dspm[k];
+        poly.dest=&dest[km];
+    }
+
+    qualifier void polytope4data_restrict::get_polytope(polytope4& poly, int k) const {
+        poly.n=n[k];
+        poly.m=m[k];
+        int kn=dspn[k];
+        poly.vertices=&vertices[kn];
+        poly.dsp=&dsp[kn];
+        poly.cnt=&cnt[kn];
+        int km=dspm[k];
+        poly.dest=&dest[km];
+    }
+
+    qualifier void polytope4data_restrict::get_collision_list(int k, const int* restrict &dest, int &num) const {
         num=pairs.cnt[k];
         dest=pairs.dest+pairs.dsp[k];
     }

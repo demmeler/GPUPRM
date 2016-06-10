@@ -16,6 +16,7 @@ template<int ndof> class Kinematics;
 namespace collision4{
   class polytope4;
   class polytope4data;
+  class polytope4data_restrict;
 }
 
 class CUstream_st;
@@ -129,7 +130,9 @@ private:
 
   collision4::polytope4data* polydata;            //data on host
   collision4::polytope4data* polydatadev_hostref; //help obj on host
-  collision4::polytope4data* polydatadev;         //pointer to GPU obj
+  collision4::polytope4data_restrict* polydatadev;         //pointer to GPU obj
+  collision4::polytope4data_restrict* polydatadev_restrict;         //pointer to GPU obj
+
 
   //!flag if GPU initialized
   bool devloaded;

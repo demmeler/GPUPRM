@@ -35,33 +35,38 @@ namespace collision4{
 #endif
   }
 
+
   class support_vertex_searcher{
   public:
     qualifierd support_vertex_searcher(){}
 
     qualifierd support_vertex_searcher(const polytope4& P, int* vmarks_buffer){
       counter=0;
+#if 0
       vmarks=vmarks_buffer;
       //dprintvard(P.n);
       for(int i=0;i<P.n;++i){
           vmarks[i]=0;
       }
+#endif
     }
 
     //! init method for second version with worker below
     qualifierd void init(const polytope4& P, int* vmarks_buffer){
         counter=0;
+#if 0
         vmarks=vmarks_buffer;
         //dprintvard(P.n);
         for(int i=0;i<P.n;++i){
             vmarks[i]=0;
         }
+#endif
     }
 
     qualifierd void search_support_vertex(const polytope4& P, int& p, const float4& Sp){
       float max=sprod(P.vertices[p],Sp);
       ++counter;
-      vmarks[p]=counter;
+      ///vmarks[p]=counter;
       //msg("start supp vert");
       //printarr(Sp,3);
       //printvar(max);
@@ -75,7 +80,8 @@ namespace collision4{
           //printvar(i);
           int v=P.dest[i];
           //int v=__ldg_(P.dest+i);
-          if(vmarks[v]!=counter){
+          ///if(vmarks[v]!=counter){
+          if(true){
             //printvar(v);
             float dp=sprod(P.vertices[v],Sp);
             //float dp=sprod(__ldg_(P.vertices+v),Sp);
@@ -86,7 +92,7 @@ namespace collision4{
               cont=true;
               break;
             }
-            vmarks[v]=counter;
+            ///vmarks[v]=counter;
           }
         }
         if(!cont)break;
@@ -97,7 +103,7 @@ namespace collision4{
     }
 
   private:
-    int* vmarks;
+    ///int* vmarks;
     int counter;
   };
 

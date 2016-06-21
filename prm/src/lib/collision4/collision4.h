@@ -68,17 +68,17 @@ namespace collision4{
       while(true){
         //printvar(p);
         bool cont=false;
-        //int imax=P.dsp[p]+P.cnt[p];
-        int imax=__ldg_(P.dsp+p)+__ldg_(P.cnt+p);
-        //for(int i=P.dsp[p];i<imax;++i){
-        for(int i=__ldg_(P.dsp+p);i<imax;++i){
+        int imax=P.dsp[p]+P.cnt[p];
+        //int imax=__ldg_(P.dsp+p)+__ldg_(P.cnt+p);
+        for(int i=P.dsp[p];i<imax;++i){
+        //for(int i=__ldg_(P.dsp+p);i<imax;++i){
           //printvar(i);
-          //int v=P.dest[i];
-          int v=__ldg_(P.dest+i);
+          int v=P.dest[i];
+          //int v=__ldg_(P.dest+i);
           if(vmarks[v]!=counter){
             //printvar(v);
-           //float dp=sprod(P.vertices[v],Sp);
-            float dp=sprod(__ldg_(P.vertices+v),Sp);
+            float dp=sprod(P.vertices[v],Sp);
+            //float dp=sprod(__ldg_(P.vertices+v),Sp);
             //printvar(dp);
             if(dp>max){
               max=dp;

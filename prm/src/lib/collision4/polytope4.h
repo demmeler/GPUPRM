@@ -11,6 +11,7 @@
 
 namespace collision4{
 
+#if 0
   struct polytope4{
     const float4* restrict vertices;
     int n;
@@ -18,6 +19,33 @@ namespace collision4{
     const int* restrict dsp;
     const int* restrict cnt;
     const int* restrict dest;
+    int m;
+  };
+#endif
+
+  template<typename T>
+  struct ldgptr{
+      const T* restrict p;
+      qualifierd T operator[](int i) const{
+#ifdef __CUDA_ARCH__
+          return __ldg(p+i);
+#else
+          return p[i];
+#endif
+      }
+
+      qualifierd void operator=(const T restrict *p_){
+          p=p_;
+      }
+  };
+
+  struct polytope4{
+    ldgptr<float4> vertices;
+    int n;
+    //!edges saved in crs format
+    ldgptr<int> dsp;
+    ldgptr<int> cnt;
+    ldgptr<int> dest;
     int m;
   };
 
@@ -114,6 +142,7 @@ namespace collision4{
   }
 #endif
 
+#if 0
   //!delete hostpoly arrays
   inline int host_free(polytope4& hostpoly){
     delete hostpoly.vertices;
@@ -122,7 +151,7 @@ namespace collision4{
     delete hostpoly.dest;
     return 0;
   }
-
+#endif
 
   ///   **************************
   ///   *       polytope4        *

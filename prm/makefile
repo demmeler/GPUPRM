@@ -35,7 +35,7 @@ all: robo arrayconfigspace $(BIN)/main $(BIN)/maincuda $(BIN)/maincuda0 $(BIN)/b
 	
 
 clean:
-	rm -f bin/*
+	rm -f $(BIN)/*
 
 arrayo:
 	$(PREP) $(MPICXX) $(WRN_OPT) $(OPT) -I $(SRC)/lib -c -std=c++0x -o $(BIN)/array.o $(SRC)/array.cpp

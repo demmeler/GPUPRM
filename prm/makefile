@@ -9,7 +9,7 @@ CUDA_PATH2=/share/apps/cuda-7.5
 #CUDA_INCLUDE= -L$(CUDA_PATH)/lib64 -L$(CUDA_PATH2)/lib64 -lcudart
 CUDA_INCLUDE=-L$(CUDA_PATH2)/lib64 -lcudart
 
-NVCC_FLAGS=-lineinfo
+NVCC_FLAGS=-lineinfo --maxrregcount 80
 #NVCC_FLAGS=-lineinfo -DNEW_COLLISION_KERNEL
 
 #WRN_OPT=-Wall

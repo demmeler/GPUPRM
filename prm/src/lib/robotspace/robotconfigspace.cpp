@@ -229,6 +229,8 @@ int RobotConfigspace<ndof>::init_(const int ressource_rank_, const int ressource
   int device = (ressource_rank*devcount)/ressource_size;
   cudaSetDevice(device);
 
+  cudaDeviceSetCacheConfig(cudaFuncCachePreferL1);
+
   cudaDeviceProp p;
   cudaGetDeviceProperties(&p, device);
 

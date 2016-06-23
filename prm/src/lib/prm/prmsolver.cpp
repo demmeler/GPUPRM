@@ -2504,6 +2504,19 @@
       }
   }
 
+  template<int ndof>
+  int PRMSolver<ndof>::rand_nodes_all;
+  template<int ndof>
+  int PRMSolver<ndof>::rand_nodes_dismissed;
+  template<int ndof>
+  int PRMSolver<ndof>::rand_nodes_dismissed_indicator;
+  template<int ndof>
+  int PRMSolver<ndof>::rand_nodes_dismissed_prob;
+  template<int ndof>
+  int PRMSolver<ndof>::rand_nodes_accepted;
+  template<int ndof>
+  int PRMSolver<ndof>::rand_block_numbers;
+
 
 
   template<int ndof>

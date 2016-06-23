@@ -61,9 +61,8 @@ int main(int argc, char** argv)
   int prmversion=5;
   int store=1;
   int maxstorage=1024*1024;
-  int maxsteps=10000;//(argc>=2 ? atoi(argv[1]) : 100000 );
-
-  bool new_kernel=(argc>=2 ? atoi(argv[1]) : 1 );
+  int maxsteps=10000;
+  bool new_kernel=0;
 #endif
 
   //! Parse inputs

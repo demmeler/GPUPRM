@@ -294,7 +294,7 @@ public:
   //! \param qnew               node storage (array of structs)
   //! \return
   //!
-  inline int get_random_nodes(const graph &g, const int start, const int end, float *qnew, float D, Configspace<ndof> *space);
+  static inline int get_random_nodes(const graph &g, const int start, const int end, float *qnew, float D, Configspace<ndof> *space);
 
 
   //!
@@ -362,12 +362,12 @@ public:
 
 
   //for some statistics:
-  int rand_nodes_all;
-  int rand_nodes_dismissed;
-  int rand_nodes_dismissed_indicator;
-  int rand_nodes_dismissed_prob;
-  int rand_nodes_accepted;
-  int rand_block_numbers;
+  static int rand_nodes_all;
+  static int rand_nodes_dismissed;
+  static int rand_nodes_dismissed_indicator;
+  static int rand_nodes_dismissed_prob;
+  static int rand_nodes_accepted;
+  static int rand_block_numbers;
 
 private:
   float H;

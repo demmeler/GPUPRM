@@ -229,7 +229,9 @@ int RobotConfigspace<ndof>::init_(const int ressource_rank_, const int ressource
   int device = (ressource_rank*devcount)/ressource_size;
   cudaSetDevice(device);
 
+  cudaFree(0);
   cudaDeviceSetCacheConfig(cudaFuncCachePreferL1);
+  
 
   cudaDeviceProp p;
   cudaGetDeviceProperties(&p, device);
@@ -647,7 +649,7 @@ int RobotConfigspace<ndof>::indicator2_async(const float* qs, const float* qe, i
     }
     data.resdevbuffer_id=id;
 
-    int BLOCK = 256;
+    int BLOCK = 64;
 
     //cudaassert(cudaMemcpy((void*)resdevbuffer,(void*)res,N*sizeof(int), cudaMemcpyHostToDevice));
     int GRIDN=(N + BLOCK - 1)/BLOCK;
@@ -706,7 +708,7 @@ int RobotConfigspace<ndof>::indicator2_async(const float* qs, const float* qe, i
     requeststack[requeststack_id]=data;
     request=requeststack_id;
 
-#if 1
+#if 0
     //printarr(res,N);
     //printvar(numthreads);
 

@@ -9,7 +9,7 @@ CUDA_PATH2=/share/apps/cuda-7.5
 #CUDA_INCLUDE= -L$(CUDA_PATH)/lib64 -L$(CUDA_PATH2)/lib64 -lcudart
 CUDA_INCLUDE=-L$(CUDA_PATH2)/lib64 -lcudart
 
-NVCC_FLAGS=-lineinfo --maxrregcount 80
+NVCC_FLAGS=-lineinfo --maxrregcount 64
 #NVCC_FLAGS=-lineinfo -DNEW_COLLISION_KERNEL
 
 #WRN_OPT=-Wall
@@ -24,9 +24,11 @@ OPT=-O3
 PREP=
 
 #COMPILER=icpc -g
-COMPILER=g++
+COMPILER=g++ 
+#-march=corei7-avx
 
-MPICXX=mpicxx
+MPICXX=mpicxx 
+#-march=corei7-avx
 #MPICXX=$(COMPILER) -I/usr/mpi/gcc/openmpi-1.8.4/include/openmpi/opal/mca/hwloc/hwloc191/hwloc/include -I/usr/mpi/gcc/openmpi-1.8.4/include/openmpi/opal/mca/event/libevent2021/libevent -I/usr/mpi/gcc/openmpi-1.8.4/include/openmpi/opal/mca/event/libevent2021/libevent/include -I/usr/mpi/gcc/openmpi-1.8.4/include -I/usr/mpi/gcc/openmpi-1.8.4/include/openmpi -pthread -Wl,-rpath -Wl,/usr/mpi/gcc/openmpi-1.8.4/lib64 -Wl,--enable-new-dtags -L/usr/mpi/gcc/openmpi-1.8.4/lib64 -lmpi_cxx -lmpi
 
 
@@ -89,7 +91,7 @@ robo: robotconfigspace robotconfigspacecuda robotconfigspacecuda0
 	
 
 robotconfigspace:
-	$(PREP) g++ $(WRN_OPT) $(OPT) -I $(SRC)/lib -c -o $(BIN)/robotconfigspace.o $(SRC)/lib/robotspace/robotconfigspace.cpp
+	$(PREP) g++  $(WRN_OPT) $(OPT) -I $(SRC)/lib -c -o $(BIN)/robotconfigspace.o $(SRC)/lib/robotspace/robotconfigspace.cpp
 
 robotconfigspacecuda: $(SRC)/lib/robotspace/robotconfigspace.cpp
 	$(PREP) nvcc $(NVCC_FLAGS) $(OPT) -x=cu -arch=$(ARCHITECTURE) -I $(SRC)/lib -c -o $(BIN)/robotconfigspacecuda.o $(SRC)/lib/robotspace/robotconfigspace.cpp -D CUDA_CODE -D GPU_VERSION

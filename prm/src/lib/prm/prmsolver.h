@@ -294,7 +294,7 @@ public:
   //! \param qnew               node storage (array of structs)
   //! \return
   //!
-  static inline int get_random_nodes(const graph &g, const int start, const int end, float *qnew, float D, Configspace<ndof> *space);
+  inline int get_random_nodes(const graph &g, const int start, const int end, float *qnew, float D, Configspace<ndof> *space);
 
 
   //!

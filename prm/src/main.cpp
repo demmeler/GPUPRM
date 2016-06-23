@@ -176,6 +176,12 @@ int main(int argc, char** argv)
   int time;
   tockval(trun,time);
 
+  printvar(prm.rand_nodes_all);
+  printvar(prm.rand_nodes_accepted);
+  printvar(prm.rand_nodes_dismissed);
+  printvar(prm.rand_nodes_dismissed_prob);
+  printvar(prm.rand_nodes_dismissed_indicator);
+  printvar(prm.rand_block_numbers);
 
   //! write output
 

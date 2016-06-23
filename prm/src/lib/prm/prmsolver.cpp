@@ -64,6 +64,15 @@
     factor=1.0/H;
 
     space=space_;
+
+
+    rand_nodes_all=0;
+    rand_nodes_dismissed=0;
+    rand_nodes_dismissed_indicator=0;
+    rand_nodes_dismissed_prob=0;
+    rand_nodes_accepted=0;
+    rand_block_numbers=0;
+
   }
 
   template<int ndof>
@@ -2464,6 +2473,7 @@
           do{
               k=rand()%g.blocknum;
               b=&(g.blocks[k]);
+              ++rand_block_numbers;
           }while(b->num==0);
           //!chose random vertex
           int m=(b->pos+rand()%b->num);
@@ -2472,6 +2482,7 @@
           int prob=RAND_MAX/(x*x*x);
           if(rand()>prob){
             dismiss=true;
+            ++rand_nodes_dismissed_prob;
           }else{
             l=ndof*m;
             for(int i=0;i<ndof;++i){
@@ -2479,12 +2490,16 @@
             }
 
             dismiss=space->indicator(&qnew[ndof*j])!=0;
+            if(dismiss)++rand_nodes_dismissed_indicator;
+            else ++rand_nodes_accepted;
           }
   #ifndef NO_IO
           printvar(l);
           printarr(&qnew[ndof*j],ndof);
           printvar(dismiss);
   #endif
+          ++rand_nodes_all;
+          if(dismiss)++rand_nodes_dismissed;
         }while(dismiss);
       }
   }

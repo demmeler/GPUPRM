@@ -361,6 +361,13 @@ public:
   void store_graph(std::string path, graph& g, dijkstra_result& d, int start, int end) const ;
 
 
+  //for some statistics:
+  int rand_nodes_all;
+  int rand_nodes_dismissed;
+  int rand_nodes_dismissed_indicator;
+  int rand_nodes_dismissed_prob;
+  int rand_nodes_accepted;
+  int rand_block_numbers;
 
 private:
   float H;

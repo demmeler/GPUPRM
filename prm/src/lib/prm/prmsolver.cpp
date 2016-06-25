@@ -33,6 +33,7 @@
     graphl.from.reserve(N*connectivity);
     graphl.to.reserve(N*connectivity);
     graphl.weights.reserve(N*connectivity);
+    graphl.main_keys.reserve(N/blocksize);
 
     graphl.newblockpos=0;
     graphl.blocknum=0;
@@ -45,6 +46,8 @@
     graphr.from.reserve(N*connectivity);
     graphr.to.reserve(N*connectivity);
     graphr.weights.reserve(N*connectivity);
+    graphr.main_keys.reserve(N/blocksize);
+
     graphr.newblockpos=0;
     graphr.blocknum=0;
 
@@ -1913,7 +1916,7 @@
         counts=new int[mpisize];
         disps=new int[mpisize];
 
-        assert(1<=workerversion && workerversion<=2);
+        assert(1<=workerversion && workerversion<=3);
         if(workerversion==1){
             step1ptr=&worker::processing_step_part1a;
             step2ptr=&worker::processing_step_part2a;
@@ -1921,7 +1924,11 @@
         }else if(workerversion==2){
             step1ptr=&worker::processing_step_part1b;
             step2ptr=&worker::processing_step_part2b;
-            step3ptr=&worker::processing_step_part3b;
+            step3ptr=&worker::processing_step_part3a;
+        }else if(workerversion==3){
+            step1ptr=&worker::processing_step_part1c;
+            step2ptr=&worker::processing_step_part2b;
+            step3ptr=&worker::processing_step_part3a;
         }
     }
 
@@ -2293,12 +2300,93 @@
       return 0;
     }
 
+
+    //! ***********************
+    //! *   workerversion 3   *
+    //! ***********************
+
     template<int ndof>
-    int PRMSolver<ndof>::worker::processing_step_part3b(){
-        return worker::processing_step_part3a();
-    }
+    int PRMSolver<ndof>::worker::processing_step_part1c()
+    {
 
 
+      //!
+      //! create nodes qnew randomly
+      //!
+
+
+      //tick(tnodes);
+      get_random_nodes2(graphl,0,num/2,qnew,D,space);
+      get_random_nodes2(graphr,num/2,num,qnew,D,space);
+
+
+      //!
+      //! make list of potential neighbours for all new nodes
+      //!
+
+
+      //!posqlist[i]: position in qlist buffer, at which neighbours of qnew[i] start
+
+      index=0;
+      qstartp=qstart;
+      qendp=qend;
+      poslistp=poslist;
+      distlistp=distlist;
+      nbufrest=nbuf;
+
+
+
+
+      in->find_neighbours(  0, dsp_,
+                        qnew, qstartp, qendp,
+                        poslistp, distlistp, nbufrest, index,
+                        &posqlist[0], &numqlistleft[0], &numqlist[0],
+                        nbuf, offset
+                      );
+
+      in->find_neighbours(  dsp_, dsp_+cnt_,
+                        qnew, qstartp, qendp,
+                        poslistp, distlistp, nbufrest, index,
+                        &posqlist[0], &numqlistleft[0], &numqlist[0],
+                        nbuf, offset
+                      );
+
+      in->find_neighbours(  dsp_+cnt_, num,
+                        qnew, qstartp, qendp,
+                        poslistp, distlistp, nbufrest, index,
+                        &posqlist[0], &numqlistleft[0], &numqlist[0],
+                        nbuf, offset
+                      );
+
+      Nqlist=index;
+
+      {
+          int r = Nqlist % mpisize, q = Nqlist / mpisize;
+          for(int rank=0;rank<mpisize;++rank){
+            int count = q;
+            int disp = rank * q;
+            count += rank < r ? 1 : 0;
+            disp += rank < r ? rank : r;
+            counts[rank]=count;
+            disps[rank]=disp;
+          }
+      }
+      disp=disps[mpirank];
+      count=counts[mpirank];
+
+      //tock(tnodes);
+      //tick(tindicatorcall);
+
+      space->indicator2_async(qstart+disp,qend+disp,resbufloc,count,offset,configrequest);
+
+      //tock(tindicatorcall);
+      //!
+      //! calculate which edges exist
+      //!
+
+
+      return 0;
+  }
 
 
 
@@ -2324,9 +2412,12 @@
       g.newblockpos+=blocksize;
       if(g.newblockpos>N) return -1;
       b->num=0;
+      b->main_num=1;
+      g.main_keys.push_back(key);
       ++num_blocks;
     }else{
       b=it->second;
+      ++(b->main_num);
       while(b->num>=blocksize){
         b=b->next;
       }
@@ -2504,6 +2595,61 @@
       }
   }
 
+  //!
+  //! \brief get_random_nodes   get random feasible nodes from graph
+  //! \param g                  the graph
+  //! \param start              start index in qnew
+  //! \param end                end (excl.) index
+  //! \param qnew               node storage (array of structs)
+  //! \return
+  //!
+  template<int ndof>
+  int PRMSolver<ndof>::get_random_nodes2(const graph &g, const int start, const int end, float *qnew, float D, Configspace<ndof> *space){
+      for(int j=start;j<end;++j){
+        bool dismiss;
+        do{
+          //!choose random block
+          int k;
+          const block *b;
+          int main_k=rand()%g.main_keys.size();
+          k=g.main_keys[main_k];
+          b=&(g.blocks[k]);
+          ++rand_block_numbers;
+
+          int m_block=rand()%b->main_num;
+          while(m_block>=b->num){
+              m_block-=b->num;
+              b=b->next;
+          }
+
+          //!chose random vertex
+          int m=(b->pos+m_block);
+          int l;
+          int x=1+g.surrnum[m];
+          int prob=RAND_MAX/(x*x*x);
+          if(rand()>prob){
+            dismiss=true;
+            ++rand_nodes_dismissed_prob;
+          }else{
+            l=ndof*m;
+            for(int i=0;i<ndof;++i){
+              qnew[ndof*j+i]=g.qstorage[l+i]-D+2*D*((float)rand()/RAND_MAX);
+            }
+
+            dismiss=space->indicator(&qnew[ndof*j])!=0;
+            if(dismiss)++rand_nodes_dismissed_indicator;
+            else ++rand_nodes_accepted;
+          }
+  #ifndef NO_IO
+          printvar(l);
+          printarr(&qnew[ndof*j],ndof);
+          printvar(dismiss);
+  #endif
+          ++rand_nodes_all;
+          if(dismiss)++rand_nodes_dismissed;
+        }while(dismiss);
+      }
+  }
 
 
   template<int ndof>

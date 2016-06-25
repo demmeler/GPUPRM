@@ -37,21 +37,6 @@ int main(int argc, char** argv)
   tick(tinit);
 
   //! Parameters
-#if 0
-  int num=(argc>=10 ? atoi(argv[9]) : 32 );
-  int nbuf=(argc>=3 ? atoi(argv[2]) : 2048);
-  int confignbuf=(argc>=3 ? 2*atoi(argv[2]) : 4096);
-  float dq=(argc>=4 ? atof(argv[3]) : 0.01);
-  float D=(argc>=5 ? atof(argv[4]) : 1.0);
-  int seed=(argc>=6 ? atoi(argv[5]) : 0 );
-  int blocksize=(argc>=7 ? atoi(argv[6]) : 256);
-  int prmversion=(argc>=8 ? atoi(argv[7]) : 5 );
-  int store=(argc>=9 ? atoi(argv[8]) : 1 );
-  int maxstorage=1024*1024;
-  int maxsteps=10000;//(argc>=2 ? atoi(argv[1]) : 100000 );
-
-  bool new_kernel=(argc>=2 ? atoi(argv[1]) : 1 );
-#else
   int num=32;
   int nbuf=2048;
   float dq=0.01;
@@ -60,11 +45,11 @@ int main(int argc, char** argv)
   int seed=0;
   int blocksize=256;
   int prmversion=5;
+  int workerversion=1;
   int store=1;
   int maxstorage=1024*1024;
   int maxsteps=10000;
   bool new_kernel=0;
-#endif
 
   //! Parse inputs
   static struct option long_options[] = {
@@ -72,14 +57,15 @@ int main(int argc, char** argv)
       {"nbuf", required_argument,            0,  'b' },
       {"dq",    required_argument,           0,  'q' },
       {"seed",   required_argument,          0,  's' },
-      {"prmversion", required_argument,      0,  'v' },
+      {"prmversion", required_argument,      0,  'V' },
+      {"workerversion", required_argument,   0 , 'v' },
       {"store",      required_argument,      0,  'w' },
       {"maxsteps",   required_argument,      0,  'N' },
       {"new_kernel", required_argument,      0,  'k' },
       {"blocksize", required_argument,       0,  'B' },
       {"distD",     required_argument,       0,  'D' },
       {"distH",     required_argument,       0,  'H' },
-      {0,           0,                 0,        0   }
+      {0,           0,                       0,   0  }
   };
 
   char opt= 0;
@@ -95,7 +81,9 @@ int main(int argc, char** argv)
           break;
       case 's' : seed = atoi(optarg);
           break;
-      case 'v' : prmversion = atoi(optarg);
+      case 'V' : prmversion = atoi(optarg);
+          break;
+      case 'v' : workerversion = atoi(optarg);
           break;
       case 'w' : store = atoi(optarg);
           break;
@@ -109,6 +97,7 @@ int main(int argc, char** argv)
           break;
       case 'H': distH = atof(optarg);
           break;
+
       default:
           cout<<"bad argument: "<< opt <<endl;
           exit(EXIT_FAILURE);
@@ -171,11 +160,8 @@ int main(int argc, char** argv)
     prm.process_mpi4(num,nbuf,maxsteps, seed);
     version=2;
   }else if(prmversion==5){
-    prm.process_mpi5(num,nbuf,maxsteps, seed,1); //workerversion 1
+    prm.process_mpi5(num,nbuf,maxsteps, seed, workerversion);
     version=3;
-  }else if(prmversion==6){
-    prm.process_mpi5(num,nbuf,maxsteps, seed,2); //workerversion 2
-    version=4;
   }else {
     msg("Error: prmversion not valid");
     printvar(prmversion);
@@ -224,6 +210,7 @@ int main(int argc, char** argv)
       printvar(seed);
       printvar(blocksize);
       printvar(prmversion);
+      printvar(workerversion);
       printvar(store);
       printvar(new_kernel);
 

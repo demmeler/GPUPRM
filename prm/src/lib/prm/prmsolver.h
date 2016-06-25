@@ -28,6 +28,7 @@ class PRMSolver{
   struct block{
     int pos; //! position of first vertex
     int num; //! current number of vertices stored
+    int main_num;
     block* next; //!if num==blocksize -> pointer to next block
   };
 
@@ -39,6 +40,7 @@ class PRMSolver{
   struct graph{
     pmap map; //map for sorting on high level
     std::vector<block> blocks;
+    std::vector<int> main_keys;
 
     std::vector<float> qstorage;                 //length ndof*N
     std::vector<int> surrnum;                    //length N
@@ -235,7 +237,9 @@ public:
     //! workerversion 2
     int processing_step_part1b();
     int processing_step_part2b();
-    int processing_step_part3b();
+
+    //! workerversion 3
+    int processing_step_part1c();
   };
 
 
@@ -295,7 +299,7 @@ public:
   //! \return
   //!
   static inline int get_random_nodes(const graph &g, const int start, const int end, float *qnew, float D, Configspace<ndof> *space);
-
+  static inline int get_random_nodes2(const graph &g, const int start, const int end, float *qnew, float D, Configspace<ndof> *space);
 
   //!
   //! \brief find_neighbours

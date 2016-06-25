@@ -75,6 +75,7 @@ int main(int argc, char** argv)
       {"store",      required_argument,      0,  'w' },
       {"maxsteps",   required_argument,      0,  'N' },
       {"new_kernel", required_argument,      0,  'k' },
+      {"blocksize", required_argument,       0,  'B' },
       {0,           0,                 0,        0   }
   };
 
@@ -98,6 +99,8 @@ int main(int argc, char** argv)
       case 'N' : maxsteps = atoi(optarg);
           break;
       case 'k': new_kernel = atoi(optarg);
+          break;
+      case 'B': blocksize = atoi(optarg);
           break;
       default:
           cout<<"bad argument: "<< opt <<endl;

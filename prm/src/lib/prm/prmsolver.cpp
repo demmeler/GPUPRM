@@ -72,6 +72,8 @@
     rand_nodes_dismissed_prob=0;
     rand_nodes_accepted=0;
     rand_block_numbers=0;
+    num_nodes=0;
+    num_blocks=0;
 
   }
 
@@ -86,11 +88,6 @@
     i0r=insert(qend,graphr);
     return 0;
   }
-
-
-
-
-
 
 
 
@@ -2327,6 +2324,7 @@
       g.newblockpos+=blocksize;
       if(g.newblockpos>N) return -1;
       b->num=0;
+      ++num_blocks;
     }else{
       b=it->second;
       while(b->num>=blocksize){
@@ -2345,7 +2343,9 @@
       g.newblockpos+=blocksize;
       if(g.newblockpos>N) return -1;
       bnew->num=0;
+      ++num_blocks;
     }
+    ++num_nodes;
     return position;
   }
 
@@ -2504,19 +2504,6 @@
       }
   }
 
-  template<int ndof>
-  int PRMSolver<ndof>::rand_nodes_all;
-  template<int ndof>
-  int PRMSolver<ndof>::rand_nodes_dismissed;
-  template<int ndof>
-  int PRMSolver<ndof>::rand_nodes_dismissed_indicator;
-  template<int ndof>
-  int PRMSolver<ndof>::rand_nodes_dismissed_prob;
-  template<int ndof>
-  int PRMSolver<ndof>::rand_nodes_accepted;
-  template<int ndof>
-  int PRMSolver<ndof>::rand_block_numbers;
-
 
 
   template<int ndof>
@@ -2667,6 +2654,36 @@
   }
 
 
+
+
+
+
+
+
+
+
+  //! ***************************
+  //! *                         *
+  //! *    static variables     *
+  //! *                         *
+  //! ***************************
+
+  template<int ndof>
+  int PRMSolver<ndof>::rand_nodes_all;
+  template<int ndof>
+  int PRMSolver<ndof>::rand_nodes_dismissed;
+  template<int ndof>
+  int PRMSolver<ndof>::rand_nodes_dismissed_indicator;
+  template<int ndof>
+  int PRMSolver<ndof>::rand_nodes_dismissed_prob;
+  template<int ndof>
+  int PRMSolver<ndof>::rand_nodes_accepted;
+  template<int ndof>
+  int PRMSolver<ndof>::rand_block_numbers;
+  template<int ndof>
+  int PRMSolver<ndof>::num_nodes;
+  template<int ndof>
+  int PRMSolver<ndof>::num_blocks;
 
 
 

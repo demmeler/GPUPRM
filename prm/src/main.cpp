@@ -181,6 +181,9 @@ int main(int argc, char** argv)
   printvar(prm.rand_nodes_dismissed_prob);
   printvar(prm.rand_nodes_dismissed_indicator);
   printvar(prm.rand_block_numbers);
+  printvar(prm.num_nodes);
+  printvar(prm.num_blocks);
+  printvar(prm.num_nodes/blocksize);
 
   //! write output
 

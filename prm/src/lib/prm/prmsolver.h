@@ -369,6 +369,9 @@ public:
   static int rand_nodes_accepted;
   static int rand_block_numbers;
 
+  static int num_nodes;
+  static int num_blocks;
+
 private:
   float H;
   float D;

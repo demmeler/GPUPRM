@@ -55,7 +55,7 @@ int main(int argc, char** argv)
   int num=32;
   int nbuf=2048;
   float dq=0.01;
-  float D=1.0;
+  float dist=1.0;
   int seed=0;
   int blocksize=256;
   int prmversion=5;
@@ -76,6 +76,7 @@ int main(int argc, char** argv)
       {"maxsteps",   required_argument,      0,  'N' },
       {"new_kernel", required_argument,      0,  'k' },
       {"blocksize", required_argument,       0,  'B' },
+      {"dist",      required_argument,       0,  'D' },
       {0,           0,                 0,        0   }
   };
 
@@ -102,6 +103,8 @@ int main(int argc, char** argv)
           break;
       case 'B': blocksize = atoi(optarg);
           break;
+      case 'D': dist = atof(optarg);
+          break;
       default:
           cout<<"bad argument: "<< opt <<endl;
           exit(EXIT_FAILURE);
@@ -126,7 +129,7 @@ int main(int argc, char** argv)
   RobotConfigspace<ndof> space("../config1",dq, confignbuf);
   space.init_(rank,size,new_kernel);
 
-  PRMSolver<ndof> prm(&space, D, D, maxstorage, blocksize);
+  PRMSolver<ndof> prm(&space, dist, dist, maxstorage, blocksize);
 
 
   float qstart[ndof];
@@ -212,7 +215,7 @@ int main(int argc, char** argv)
       printvar(num);
       printvar(nbuf);
       printvar(dq);
-      printvar(D);
+      printvar(dist);
       printvar(seed);
       printvar(blocksize);
       printvar(prmversion);

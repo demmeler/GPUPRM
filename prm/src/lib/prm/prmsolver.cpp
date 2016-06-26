@@ -2630,7 +2630,7 @@
           const block *b;
           int main_k=rand()%g.main_keys.size();
           k=g.main_keys[main_k];
-          b=&(g.blocks[k]);
+          b=g.map[k];
           ++rand_block_numbers;
 
           printvar(g.label);

@@ -2407,9 +2407,11 @@
   //!insert node q, data of surrnum and edges are not modified -> position returned for this
   template<int ndof>
   int PRMSolver<ndof>::insert(const float* q, const int offset, graph& g){
+#if 0
     std::cout<<"--------------------"<<std::endl;
     printvar(g.label);
     printvar(g.main_keys.size());
+#endif
     int key=calc_key(q[0]);
     piterator it = g.map.find(key);
     block *b;
@@ -2422,36 +2424,42 @@
       b->num=0;
       b->main_num=1;
       g.main_keys.push_back(key);
+#if 0
       printvar(key);
       printvar(g.main_keys[g.main_keys.size()-1]);
+#endif
       ++num_blocks;
-          printvar(b->main_num);
-          printvar(b->next);
-          printvar(b->num);
+#if 0
+      printvar(b->main_num);
+      printvar(b->next);
+      printvar(b->num);
+#endif
     }else{
-      b=it->second;
-      ++(b->main_num);
-          printvar(b->main_num);
-          printvar(b->next);
-          printvar(b->num);
-      while(b->num>=blocksize){
-        b=b->next;
-      }
+        b=it->second;
+        ++(b->main_num);
+#if 0
+        printvar(b->main_num);
+        printvar(b->next);
+        printvar(b->num);
+#endif
+        while(b->num>=blocksize){
+            b=b->next;
+        }
     }
     int position=b->pos+b->num++;
     int qposition=ndof*position;
     for(int i=0;i<ndof;++i){
-      g.qstorage[qposition+i]=q[offset*i];
+        g.qstorage[qposition+i]=q[offset*i];
     }
     if(b->num>=blocksize){
-      block *bnew=&(g.blocks[g.blocknum++]);
-      b->next=bnew;
-      bnew->pos=g.newblockpos;
-      g.newblockpos+=blocksize;
-      if(g.newblockpos>N) return -1;
-      bnew->num=0;
-	bnew->main_num=-1;
-      ++num_blocks;
+        block *bnew=&(g.blocks[g.blocknum++]);
+        b->next=bnew;
+        bnew->pos=g.newblockpos;
+        g.newblockpos+=blocksize;
+        if(g.newblockpos>N) return -1;
+        bnew->num=0;
+        bnew->main_num=-1;
+        ++num_blocks;
     }
     ++num_nodes;
     return position;
@@ -2632,29 +2640,33 @@
           k=g.main_keys[main_k];
           b=g.map.at(k);
           ++rand_block_numbers;
-
+#if 0
           printvar(g.label);
           printvar(g.main_keys.size());
           printvar(main_k);
           printvar(k);
-
+#endif
           int m_block=rand()%b->main_num;
+#if 0
           printvar(m_block);
           printvar(b->main_num);
           printvar(b->next);
           printvar(b->num);
+#endif
           while(m_block>=b->num){
               m_block-=b->num;
               b=b->next;
+#if 0
               printvar(m_block);
               printvar(b->main_num);
               printvar(b->next);
               printvar(b->num);
+#endif
           }
 
           //!chose random vertex
           int m=(b->pos+m_block);
-          printvar(m);
+          //printvar(m);
           int l;
           int x=1+g.surrnum[m];
           int prob=RAND_MAX/(x*x*x);

@@ -40,6 +40,7 @@
 
     graphl.label="left";
 
+
     graphr.qstorage.resize(ndof*N);
     graphr.surrnum.resize(N);
     graphr.edgelists.resize(N);

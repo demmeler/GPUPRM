@@ -2422,7 +2422,7 @@
       b->num=0;
       b->main_num=1;
       g.main_keys.push_back(key);
-      printvar(g.main_keys(g.main_keys.size()-1));
+      printvar(g.main_keys[g.main_keys.size()-1]);
       ++num_blocks;
           printvar(b->main_num);
           printvar(b->next);

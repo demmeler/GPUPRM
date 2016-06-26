@@ -2402,6 +2402,8 @@
   //!insert node q, data of surrnum and edges are not modified -> position returned for this
   template<int ndof>
   int PRMSolver<ndof>::insert(const float* q, const int offset, graph& g){
+    std::cout<<"--------------------"<<std::endl;
+    printvar(g.main_keys.size());
     int key=calc_key(q[0]);
     piterator it = g.map.find(key);
     block *b;
@@ -2415,9 +2417,15 @@
       b->main_num=1;
       g.main_keys.push_back(key);
       ++num_blocks;
+          printvar(b->main_num);
+          printvar(b->next);
+          printvar(b->num);
     }else{
       b=it->second;
       ++(b->main_num);
+          printvar(b->main_num);
+          printvar(b->next);
+          printvar(b->num);
       while(b->num>=blocksize){
         b=b->next;
       }
@@ -2434,6 +2442,7 @@
       g.newblockpos+=blocksize;
       if(g.newblockpos>N) return -1;
       bnew->num=0;
+	bnew->main_num=-1;
       ++num_blocks;
     }
     ++num_nodes;
@@ -2616,15 +2625,28 @@
           b=&(g.blocks[k]);
           ++rand_block_numbers;
 
+	printvar(g.main_keys.size());
+	printvar(main_k);
+	printvar(k);
+
           int m_block=rand()%b->main_num;
+	  printvar(m_block);
+          printvar(b->main_num);
+          printvar(b->next);
+          printvar(b->num);
           while(m_block>=b->num){
               m_block-=b->num;
               b=b->next;
+	      printvar(m_block);
+              printvar(b->main_num);
+              printvar(b->next);
+              printvar(b->num);
           }
 
           //!chose random vertex
           int m=(b->pos+m_block);
-          int l;
+          printvar(m);
+	  int l;
           int x=1+g.surrnum[m];
           int prob=RAND_MAX/(x*x*x);
           if(rand()>prob){

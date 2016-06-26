@@ -2672,7 +2672,7 @@
           //printvar(m);
           int l;
           int x=1+g.surrnum[m];
-          int prob=RAND_MAX/(x*x*x);
+          int prob=RAND_MAX/(x*x);
           if(rand()>prob){
             dismiss=true;
             ++rand_nodes_dismissed_prob;

@@ -378,6 +378,8 @@ public:
 
   static int num_nodes;
   static int num_blocks;
+  static int num_primary_blocks;
+  static int num_secondary_blocks;
 
 private:
   float H;

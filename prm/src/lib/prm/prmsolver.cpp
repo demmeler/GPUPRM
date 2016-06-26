@@ -82,7 +82,8 @@
     rand_block_numbers=0;
     num_nodes=0;
     num_blocks=0;
-
+    num_primary_blocks=0;
+    num_secondary_blocks=0;
   }
 
   template<int ndof>
@@ -2429,6 +2430,7 @@
       printvar(g.main_keys[g.main_keys.size()-1]);
 #endif
       ++num_blocks;
+      ++num_primary_blocks;
 #if 0
       printvar(b->main_num);
       printvar(b->next);
@@ -2460,6 +2462,7 @@
         bnew->num=0;
         bnew->main_num=-1;
         ++num_blocks;
+        ++num_secondary_blocks;
     }
     ++num_nodes;
     return position;
@@ -2873,7 +2876,10 @@
   int PRMSolver<ndof>::num_nodes;
   template<int ndof>
   int PRMSolver<ndof>::num_blocks;
-
+  template<int ndof>
+  int PRMSolver<ndof>::num_primary_blocks;
+  template<int ndof>
+  int PRMSolver<ndof>::num_secondary_blocks;
 
 
 

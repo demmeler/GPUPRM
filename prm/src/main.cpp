@@ -179,6 +179,8 @@ int main(int argc, char** argv)
   printvar(prm.rand_block_numbers);
   printvar(prm.num_nodes);
   printvar(prm.num_blocks);
+  printvar(prm.num_primary_blocks);
+  printvar(prm.num_secondary_blocks);
   printvar(prm.num_nodes/blocksize);
 
   //! write output

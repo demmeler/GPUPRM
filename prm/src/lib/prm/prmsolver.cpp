@@ -53,7 +53,7 @@
     graphr.newblockpos=0;
     graphr.blocknum=0;
 
-    graphr.label="right"
+    graphr.label="right";
 
 
     block b;

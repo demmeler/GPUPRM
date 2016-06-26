@@ -5,6 +5,7 @@
 #include <map>
 #include <vector>
 #include <set>
+#include <string>
 
 #define MPI_CODE
 
@@ -53,6 +54,8 @@ class PRMSolver{
 
     int newblockpos;  //position of next block in size-N-arrays
     int blocknum;     //number of used blocks
+
+    std::string label;
   };
 
   struct dijkstra_result{

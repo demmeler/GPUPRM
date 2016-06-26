@@ -38,6 +38,8 @@
     graphl.newblockpos=0;
     graphl.blocknum=0;
 
+    graphl.label="left";
+
     graphr.qstorage.resize(ndof*N);
     graphr.surrnum.resize(N);
     graphr.edgelists.resize(N);
@@ -50,6 +52,8 @@
 
     graphr.newblockpos=0;
     graphr.blocknum=0;
+
+    graphr.label="right"
 
 
     block b;
@@ -2403,6 +2407,7 @@
   template<int ndof>
   int PRMSolver<ndof>::insert(const float* q, const int offset, graph& g){
     std::cout<<"--------------------"<<std::endl;
+    printvar(g.label);
     printvar(g.main_keys.size());
     int key=calc_key(q[0]);
     piterator it = g.map.find(key);
@@ -2625,19 +2630,20 @@
           b=&(g.blocks[k]);
           ++rand_block_numbers;
 
-	printvar(g.main_keys.size());
-	printvar(main_k);
-	printvar(k);
+          printvar(g.label);
+          printvar(g.main_keys.size());
+          printvar(main_k);
+          printvar(k);
 
           int m_block=rand()%b->main_num;
-	  printvar(m_block);
+          printvar(m_block);
           printvar(b->main_num);
           printvar(b->next);
           printvar(b->num);
           while(m_block>=b->num){
               m_block-=b->num;
               b=b->next;
-	      printvar(m_block);
+              printvar(m_block);
               printvar(b->main_num);
               printvar(b->next);
               printvar(b->num);
@@ -2646,7 +2652,7 @@
           //!chose random vertex
           int m=(b->pos+m_block);
           printvar(m);
-	  int l;
+          int l;
           int x=1+g.surrnum[m];
           int prob=RAND_MAX/(x*x*x);
           if(rand()>prob){

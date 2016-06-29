@@ -1,4 +1,4 @@
-\documentclass{scrartcl} 
+\documentclass[twocolumn]{svjour3} 
 %\documentclass[a4paper]{article}
 %\usepackage{a4wide}
 
@@ -10,9 +10,9 @@
 \usepackage{amsmath}
 \usepackage{amssymb}
 \usepackage{amstext}
-\usepackage{amsthm}
+%\usepackage{amsthm}
 
-\usepackage{fancyhdr}
+%\usepackage{fancyhdr}
 \usepackage{paralist}
 
 \usepackage{mathtools}
@@ -35,49 +35,52 @@
 % C++ CODE
 
 \usepackage{listings}
-\usepackage{xcolor}
-\definecolor{lbcolor}{rgb}{0.9,0.9,0.9}
+\lstset{breaklines=true}
 
-\lstdefinestyle{customc}{
-  belowcaptionskip=1\baselineskip,
-  breaklines=true,
-  %frame=LR,
-  %xleftmargin=\parindent,
-  language=C,
-  showstringspaces=false,
-  basicstyle=\footnotesize\ttfamily,
-  keywordstyle=\bfseries\color{green!40!black},
-  commentstyle=\itshape\color{purple!40!black},
-  identifierstyle=\color{blue},
-  stringstyle=\color{orange},
-}
 
-\lstdefinestyle{customcpp}{
-	backgroundcolor=\color{lbcolor},
-    	tabsize=4,
-    	language=[GNU]C++,
-        basicstyle=\tiny,%{\scriptsize},
-        upquote=true,
-        %aboveskip={1.5\baselineskip},
-        columns=fixed,
-        showstringspaces=false,
-        extendedchars=false,
-        breaklines=true,
-        prebreak = \raisebox{0ex}[0ex][0ex]{\ensuremath{\hookleftarrow}},
-        frame=single,
-        numbers=left,
-        showtabs=false,
-        showspaces=false,
-        showstringspaces=false,
-        identifierstyle=\ttfamily,
-        keywordstyle=\color[rgb]{0,0,1},
-        commentstyle=\color[rgb]{0.026,0.112,0.095},
-        stringstyle=\color[rgb]{0.627,0.126,0.941},
-        numberstyle=\color[rgb]{0.205, 0.142, 0.73},
-}
-
-\lstset{escapechar=@,style=customcpp}
-
+%\usepackage{xcolor}
+%\definecolor{lbcolor}{rgb}{0.9,0.9,0.9}
+%
+%\lstdefinestyle{customc}{
+%  belowcaptionskip=1\baselineskip,
+%  breaklines=true,
+%  %frame=LR,
+%  %xleftmargin=\parindent,
+%  language=C,
+%  showstringspaces=false,
+%  basicstyle=\footnotesize\ttfamily,
+%  keywordstyle=\bfseries\color{green!40!black},
+%  commentstyle=\itshape\color{purple!40!black},
+%  identifierstyle=\color{blue},
+%  stringstyle=\color{orange},
+%}
+%
+%\lstdefinestyle{customcpp}{
+%	backgroundcolor=\color{lbcolor},
+%    	tabsize=4,
+%    	language=[GNU]C++,
+%        basicstyle=\tiny,%{\scriptsize},
+%        upquote=true,
+%        %aboveskip={1.5\baselineskip},
+%        columns=fixed,
+%        showstringspaces=false,
+%        extendedchars=false,
+%        breaklines=true,
+%        prebreak = \raisebox{0ex}[0ex][0ex]{\ensuremath{\hookleftarrow}},
+%        frame=single,
+%        numbers=left,
+%        showtabs=false,
+%        showspaces=false,
+%        showstringspaces=false,
+%        identifierstyle=\ttfamily,
+%        keywordstyle=\color[rgb]{0,0,1},
+%        commentstyle=\color[rgb]{0.026,0.112,0.095},
+%        stringstyle=\color[rgb]{0.627,0.126,0.941},
+%        numberstyle=\color[rgb]{0.205, 0.142, 0.73},
+%}
+%
+%\lstset{escapechar=@,style=customcpp}
+%
 
 % TIKZ DIAGRAMS
 
@@ -129,7 +132,7 @@
 %\fancyhead[L]{Seminar \glqq Optimale Steuerung\grqq\\ Prof. Brokate, Prof. Kuttler} %Kopfzeile links
 %\fancyhead[C]{} %zentrierte Kopfzeile
 %\fancyhead[R]{10. Dezember 2013\\ Manuel Demmeler} %Kopfzeile rechts
-\title{\vspace{-1.3cm} \textmd{\normalsize{High Performance Computing Project}}\\ Parallelization of the Probabilistic Roadmap Method with GPU Acceleration}
+\title{ \textmd{\normalsize{High Performance Computing Project}}\\ Parallelization of the Probabilistic Roadmap Method with GPU Acceleration}
 \date{}
 \author{Manuel Demmeler}
 
@@ -164,8 +167,8 @@ The robotics application then was implemented as an special case of this with GP
 
 \section{Introduction}
 \subsection{Problem Statement and the Sequential PRM Method}\label{algintro}
-\newtheorem*{defi}{Definition}
-\newtheorem*{alg1}{Algorithm}
+%\newtheorem*{defi}{Definition}
+%\newtheorem*{alg1}{Algorithm}
 
 
 The abstract problem treated here is to find a path in a d-dimensional space, which avoids intersecting obstacles. The area occupied by obstacles is given by an indicator function
@@ -182,14 +185,14 @@ such that
 	I(\Gamma(s))=0 \text{\ f.a.\ } sÊ\in [0,1].
 \end{equation*}
 The PRM algorithm now grows a graph \(G=(V,E)\) form points \(q_s\) and \(q_e\) by randomly sampling nodes \(v\in \Omega\) and inserting them into $V$.  Two nodes \(v,w \in V\) are connected by an edge, if they are near enough each other and the line between them is free from obstacles. The algorithm terminates, when there exists a path from \(q_s\) to \(q_e\) on G.
-\begin{defi}
+\begin{definition}
 For two points \(q_1\) and \(q_2\) we define the connection with stepsize \(h>0\) as
 	\begin{equation*}
 		[q_1,q_2]_h \defgl \{ q = \lambda q_1+(1-\lambda) q_2\ |\ \lambda \in [0,1], \norm{q-q_1} \in \N_0 h \}.
 	\end{equation*}
 	We say, \(q_1\) and \(q_2\) are connected with stepsize \(h>0\), if
 	\(I(q)=0\) for all \(q \in [q_1, q_2]_h\).
-\end{defi}
+\end{definition}
 
 \begin{algorithm} 
 	\caption{Probabilistic Roadmap Algorithm}
@@ -216,14 +219,14 @@ The probability density \(p(\ \cdot\ ,G)\) (depending on the actual graph) can b
 \subsection{Application to Robotics}
 
 
-\begin{figure}
+\begin{figure*}
     \centering
     \includegraphics[width=0.8\textwidth]{configspacetrafo.png}
     \caption{Example from \cite{prmlec} for an indicator function in robotics. 
     		The real obstacles on the left are transformed 
 		into occupied areas of the configuration space on the right.}
     \label{fig:awesome_image}
-\end{figure}
+\end{figure*}
 
 In this project, the PRM algorithm is used to find trajectories for a robot arm, which avoid self collisions and collisions with obstacles in the environment.
 Such trajectories can be expressed as functions describing the joint variables changing over time, that means as a curve in the configuration space with dimension equal to the number of degrees of freedom of the robot.
@@ -241,7 +244,7 @@ In the robotics case, this means, the direct kinematic and collision calculation
 Although this will the only major application in the project, the PRM solver and the configuration space are implemented separated from each other and connected by an interface to be free to simply add other applications. As an example and for testing, additionally a simple 2D configuration space is provided, 
 whose indicator function is read from a black-and-white image.
 
-
+\begin{figure*}
 \begin{center} 
 \begin{tikzpicture}[auto]%node distance=0.5cm and 1.8cm]
 	\node[block] (prm) {
@@ -274,7 +277,7 @@ whose indicator function is read from a black-and-white image.
 	\path[-,thick]					(robo) edge (gpu);
 \end{tikzpicture}
 \end{center}
-
+\end{figure*}
 
 While the distribution of the indicator function to different CUDA threads is a first level of parallelization, 
 a second level can be achieved by sampling and connecting several new nodes parallelly. 
@@ -339,15 +342,22 @@ For the exact calculations, see \cite{robodyn}.
 For the implementation of the kinematics and later the collision algorithm, a geometry library was written, based on the CUDA datatypes float2 for 2D vectors and float4 for 3D vectors.
 To guarantee aligned access on the GPU, float4 is used instead of float3. Furthermore, as the geometric calculations made here are numerically not very critical, the usage of double precision has turned out to be not necessary.
 The library contains hybrid host and device inline functions for common vector operations such as
-\begin{lstlisting}
+
+
+\footnotesize
+\begin{lstlisting}[language=C++, frame=single, float=*]
 __host__ __device__ inline float4& operator += (float4& u, const float4& v);
 __host__ __device__ inline float4& operator *=  (float4& u, const float f);
 __host__ __device__ inline float4& add(const float4& u, const float4& v, float4& w);
 \end{lstlisting}
+\normalsize
+
 Operators like $+$ or $*$ are not overloaded to prevent unnecessary temporary variables.
 
 Transformation matrices are implemented as float4 arrays with inline functions for common matrix operations. Again operators with temporaries were avoided, wherever possible.
-\begin{lstlisting}
+
+\footnotesize
+\begin{lstlisting}[language=C++, frame=single, float=*]
 class trafo4{
   public:
     float4 col[4];
@@ -368,7 +378,9 @@ The second constructor implements the relative DH transformations.
 To calculate the intersection between two convex polytopes, the here used Chung-Wang algorithm only needs their vertices 
 and the data, which of them are connected by an edge. 
 For this the adjacency matrix of the edge graph is stored compactly in compact row storage format.
-\begin{lstlisting}
+
+\footnotesize
+\begin{lstlisting}[language=C++, frame=single, float=*]
 struct polytope4{
     float4* vertices;	//length n
     int n;
@@ -379,6 +391,7 @@ struct polytope4{
     int m;
 };
 \end{lstlisting}
+
 It means, that for $i=0,...,n-1$ the vertices $dest[dsp[i]],...,dest[dsp[i]+cnt[i]-1]$ are the ones connected with vertex $i$ by an edge.
 The polytopes used in this project are given by the user as convex hull of a list of vertices. However, to determine the edge graph only from the vertices is a nontrivial task, which is done by Matlab here using provided high level functions.
 
@@ -388,10 +401,12 @@ The polytopes used in this project are given by the user as convex hull of a lis
 To check if two polytopes collide an algorithm by Chung and Wang is used here. It uses the separating vector theorem and tries to find a separating vector by iterative search. Furthermore, a sub-algorithm determines in each iteration from the candidate history, if it is still theoretically possible to find a separating vector. If not, it is returned a collision. If on the other side a separating vector is found, the algorithm can return no collision.
 For detailed informations see \cite{chung} and \cite{ericson}, pp. 410-412.
 The method is implemented as device code for the use on GPU kernels.
-\begin{lstlisting}
-__host__ __device__ int separating_vector_algorithm(const polytope4& P, const polytope4& Q, 
-													const trafo4& tp, const trafo4& tq);
+
+\footnotesize
+\begin{lstlisting}[language=C++, frame=single, float=*]
+__host__ __device__ int separating_vector_algorithm(const polytope4& P, const polytope4& Q, const trafo4& tp, const trafo4& tq);
 \end{lstlisting}
+
 In our application, the polytopes are mostly parts of the robot, which are given in a body frame and have to be transformed into world frame according to section \ref{dk} first.
 However, from the structure of the Chung-Wang algorithm drops out, that mostly only a small part of the polytopes vertices are needed for the computations. Therefore, it would be rather time wasting to transform all vertices before passing them to the algorithm. To avoid this, all polytopes are passed in their body frames together with their transformations and the algorithm transforms a vertex, whenever it occurs in calculations.
 This is also the version proposed in \cite{chung}.
@@ -402,7 +417,9 @@ This is also the version proposed in \cite{chung}.
 \subsection{Robot Kernel}
 
 The robot configuration space is implemented in the form
-\begin{lstlisting}
+
+\footnotesize
+\begin{lstlisting}[language=C++, frame=single, float=*]
 template<int ndof>
 class RobotConfigspace : public Configspace<ndof>
 {
@@ -430,7 +447,9 @@ private:
   .
 }
 \end{lstlisting}
-\begin{lstlisting}
+
+\footnotesize
+\begin{lstlisting}[language=C++, frame=single, float=*]
 __global__ void kernel_indicator2(const Robot<ndof>* robot,
                                   const collision4::polytope4data* polydata,
                                   const float* qs, int offsets,
@@ -439,15 +458,19 @@ __global__ void kernel_indicator2(const Robot<ndof>* robot,
                                   const int* testpos, const int* testnum,
                                   int N, int numthreads);
 \end{lstlisting}
+
 where the constant geometry and robot data is loaded once at the beginning and copied to the GPU by an init function.
 The indicator function gets as input a list of border points $q_{start}^j, q_{end}^j, j=0,...,N$ and checks now for each pair, if the indicator function is always 0 on the line in between.
+
 \begin{equation}
 	res[j]=\begin{cases}
 		0	&\text{if $I(q)=0$ f.a. $q \in \left[qs[j], qe[j]\right]_{\Delta q}$} \\
 		1	&else
 	\end{cases}
 \end{equation}
+
 The border points are stored in structures of arrays.
+
 \begin{equation}
 \begin{aligned}
 	q_{start}^j &= \left(qs[j],qs[j+\text{offset}],...,qs[j+(d-1)*\text{offset}]\right)^T\\
@@ -553,7 +576,7 @@ This has to be chosen so large that enough nodes are stored in one block in orde
 On the other side, the smaller it is, the less unnecessary computations have to be done for the neighborhood requests.
 For illustration of the structure, the following pseudocode shows the insertion of a node.
 
-\begin{algorithm}[H]
+\begin{algorithm}
 	\KwData{$q\in\R^d$}
 	Compute key=key(q)\\ 
 	\eIf{key exists in map}{
@@ -710,6 +733,7 @@ Here, every process runs two workers overlapped.
 In the time, when the first worker has generated his indicator function request, launched the kernel and now is waiting until it has finished, the second worker updates the graph and sends his new request, and the other way round.
 With this it is possible, that the computation time of the GPU is fully used, and overlapped with the communication.
 
+\begin{figure*}
 \begin{center}
 \begin{tikzpicture}
 	\tikzset{mywidth/.style={minimum width=2.5cm},};
@@ -786,15 +810,18 @@ With this it is possible, that the computation time of the GPU is fully used, an
 	
 \end{tikzpicture}
 \end{center}
+\caption{test}
+\end{figure*}
 
 \newpage
 \section{Results}
 
-\begin{wrapfigure}{r}{0.5\textwidth}\label{robotsolution}
+\begin{figure}%{r}{0.5\textwidth}
+\label{robotsolution}
 	\centering
 	\includegraphics[width=0.5\textwidth]{robotsolution.pdf}
 	\caption{PRM generated collision-free movement for a 4-axis robot}
-\end{wrapfigure}
+\end{figure}
 
 Tests have been made for a scenario with a robot with 4 joints. For creating and plotting the environment and the resulting trajectories, Matlab functions are provided.
 Because of the dependency on random numbers, the algorithm takes different amounts of time for different runs.

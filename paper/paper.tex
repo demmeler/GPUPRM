@@ -469,6 +469,7 @@ private:
   Robot<ndof>* robotdev;    //GPU object
   collision4::polytope4data* polydata;    //host object
   collision4::polytope4data* polydatadev; //GPU object
+  collision4::polytope4data_restrict* polydatadev_restrict; //restricted pointers collection
   .
   .
   .
@@ -496,7 +497,13 @@ private:
 	caption=GPU collision kernel for testing robot configurations.,
 	label=code5
 ]
-__global__ void kernel_indicator2(const Robot<ndof>* __restrict__ robot,                                  const collision4::polytope4data_restrict polydata,                                  const float* __restrict__ qs, int offsets,                                  const float* __restrict__ qe, int offsete,                                  int* res,                                  const int* __restrict__ testpos, const int* __restrict__ testnum,                                  int N, int numthreads)
+__global__ void kernel_indicator2(const Robot<ndof>* __restrict__ robot,
+                                  const collision4::polytope4data_restrict polydata,
+                                  const float* __restrict__ qs, int offsets,
+                                  const float* __restrict__ qe, int offsete,
+                                  int* res,
+                                  const int* __restrict__ testpos, const int* __restrict__ testnum,
+                                  int N, int numthreads)
 \end{lstlisting}
 \normalsize
 
@@ -612,6 +619,7 @@ struct graph{
     std::vector<float> qstorage; //length ndof*N
     int newblockpos;  //position of next new block
     int blocknum;     //number of used blocks
+    .
     .
     .
 };
@@ -791,8 +799,9 @@ Here, every process runs two workers overlapped.
 In the time, when the first worker has generated his indicator function request, launched the kernel and now is waiting until it has finished, the second worker updates the graph and sends his new request, and the other way round, as shown in figure \ref{figversion3}.
 With this it is possible, that the computation time of the GPU is fully used, and overlapped with the communication. 
 
-\begin{figure*}
+\begin{figure}
 \begin{center}
+\resizebox{\columnwidth}{!}{
 \begin{tikzpicture}
 	\tikzset{mywidth/.style={minimum width=2.5cm},};
 	\node[block, mywidth] (l1) {\textbf{Worker 1}};
@@ -867,62 +876,96 @@ With this it is possible, that the computation time of the GPU is fully used, an
 	
 	
 \end{tikzpicture}
+}
 \end{center}
 \label{figversion3}
 \caption{Structure of asynchronous kernel launches.}
-\end{figure*}
+\end{figure}
 
 %\newpage
 \section{Results}
 
 \begin{figure}%{r}{0.5\textwidth}
-	\label{robotsolution}
 	\centering
 	\includegraphics[width=0.5\textwidth]{robotsolution2_5.pdf}
-	\caption{PRM generated collision-free movement for a 4-axis robot}
+	\caption{PRM generated collision-free movement for a 4-axis robot}\label{robotpic}
 \end{figure}
 
-Tests have been made for a scenario with a robot with 4 joints. For creating and plotting the environment and the resulting trajectories, Matlab functions are provided.
+Tests have been made for a scenario with a robot with 4 joints, shown in figure \ref{robotpic}.
+This scenario is difficult because of the small path to be passed in the middle.
+For creating and plotting the environment and the resulting trajectories, Matlab functions were written.
 Because of the dependency on random numbers, the algorithm takes different amounts of time for different runs.
 Therefore, 10 runs were made for each version and number of processes.
 However, the different versions lead to a different average amount of GPU threads needed.
 Hence, to be able to better compare how they scale, the time per number of GPU threads is used as a quantity.
 Table 1 shows the results.
-One can see, that the version with node communication has a better time to GPU threads ratio, but leads to a greater amount of threads on average.
-The versions with less communication, however, have better absolute times.
-Furthermore, one sees the improvement from version 2 to version 3 from the asynchronous indicator function.
+
+
+%\begin{table}[h]\label{resulttable}
+%\caption{Timing results for the parallelization versions from chapter \ref{solver} on a cluster node with 2x Intel Xeon Six-Core CPU X5650 @2.67GHz and 4x GeForce GTX 480}
+%\centering
+%%\begin{tabular}{| c | c | r | r | r |}
+%
+%\begin{tabular}{ c  c  r  r  r }
+%
+%\hline
+%version	&  processes/	& time		& GPU 		& time per 1e6  \\ 
+%		& GPUs		& (ms)		& threads		& threads (ms) \\ 
+%\hline
+%		& 1			& 1002		& 696413		& 1448	\\ 
+%1		& 2			& 763		& 838938		& 918	\\ 
+%		& 4			& 706		& 1113781	& 647	\\ 
+%\hline
+%		& 1			& 900		& 608172		& 1490	\\ 
+%2		& 2			& 647		& 608172		& 1070	\\ 
+%		& 4			& 568		& 608172		& 947	\\ 
+%\hline
+%		& 1			& 696		& 599847		& 1181	\\ 
+%3		& 2			& 554		& 599847		& 951	\\ 
+%		& 4			& 500		& 599847		& 864	\\ 
+%\hline
+%
+%\end{tabular}
+%\end{table}
 
 
 \begin{table}[h]\label{resulttable}
-\caption{Timing results for the parallelization versions from chapter \ref{solver} on a cluster node with 2x Intel Xeon Six-Core CPU X5650 @2.67GHz and 4x GeForce GTX 480}
+\caption{Timing results for the parallelization versions from chapter \ref{solver} on a cluster node with 2x Intel Xeon Eight-Core CPU E5-2650 0 @ 2.00GHz and 4x Tesla K20m.}
 \centering
 %\begin{tabular}{| c | c | r | r | r |}
 
 \begin{tabular}{ c  c  r  r  r }
 
 \hline
-version	&  processes/	& time		& GPU 		& time per 1e6  \\ 
+version	&  processes/	& time		& GPU 		& time per $10^6$  \\ 
 		& GPUs		& (ms)		& threads		& threads (ms) \\ 
 \hline
-		& 1			& 1002		& 696413		& 1448	\\ 
-1		& 2			& 763		& 838938		& 918	\\ 
-		& 4			& 706		& 1113781	& 647	\\ 
+		& 1			& 6864		& 6171525	& 1070	\\ 
+1		& 2			& 1580		& 4489213	& 342	\\ 
+		& 4			& 869		& 5853763	& 149	\\ 
 \hline
-		& 1			& 900		& 608172		& 1490	\\ 
-2		& 2			& 647		& 608172		& 1070	\\ 
-		& 4			& 568		& 608172		& 947	\\ 
+		& 1			& 2136		& 6933768	& 337	\\ 
+2		& 2			& 1778		& 6933768	& 290	\\ 
+		& 4			& 1677		& 6933768	& 279	\\ 
 \hline
-		& 1			& 696		& 599847		& 1181	\\ 		
-3		& 2			& 554		& 599847		& 951	\\ 
-		& 4			& 500		& 599847		& 864	\\ 
+		& 1			& 2492		& 19096275	& 130	\\ 
+3		& 2			& 1345		& 19096275	& 72		\\ 
+		& 4			& 942		& 19096275	& 52		\\ 
+\hline
+3		& 4			& 32730		& 10038198	& 3281	\\ 
+ (CPU	& 8			& 17676		& 10038198	& 1785	\\ 
+only)		& 16			& 9936		& 10038198	& 1012	\\ 
 \hline
 
 \end{tabular}
 \end{table}
 
+
 As the indicator function has also been implemented on the CPU, all versions could be run without GPU.
-In most cases, the GPU code was around 10 times faster. 
-However, the robot code is not optimized for the CPU version, such that this comparison is not quite fair.
+The timing results for the last one are shown in the last section of table 1.
+One can see an improvement of up to a factor around 10.
+However, the robot code is not optimized for the CPU version, as the GPU kernel is just rewritten with an for loop.
+Therefore this comparison is not quite fair.
 
 %\newpage
 

@@ -19,7 +19,12 @@ Qpathcont=interp1q((1:l)',prmoutput.Qpath',(1:0.4:l)')';
 %Qpathcont=interp1q((1:l)',prmoutput.Qpath',[1;18;20;21;25;l])';
 
 
-pathplot(dhparams,ndof,polys,N,Qpathcont, 0.06, true);
+%pathplot(dhparams,ndof,polys,N,Qpathcont, 0.06, true);
+
+pathplot(dhparams,ndof,polys,N, ...
+    [prmoutput.Qpath(:,1),prmoutput.Qpath(:,round(l/4)),...
+    prmoutput.Qpath(:,round(l*0.7)),prmoutput.Qpath(:,l)], ...
+    0.06, false);
 
 
 

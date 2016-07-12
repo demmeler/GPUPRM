@@ -18,7 +18,7 @@ function [] = pathplot( dhparams, ndof, polys, N, Q, dt, infinite)
         lim=[xlim;ylim;zlim];
         [AZ,EL]=view;
         
-        clf;
+        %clf;
         stateplot(dhparams,ndof,polys,N,Q(:,t),colors);
         
         
@@ -29,7 +29,7 @@ function [] = pathplot( dhparams, ndof, polys, N, Q, dt, infinite)
         zlim(limneu(3,:));
         view(AZ,EL);
         
-        pause(dt);
+        %pause(dt);
     end
         if ~infinite
             break;

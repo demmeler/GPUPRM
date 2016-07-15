@@ -16,74 +16,20 @@
 \usepackage{amstext}
 %\usepackage{amsthm}
 
-%\usepackage{fancyhdr}
 \usepackage{paralist}
 
 \usepackage{mathtools}
-
-
-%\usepackage{hyperref}
-
-
-%\usepackage{graphicx}
-%\usepackage{wrapfig}
 
 
 % PSEUDOCODE
 
 \usepackage[ruled]{algorithm2e}
 
-
 % C++ CODE
 
 \usepackage{listings}
 \lstset{breaklines=true}
 \renewcommand{\lstlistingname}{Code}
-
-
-%\usepackage{xcolor}
-%\definecolor{lbcolor}{rgb}{0.9,0.9,0.9}
-%
-%\lstdefinestyle{customc}{
-%  belowcaptionskip=1\baselineskip,
-%  breaklines=true,
-%  %frame=LR,
-%  %xleftmargin=\parindent,
-%  language=C,
-%  showstringspaces=false,
-%  basicstyle=\footnotesize\ttfamily,
-%  keywordstyle=\bfseries\color{green!40!black},
-%  commentstyle=\itshape\color{purple!40!black},
-%  identifierstyle=\color{blue},
-%  stringstyle=\color{orange},
-%}
-%
-%\lstdefinestyle{customcpp}{
-%	backgroundcolor=\color{lbcolor},
-%    	tabsize=4,
-%    	language=[GNU]C++,
-%        basicstyle=\tiny,%{\scriptsize},
-%        upquote=true,
-%        %aboveskip={1.5\baselineskip},
-%        columns=fixed,
-%        showstringspaces=false,
-%        extendedchars=false,
-%        breaklines=true,
-%        prebreak = \raisebox{0ex}[0ex][0ex]{\ensuremath{\hookleftarrow}},
-%        frame=single,
-%        numbers=left,
-%        showtabs=false,
-%        showspaces=false,
-%        showstringspaces=false,
-%        identifierstyle=\ttfamily,
-%        keywordstyle=\color[rgb]{0,0,1},
-%        commentstyle=\color[rgb]{0.026,0.112,0.095},
-%        stringstyle=\color[rgb]{0.627,0.126,0.941},
-%        numberstyle=\color[rgb]{0.205, 0.142, 0.73},
-%}
-%
-%\lstset{escapechar=@,style=customcpp}
-%
 
 % TIKZ DIAGRAMS
 
@@ -126,42 +72,31 @@
 }
 
 
-
-\DeclareMathOperator*{\esssup}{ess.sup}
 \DeclareMathOperator*{\defgl}{\vcentcolon=}
+\newcommand{\R}{\mathbb{R}}
+\newcommand{\N}{\mathbb{N}}
+\newcommand{\norm}[1]{\left\lVert#1\right\rVert}
+\newcommand{\abs}[1]{\left |#1\right |}
 
 
-%\pagestyle{fancy}
-%\fancyhead[L]{Seminar \glqq Optimale Steuerung\grqq\\ Prof. Brokate, Prof. Kuttler} %Kopfzeile links
-%\fancyhead[C]{} %zentrierte Kopfzeile
-%\fancyhead[R]{10. Dezember 2013\\ Manuel Demmeler} %Kopfzeile rechts
-\title{ %\textmd{\normalsize{High Performance Computing Project}}\\ 
-	Parallelization of the Probabilistic Roadmap Method with GPU Acceleration}
+\usepackage{hyperref}
+
+
+\title{ Parallelization of the Probabilistic Roadmap Method with GPU Acceleration}
 \subtitle{High Performance Computing Project}
 %\date{}
 \author{Manuel Demmeler \and Manfred Liebmann}
 
 \institute{Manuel Demmeler
-\at todo ... \\ \email{manuel.demmeler@yahoo.de}
+\at todo ... \\ 
+\email{manuel.demmeler@yahoo.de}
 \and
 Manfred Liebmann
-\at todo ... \\ \email{todo}
+\at todo ... \\  %TODO: which adresses to use?
+\email{todo}
 }
 
-%\thispagestyle{fancy}
 
-\newcommand{\R}{\mathbb{R}}
-\newcommand{\N}{\mathbb{N}}
-\newcommand{\Sym}{\mathbb{S}^3}
-\newcommand{\Mpos}{\M_+^3}
-\newcommand{\Orth}{\mathbb{O}^3}
-\newcommand{\norm}[1]{\left\lVert#1\right\rVert}
-\newcommand{\abs}[1]{\left |#1\right |}
-\newcommand{\ub}{\bar{u}}
-\newcommand{\yb}{\bar{y}}
-\newcommand{\scprod}[2]{\langle#1 , #2 \rangle}
-
-%\vspace{-3.4cm}
 
 
 \begin{document}
@@ -177,9 +112,6 @@ A robotics application then was implemented as an special case of this with GPU 
 
 \section{Introduction}
 \subsection{Problem Statement and the Sequential PRM Method}\label{algintro}
-%\newtheorem*{defi}{Definition}
-%\newtheorem*{alg1}{Algorithm}
-
 
 The abstract problem treated here is to find a path in a d-dimensional space, which avoids intersecting obstacles. The area occupied by obstacles is given by an indicator function
 \begin{equation}
@@ -239,7 +171,7 @@ Algorithm \ref{prmalg} shows the sequential version. Hereby, the probability den
     \centering
     \includegraphics[width=0.8\textwidth]{configspacetrafo.png}
     \caption{Example from \cite{prmlec} for an indicator function in robotics. 
-    		The real obstacles on the left are transformed 
+    		The given obstacles on the left are transformed 
 		into occupied areas of the configuration space on the right.}
     \label{fig:awesome_image}
 \end{figure*}
@@ -250,7 +182,6 @@ With this association, the trajectory finding problem becomes a path finding pro
 The real obstacles transform into obstacles in the configuration space, given by the indicator function, that returns for a given vector of joint angles, if it is feasible or leads to a collision.
 
 
-%\newpage
 \subsection{Project Overview}
 
 Like in the stated robotics example, in many cases the most costly operation of the PRM algorithm are the many evaluations of the indicator function \(I(q)\), 
@@ -265,7 +196,6 @@ a second level can be achieved by sampling and connecting several new nodes para
 This is more difficult, because all new nodes have to be connected 
 and the graph data has to be updated on all processes. 
 For this, different approaches have been implemented, which are described in chapter \ref{solver}.
-
 Before that, chapter \ref{indicator} gives more details about the robotics indicator function.
 
 \begin{figure*}
@@ -301,8 +231,7 @@ Before that, chapter \ref{indicator} gives more details about the robotics indic
 	\path[-,thick]					(robo) edge (gpu);
 \end{tikzpicture}
 \end{center}
-\label{interfacefig}
-\caption{Project structure. Probabilistic roadmap solver and configuration space implementation are separated.}
+\caption{Project structure. Probabilistic roadmap solver and configuration space implementation are separated.}\label{interfacefig}
 \end{figure*}
 
 
@@ -391,7 +320,6 @@ class trafo4{
     __host__ __device__ inline float4& apply(const float4& u, float4& Tu) const;
     .
     .
-    .
 }
 \end{lstlisting}
 \normalsize
@@ -420,7 +348,7 @@ struct polytope4{
 \end{lstlisting}
 \normalsize
 
-It means, that for $i=0,...,n-1$ the vertices with indices $dest[dsp[i]],..., dest[dsp[i]+cnt[i]-1]$ are the ones connected with vertex $i$ by an edge.
+It means, that for $i=0,...,n-1$ the vertices with indices $\mathrm{ dest[dsp[i]],..., dest[dsp[i]+cnt[i]-1] }$ are the ones connected with vertex $i$ by an edge.
 The polytopes used in this project are given by the user as convex hull of a list of vertices. However, to determine the edge graph only from the vertices is a nontrivial task, which is done by Matlab here using provided high level functions.
 
 
@@ -463,14 +391,12 @@ public:
   int indicator2(const float* qs, const float* qe, int *res, const int N, const int offset);
   .
   .
-  .
 private:
   const Robot<ndof>* robot; //host object
   Robot<ndof>* robotdev;    //GPU object
   collision4::polytope4data* polydata;    //host object
   collision4::polytope4data* polydatadev; //GPU object
   collision4::polytope4data_restrict* polydatadev_restrict; //restricted pointers collection
-  .
   .
   .
 }
@@ -514,20 +440,20 @@ The geometry and robot data is load\-ed once at the beginning and copied to the 
 It is constant during runtime.
 The indicator function gets as input a list of border points $q_{start}^j, q_{end}^j, j=0,...,N$ and checks now for each pair, if the indicator function is always 0 on the line in between.
 \begin{equation}
-	res[j]=\begin{cases}
-		0	&\text{if $I(q)=0$ f.a. $q \in \left[qs[j], qe[j]\right]_{\Delta q}$} \\
+	\mathrm{res[j]}=\begin{cases}
+		0	&\text{if $I(q)=0$ f.a. $q \in \left[q_{start}^j, q_{end}^j\right]_{\Delta q}$} \\
 		%0	&\text{if $I(q)=0$ f.a. $q \in \left[q_{start}^j, q_{end}^j\right]_{\Delta q}$} \\
-		1	&else
+		1	&\text{else}
 	\end{cases}
 \end{equation}
 This computation is done by calling the kernel in Code \ref{code5}.
 The border points are stored in structures of arrays.
 \begin{equation}
 \begin{aligned}
-	q_{start}^j = (&qs[j],qs[j+\text{offset}], \\
-			&..., qs[j+(d-1)*\text{offset}])^T\\
-	q_{end}^j = (&qe[j],qe[j+\text{offset}], \\
-			&..., qe[j+(d-1)*\text{offset}])^T
+	q_{start}^j = (&\mathrm{qs[j],qs[j+\text{offset}], }\\
+			&\mathrm{..., qs[j+(d-1)*\text{offset}]})^T\\
+	q_{end}^j = (&\mathrm{qe[j],qe[j+\text{offset}], }\\
+			&{..., qe[j+(d-1)*\text{offset}]})^T
 \end{aligned}
 \end{equation}
 As the PRMSolver only needs to know, which node points can be connected by a line, and not, which intermediate points are free in detail, the kernel delivers exactly this minimal necessary information. 
@@ -539,10 +465,10 @@ Algorithms \ref{host} and \ref{kernel} show in pseudo code, how the work is spli
 	\KwData{qs, qe, N, offset}
 	\KwResult{res}
 	compute distances $d_j = \abs{q_{end}^j - q_{start}^j}$ \;
-	testnum[j] = $d_j/{\Delta q}$: number of threads for each line \;
-	testpos[j] = thread displacements \;
+	$\mathrm{testnum[j]} = d_j/{\Delta q}$: number of threads for each line \;
+	$\mathrm{testpos[j]} = \mathrm{thread\ displacements}$ \;
 	reset res \;
-	call kernel \;
+	call kernel with $\sum_{j=0}^N \mathrm{testnum[j]}$ threads\;
 	\caption{Host indicator function}
 \end{algorithm}
 
@@ -550,14 +476,14 @@ Algorithms \ref{host} and \ref{kernel} show in pseudo code, how the work is spli
 	\KwData{arrays qs, qe, testpos, testnum and threadindex}
 	\KwResult{res}
 	compute associated edge number $j$, defined by $testpos[j] \leq threadindex \le testpos[j]+testnum[j]$ \;
-	$c = (threadindex - testpos[j]) / (testnum[k]-1) $ \;
+	$c = (\mathrm{threadindex - testpos[j]}) / (\mathrm{testnum[k]}-1) $ \;
 	$q=c q_{start}^j + (1-c) q_{end}^j $ \;
 	calculate robot kinematics $T_0(q), ..., T_d(q) $\;
-	$res_{tmp} = 0; $ \;
+	$\mathrm{res\_tmp} = 0; $ \;
 	\For{all registered pairs pairs of polytopes $P, Q$}{
-		$res_{tmp}=separating\_vector\_algorithm(P, T_{i_P}, Q, T_{i_Q})$ \;
-		\If{$res_{tmp} \neq 0$}{
-			$res[j]=res_{tmp}$ \;
+		$\mathrm{res\_tmp}=\mathrm{separating\_vector\_algorithm}(P, T_{i_P}, Q, T_{i_Q})$ \;
+		\If{$\mathrm{res\_tmp} \neq 0$}{
+			$\mathrm{res}[j]=\mathrm{res\_tmp}$ \;
 			break \;
 		}
 	}
@@ -580,8 +506,6 @@ With that, it is possible to use the full computation time of the GPU.
 %\normalsize
 
 
-
-%\newpage
 %%%%%%%%%%%%%%%%%%%%%%%%
 
 \section{The PRM Solver}\label{solver}
@@ -598,9 +522,8 @@ Therefore, it is not parallelized here and the focus lies on the first phase.
 
 Apart from the indicator function evaluation, the main problem in building the probabilistic roadmap is, that for each new node $q$ it have to be determined all possible neighbors. That is the set of all nodes $\tilde q$ of the graph, with $\norm{\tilde q - q} \le D$.
 If no special order of the nodes is given, one has to calculate this norms for all nodes of the graph, which is rather time consuming.
-
 Therefore, a special indexing is used here. 
-The nodes are stored in a vector, which is organized in blocks with fixed sizes. The blocks are referred to by ids which are stored in a map.
+The nodes are stored in a vector, which is organized in blocks with fixed sizes. The blocks are referred to by ids which are stored in a map. See Code \ref{code7} for the data structures.
 
 \footnotesize
 \begin{lstlisting}[language=C++, frame=single, float=*,
@@ -619,7 +542,6 @@ struct graph{
     std::vector<float> qstorage; //length ndof*N
     int newblockpos;  //position of next new block
     int blocknum;     //number of used blocks
-    .
     .
     .
 };
@@ -792,13 +714,6 @@ Here, the distribution of the computation amount over the GPUs can be chosen alm
 %\caption{Second version of parallelization: redundant node generation. }
 %\end{figure*}
 
-\subsubsection*{Version 3}
-
-The third version does a further optimization by using the asynchronous version of the indicator function.
-Here, every process runs two workers overlapped. 
-In the time, when the first worker has generated his indicator function request, launched the kernel and now is waiting until it has finished, the second worker updates the graph and sends his new request, and the other way round, as shown in figure \ref{figversion3}.
-With this it is possible, that the computation time of the GPU is fully used, and overlapped with the communication. 
-
 \begin{figure}
 \begin{center}
 \resizebox{\columnwidth}{!}{
@@ -878,11 +793,16 @@ With this it is possible, that the computation time of the GPU is fully used, an
 \end{tikzpicture}
 }
 \end{center}
-\label{figversion3}
-\caption{Structure of asynchronous kernel launches.}
+\caption{Structure of asynchronous kernel launches.}\label{fig:v3}
 \end{figure}
 
-%\newpage
+\subsubsection*{Version 3}
+
+The third version does a further optimization by using the asynchronous version of the indicator function.
+Here, every process runs two workers overlapped. 
+In the time, when the first worker has generated his indicator function request, launched the kernel and now is waiting until it has finished, the second worker updates the graph and sends his new request, and the other way round, as shown in figure \ref{fig:v3}.
+With this it is possible, that the computation time of the GPU is fully used, and overlapped with the communication. 
+
 \section{Results}
 
 \begin{figure}%{r}{0.5\textwidth}
@@ -900,39 +820,9 @@ However, the different versions lead to a different average amount of GPU thread
 Hence, to be able to better compare how they scale, the time per number of GPU threads is used as a quantity.
 Table 1 shows the results.
 
-
-%\begin{table}[h]\label{resulttable}
-%\caption{Timing results for the parallelization versions from chapter \ref{solver} on a cluster node with 2x Intel Xeon Six-Core CPU X5650 @2.67GHz and 4x GeForce GTX 480}
-%\centering
-%%\begin{tabular}{| c | c | r | r | r |}
-%
-%\begin{tabular}{ c  c  r  r  r }
-%
-%\hline
-%version	&  processes/	& time		& GPU 		& time per 1e6  \\ 
-%		& GPUs		& (ms)		& threads		& threads (ms) \\ 
-%\hline
-%		& 1			& 1002		& 696413		& 1448	\\ 
-%1		& 2			& 763		& 838938		& 918	\\ 
-%		& 4			& 706		& 1113781	& 647	\\ 
-%\hline
-%		& 1			& 900		& 608172		& 1490	\\ 
-%2		& 2			& 647		& 608172		& 1070	\\ 
-%		& 4			& 568		& 608172		& 947	\\ 
-%\hline
-%		& 1			& 696		& 599847		& 1181	\\ 
-%3		& 2			& 554		& 599847		& 951	\\ 
-%		& 4			& 500		& 599847		& 864	\\ 
-%\hline
-%
-%\end{tabular}
-%\end{table}
-
-
-\begin{table}[h]\label{resulttable}
-\caption{Timing results for the parallelization versions from chapter \ref{solver} on a cluster node with 2x Intel Xeon Eight-Core CPU E5-2650 0 @ 2.00GHz and 4x Tesla K20m.}
+\begin{table}
+\caption{Timing results for the parallelization versions from chapter \ref{solver} on a cluster node with 2x Intel Xeon Eight-Core CPU E5-2650 0 @ 2.00GHz and 4x Tesla K20m.}\label{resulttable}
 \centering
-%\begin{tabular}{| c | c | r | r | r |}
 
 \begin{tabular}{ c  c  r  r  r }
 
@@ -952,6 +842,11 @@ version	&  processes/	& time		& GPU 		& time per $10^6$  \\
 3		& 2			& 1345		& 19096275	& 72		\\ 
 		& 4			& 942		& 19096275	& 52		\\ 
 \hline
+\hline
+version	&  CPU		& time		& indicator 	& time per $10^6$  \\ 
+		& threads		& (ms)		& evaluations	& evals. (ms) \\
+		
+\hline
 3		& 4			& 32730		& 10038198	& 3281	\\ 
  (CPU	& 8			& 17676		& 10038198	& 1785	\\ 
 only)		& 16			& 9936		& 10038198	& 1012	\\ 
@@ -962,21 +857,26 @@ only)		& 16			& 9936		& 10038198	& 1012	\\
 
 
 As the indicator function has also been implemented on the CPU, all versions could be run without GPU.
-The timing results for the last one are shown in the last section of table 1.
+The timing results for the last one are shown in the last section of table \ref{resulttable}.
 One can see an improvement of up to a factor around 10.
-However, the robot code is not optimized for the CPU version, as the GPU kernel is just rewritten with an for loop.
+However, the robot code is not optimized for the CPU version, as the GPU kernel has just been rewritten with an for loop
+reusing all the device functions for collision detection.
 Therefore this comparison is not quite fair.
 
-%\newpage
 
-%\bibliographystyle{alpha}
+%%%%%%%%%%%%%%%%%%%%%%%%
+
 \begin{thebibliography}{}%{999}
-	\bibitem{prmlec} D. Burschka, Lecture Robot Motion Planning, source: http://robvis01.informatik.tu-muenchen.de/courses/wegtraj/index.html
-	\bibitem{prm1} H. Choset, K. Lynch, S. Hutchinson, G. Kantor, W. Burgard, L. Kavraki and S. Thrun, Principles of Robot Motion: Theory, Algorithms, and Implementation, MIT Press, 2005
-	\bibitem{prm2} S. M. LaValle, Planning Algorithms, Cambridge University Press, 2006
-	\bibitem{robodyn} T. Buschmann, Skript zur Vorlesung: Roboterdynamik SS14, Lehrstuhl für Angewandte Mechanik, TU München, 2014
-	\bibitem{chung} K. Chung, Wenping Wang, Quick Collision Detection of Polytopes in Virtual Environments, Proceedings of the ACM Symposium on Virtual Reality Software and Technology (VRST 96), Mark Green (ed.), 1996
-	\bibitem{ericson} C. Ericson, Real-Time Collision Detection, Elsevier, 2005
+	\bibitem{prmlec} D. Burschka, Lecture Robot Motion Planning, \url{http://robvis01.informatik.tu-muenchen.de/courses/wegtraj/index.html}
+	\bibitem{prm1} H. Choset, K. Lynch, S. Hutchinson, G. Kantor, W. Burgard, L. Kavraki and S. Thrun, Principles of Robot Motion: Theory, Algorithms, and Implementation, MIT Press 2005
+	\bibitem{prm2} S. M. LaValle, Planning Algorithms, Cambridge University Press 2006
+	\bibitem{robodyn} T. Buschmann, Skript zur Vorlesung: Roboterdynamik SS14, Lehrstuhl für Angewandte Mechanik, TU München 2014
+	\bibitem{chung} K. Chung, Wenping Wang, Quick Collision Detection of Polytopes in Virtual Environments, Proceedings of the ACM Symposium on Virtual Reality Software and Technology (VRST 96), Mark Green (ed.) 1996
+	\bibitem{ericson} C. Ericson, Real-Time Collision Detection, MK 2005
+	\bibitem{cuda} Nvidia Corporation, Cuda Programming Guide, 2015, \url{http://docs.nvidia.com/cuda/pdf/CUDA_C_Programming_Guide.pdf}
+	\bibitem{cuda2} D. B. Kirk, W. W. Hwu, Programming Massively Parallel Processors, MK 2010
+	\bibitem{c++} Pitt-Francis, Guide to Scientific Computing in C++, Springer 2012
+	\bibitem{mpi} W. Gropp, Using MPI: Portable Parallel Programming with the Message-Passing Interface, MIT Press 2014
 \end{thebibliography}
 
 \end{document}

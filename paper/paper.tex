@@ -81,8 +81,8 @@
 
 \usepackage{hyperref}
 
-
-\title{ Parallelization of the Probabilistic Roadmap Method with GPU Acceleration}
+\journalname{Journal of Intelligent \& Robotic Systems}
+\title{ Parallel Algorithms for the Probabilistic Roadmap Method for Robotic Motion Planning with GPU Acceleration}
 %\subtitle{High Performance Computing Project}
 %\date{}
 \author{Manuel Demmeler \and Manfred Liebmann}
@@ -92,23 +92,28 @@
 \email{manuel.demmeler@yahoo.de}
 \and
 Manfred Liebmann
-\at todo ... \\  %TODO: which adresses to use?
-\email{todo}
+\at Technische Universität München\\
+%Chair of Optimal Control,
+Center for Mathematical Sciences, M17 \\
+Boltzmannstraße 3,
+85748 Garching by Munich \\  %TODO: which adresses to use?
+\email{manfred.liebmann@tum.de}
 }
-
 
 
 
 \begin{document}
 \maketitle
 
-\section{Abstract}
-In trajectory optimization with obstacles, it is often necessary to provide feasible initial trajectories. 
-For example in robot motion planning, where the dimensions of the underlying spaces are rather high, this can be expensive. A further problem is that because of the transformation from work into configuration space, the obstacles are often no longer given in a closed form. An efficient approximative solution for this is using probabilistic roadmaps (PRMs).
-
+\begin{abstract}
+In trajectory optimization with obstacles for robot motion planning, it is often necessary to provide feasible initial trajectories. 
+For example in robot motion planning, where the dimensions of the underlying spaces are rather high, this can be expensive. 
+A further problem is that because of the transformation from work into configuration space, the obstacles are often no longer given in a closed form. 
+An efficient approximative solution for this problem is the probabilistic roadmap method (PRM).
 In this paper, a parallelized version of the PRM method has been developed in general.
-A robotics application then was implemented as an special case of this with GPU support.
-
+A robotics application then was implemented as a special case of this with GPU support.
+\keywords{probabilistic roadmap method \and robot motion planning \and parallel algorithms \and GPU acceleration}
+\end{abstract}
 
 \section{Probabilistic Roadmap Method}
 \subsection{Problem Statement and the Sequential PRM Method}\label{algintro}

@@ -263,8 +263,9 @@ To apply the probabilistic roadmap algorithm, we express this setting by the ind
 	I(q)=
 	\begin{cases}
 		0,	& \text{ for no collision of any polytope pair} \\
-		1,	& \text{ if at least one collision occurs },
+		1,	& \text{ if at least one collision occurs }
 	\end{cases}
+	\; .
 \end{equation}
 
 The indicator function is implemented in a vectorized form in a CUDA kernel, which means that, given a set of states $q^1,..,q^M$, the indicator function is evaluated for each state by one CUDA thread. 
@@ -296,7 +297,7 @@ For the exact calculations, see \cite{robodyn}.
 
 \subsection{2D and 3D Geometry Library}
 
-For the implementation of the kinematics and later the collision algorithm, a geometry library was written, based on the CUDA datatypes float2 for 2D vectors and float4 for 3D vectors.
+For the implementation of the kinematics and later the collision algorithm, a geometry library was written, based on the CUDA datatypes \texttt{float2} for 2D vectors and \texttt{float4} for 3D vectors.
 To guarantee aligned access on the GPU, float4 is used instead of float3. 
 Furthermore, as the precision of the geometric calculations is numerically not very critical, the usage of single precision instead of double precision did not cause problems.
 The library contains host and device inline functions for common vector operations as shown in code \ref{code1}.
@@ -450,9 +451,7 @@ __global__ void kernel_indicator2(const Robot<ndof>* __restrict__ robot,
 Code \ref{code4} exemplarily shows the class definition of the robot configuration space.
 The geometry and robot data does not change during runtime
 and is load\-ed once at the beginning and copied to the GPU by the 
-\footnotesize
-init
-\normalsize 
+\texttt{init}
 function.
 The indicator function gets as input a list of start and end points $q_{start}^j, q_{end}^j, j=0,...,N$ and checks now for each pair, if the indicator function is always 0 on the line in between.
 \begin{equation}
@@ -475,7 +474,7 @@ CPU and communication time is also saved by computing interpolating points direc
 Algorithms \ref{host} and \ref{kernel} show in pseudo code, how the work is split between host and device.
 
 \begin{algorithm}\label{host}
-	\KwData{qs, qe, N, offset}
+	\KwData{$q_s$, $q_e$, N, $N_{buf}$}
 	\KwResult{res}
 	compute distances $d_j = \abs{q_{end}^j - q_{start}^j}$ \;
 	$\mathrm{testnum[j]} = d_j/{\Delta q}$: number of threads for each line \;
@@ -486,7 +485,7 @@ Algorithms \ref{host} and \ref{kernel} show in pseudo code, how the work is spli
 \end{algorithm}
 
 \begin{algorithm}\label{kernel}
-	\KwData{arrays qs, qe, testpos, testnum and threadindex}
+	\KwData{arrays $q_s$, $q_e$, testpos, testnum and threadindex}
 	\KwResult{res}
 	compute associated edge number $j$, defined by $testpos[j] \leq threadindex \le testpos[j]+testnum[j]$ \;
 	$c = (\mathrm{threadindex - testpos[j]}) / (\mathrm{testnum[k]}-1) $ \;

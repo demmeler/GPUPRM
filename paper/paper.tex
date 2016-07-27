@@ -357,7 +357,7 @@ struct polytope4{
 \end{lstlisting}
 \normalsize
 
-This means, that for $i=0,...,n-1$ the vertices with indices $\mathrm{ dest[dsp[i]],..., dest[dsp[i]+cnt[i]-1] }$ are the ones connected to vertex $i$ by an edge.
+This means, that for $i=0,...,n-1$ the vertices with indices \texttt{ dest[dsp[i]],...,dest[dsp[i]+cnt[i]-1] } are the ones connected to vertex $i$ by an edge.
 The polytopes are given by the user as convex hull of a list of vertices. However, to determine the edge graph only from the vertices is a nontrivial task, which is done by Matlab using builtin high level functions.
 
 
@@ -465,8 +465,8 @@ This computation is done by calling the kernel in Code \ref{code5}.
 The start and end points are stored in structures of arrays defined by
 \begin{equation}
 \begin{aligned}
-	q_{start}^j &= (q_s^j , q_s^{j+N_{buf}} , ... , q_s^{j+(d-1)*N_{buf}})^T\\
-	q_{end}^j &= (q_e^j , q_e^{j+N_{buf}} , ... , q_e^{j+(d-1)*N_{buf}})^T
+	q_{start}^j &\defgl (q_s^j , q_s^{j+N_{buf}} , ... , q_s^{j+(d-1)*N_{buf}})^T\\
+	q_{end}^j &\defgl (q_e^j , q_e^{j+N_{buf}} , ... , q_e^{j+(d-1)*N_{buf}})^T
 \end{aligned}
 \end{equation}
 As the PRM solver only needs to know, which start and end points can be connected by a line, the kernel delivers exactly this minimal necessary information. 
@@ -480,7 +480,7 @@ Algorithms \ref{host} and \ref{kernel} show in pseudo code, how the work is spli
 	$\mathrm{testnum[j]} = d_j/{\Delta q}$: number of threads for each line \;
 	$\mathrm{testpos[j]} = \mathrm{thread\ displacements}$ \;
 	reset res \;
-	call kernel with $\sum_{j=0}^N \mathrm{testnum[j]}$ threads\;
+	call kernel with $\sum_{j=0}^N \mathrm{testnum[j]}$ threads \;
 	\caption{Host indicator function}
 \end{algorithm}
 
@@ -490,8 +490,8 @@ Algorithms \ref{host} and \ref{kernel} show in pseudo code, how the work is spli
 	compute associated edge number $j$, defined by $testpos[j] \leq threadindex \le testpos[j]+testnum[j]$ \;
 	$c = (\mathrm{threadindex - testpos[j]}) / (\mathrm{testnum[k]}-1) $ \;
 	$q=c q_{start}^j + (1-c) q_{end}^j $ \;
-	calculate robot kinematics $T_0(q), ..., T_d(q) $\;
-	$\mathrm{res\_tmp} = 0; $ \;
+	calculate robot kinematics $T_0(q), ..., T_d(q) $ \;
+	$\mathrm{res\_tmp} = 0$ \;
 	\For{all registered pairs pairs of polytopes $P, Q$}{
 		$\mathrm{res\_tmp}=\mathrm{separating\_vector\_algorithm}(P, T_{i_P}, Q, T_{i_Q})$ \;
 		\If{$\mathrm{res\_tmp} \neq 0$}{

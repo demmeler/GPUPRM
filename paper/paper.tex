@@ -87,17 +87,20 @@
 %\date{}
 \author{Manuel Demmeler \and Manfred Liebmann}
 
-\institute{Manuel Demmeler
-\at todo ... \\ 
-\email{manuel.demmeler@yahoo.de}
-\and
-Manfred Liebmann
+\institute{Manuel Demmeler, Manfred Liebmann\\ 
+%\at Technische Universität München\\
+%Center for Mathematical Sciences, M17 \\
+%Boltzmannstraße 3,
+%85748 Garching by Munich \\ 
+%\email{manuel.demmeler@yahoo.de}
+%\and
+%Manfred Liebmann
 \at Technische Universität München\\
 %Chair of Optimal Control,
 Center for Mathematical Sciences, M17 \\
 Boltzmannstraße 3,
-85748 Garching by Munich \\  %TODO: which adresses to use?
-\email{manfred.liebmann@tum.de}
+85748 Garching by Munich \\ 
+\email{manfred.liebmann@tum.de, manuel.demmeler@yahoo.de}
 }
 
 
@@ -106,12 +109,21 @@ Boltzmannstraße 3,
 \maketitle
 
 \begin{abstract}
+%
 In trajectory optimization with obstacles for robot motion planning, it is often necessary to provide feasible initial trajectories. 
-For example in robot motion planning, where the dimensions of the underlying spaces are rather high, this can be expensive. 
-A further problem is that because of the transformation from work into configuration space, the obstacles are often no longer given in a closed form. 
-An efficient approximative solution for this problem is the probabilistic roadmap method (PRM).
-In this paper, a parallelized version of the PRM method has been developed in general.
-A robotics application then was implemented as a special case of this with GPU support.
+A common algorithm is the probabilistic roadmap method (PRM), which gives efficient approximative solutions and scales well with high dimensions of the underlying spaces.
+%
+%As the dimensions of the underlying spaces are rather high, this can be expensive. 
+%A further problem is that because of the transformation from work into configuration space, the obstacles are often no longer given in a closed form. 
+%An efficient approximative solution for this problem is the probabilistic roadmap method (PRM).
+%In this paper, a parallelized version of the PRM method has been developed in general.
+%A robotics application then was implemented as a special case of this with GPU support.
+%
+In this paper, the PRM method has been parallelized.
+A first level of parallelization is achieved by GPU support.
+A CUDA kernel has been implemented that runs robot kinematics calculations and collision detection for different robot configurations in parallel.
+For a further level of parallelization, different approaches for the usage of multiple GPUs have been developed and benchmarked.
+%
 \keywords{probabilistic roadmap method \and robot motion planning \and parallel algorithms \and GPU acceleration}
 \end{abstract}
 
@@ -178,7 +190,7 @@ Theory about success probabilities and convergence results can be found in \cite
 
 \begin{figure*}
     \centering
-    \includegraphics[width=0.8\textwidth]{configspacetrafo.png}
+    \includegraphics[width=0.7\textwidth]{configspacetrafo.png}
     \caption{Example from \cite{prmlec} for an indicator function in robotics. 
     		The given obstacles on the left are transformed 
 		into occupied areas of the configuration space on the right.}
@@ -880,7 +892,7 @@ only)		& 16			& 9936		& 10038198	& 1012	\\
 
 
 As the indicator function has also been implemented on the CPU, all versions could be run without GPU.
-The timing results for the last one are shown in the last section of table \ref{resulttable}.
+The timing results for the CPU version are shown in the last section of table \ref{resulttable}.
 One can see an improvement of up to a factor around 10 between the CPU and GPU benchmarks (based on version 3).
 However, the robot code is not especially optimized for the CPU version, as the GPU kernel has been rewritten with an for loop
 reusing all device functions for collision detection.

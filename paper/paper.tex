@@ -266,7 +266,7 @@ Before that, chapter \ref{indicator} gives more details about the robotics indic
 
 The probabilistic roadmap algorithm is applied  to create collision-free trajectories of a robot arm.
 For a robot with given joint angles \(q_i\) one can calculate straightforward all positions and orientations  of the single parts of the robot.
-For this, coordinate frames according to the Denavit-Hartenberg (DH) \cite{robodyn} convention are used.
+For this, coordinate frames according to the Denavit-Hartenberg (DH) \cite{robodyn}, \cite{robodynbuch} convention are used.
 The coordinate frames of reference of the single parts are described by transformation matrices 
 $T_i \in \R^{4 \times 4}, i=1,...,d$, which transform points from the body frame of reference into the world frame of reference. They depend on the state $q=(q_1,...,q_d)^T$ of the robot and on the geometry of the joint angles given by the DH parameters of the robot. 
 
@@ -309,7 +309,7 @@ where $R_x, R_z$ are rotations aro\-und and $T_x, T_z$ are translations along th
 With this and $T_0=I$, all transformations $T_i$ are determined.
 
 One can show, that by an proper choice of the body frames, every robot with rotational or prismatic joints can be described by such a set of DH parameters, i.e. there exists a set of parameters, such that the above definition leads to the correct transformations for this robot.
-For the exact calculations, see \cite{robodyn}.
+For the exact calculations, see \cite{robodyn}, \cite{robodynbuch}.
 
 
 \subsection{2D and 3D Geometry Library}
@@ -907,6 +907,7 @@ The code is available on Github, \cite{githubcode}.
 	\bibitem{prm1} H. Choset, K. Lynch, S. Hutchinson, G. Kantor, W. Burgard, L. Kavraki and S. Thrun, Principles of Robot Motion: Theory, Algorithms, and Implementation, MIT Press 2005
 	\bibitem{prm2} S. M. LaValle, Planning Algorithms, Cambridge University Press 2006
 	\bibitem{robodyn} T. Buschmann, Skript zur Vorlesung: Roboterdynamik SS14, Lehrstuhl für Angewandte Mechanik, TU München 2014
+	\bibitem{robodynbuch} F. Pfeiffer, E. Reithmeier, Roboterdynamik, B.G. Teubner Verlag 1987
 	\bibitem{chung} K. Chung, Wenping Wang, Quick Collision Detection of Polytopes in Virtual Environments, Proceedings of the ACM Symposium on Virtual Reality Software and Technology (VRST 96), Mark Green (ed.) 1996
 	\bibitem{ericson} C. Ericson, Real-Time Collision Detection, MK 2005
 	\bibitem{cuda} Nvidia Corporation, Cuda Programming Guide, 2015, \url{http://docs.nvidia.com/cuda/pdf/CUDA_C_Programming_Guide.pdf}

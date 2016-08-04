@@ -88,19 +88,19 @@
 \author{Manuel Demmeler \and Manfred Liebmann}
 
 \institute{Manuel Demmeler, Manfred Liebmann\\ 
-%\at Technische UniversitŠt MŸnchen\\
+%\at Technische UniversitÂŠt MÂŸnchen\\
 %Center for Mathematical Sciences, M17 \\
-%Boltzmannstra§e 3,
+%BoltzmannstraÂ§e 3,
 %85748 Garching by Munich \\ 
 %\email{manuel.demmeler@yahoo.de}
 %\and
 %Manfred Liebmann
-\at Technische UniversitŠt MŸnchen\\
+\at Technische Universit\"at M\"unchen\\
 %Chair of Optimal Control,
 Center for Mathematical Sciences, M17 \\
-Boltzmannstra§e 3,
+Boltzmannstra{\ss}e 3,
 85748 Garching by Munich \\ 
-\email{manfred.liebmann@tum.de, manuel.demmeler@yahoo.de}
+\email{manuel.demmeler@tum.de, manfred.liebmann@tum.de}
 }
 
 
@@ -110,8 +110,8 @@ Boltzmannstra§e 3,
 
 \begin{abstract}
 %
-In trajectory optimization with obstacles for robot motion planning, it is often necessary to provide feasible initial trajectories. 
-A common algorithm is the probabilistic roadmap method (PRM), which gives efficient approximative solutions and scales well with high dimensions of the underlying spaces.
+In trajectory optimization with obstacles for robot motion planning it is often necessary to provide feasible initial trajectories. 
+A common algorithm to solve this problem is the probabilistic roadmap method (PRM), which gives efficient approximative solutions and scales well with the high dimensional spaces underlying the problem.
 %
 %As the dimensions of the underlying spaces are rather high, this can be expensive. 
 %A further problem is that because of the transformation from work into configuration space, the obstacles are often no longer given in a closed form. 
@@ -119,10 +119,11 @@ A common algorithm is the probabilistic roadmap method (PRM), which gives effici
 %In this paper, a parallelized version of the PRM method has been developed in general.
 %A robotics application then was implemented as a special case of this with GPU support.
 %
-In this paper, the PRM method has been parallelized.
-A first level of parallelization is achieved by GPU support.
-A CUDA kernel has been implemented that runs robot kinematics calculations and collision detection for different robot configurations in parallel.
-For a further level of parallelization, different approaches for the usage of multiple GPUs have been developed and benchmarked.
+In this paper, the parallelization of the PRM method specifically for graphics processing units (GPUs) is investigated.
+%A first level of parallelization is achieved by GPU support.
+CUDA kernels have been implemented to run the robot kinematics calculations and collision detection for different robot configurations in parallel.
+Three different parallelization approaches to improve the performance for multi GPU configurations are analyzed and the resulting benchmarks are presented.
+%For a further level of parallelization, different approaches for the usage of multiple GPUs have been developed and benchmarked.
 %
 \keywords{probabilistic roadmap method \and robot motion planning \and parallel algorithms \and GPU acceleration}
 \end{abstract}
@@ -906,7 +907,7 @@ The code is available on Github, \cite{githubcode}.
 	\bibitem{prmlec} D. Burschka, Lecture Robot Motion Planning, \url{http://robvis01.informatik.tu-muenchen.de/courses/wegtraj/index.html}
 	\bibitem{prm1} H. Choset, K. Lynch, S. Hutchinson, G. Kantor, W. Burgard, L. Kavraki and S. Thrun, Principles of Robot Motion: Theory, Algorithms, and Implementation, MIT Press 2005
 	\bibitem{prm2} S. M. LaValle, Planning Algorithms, Cambridge University Press 2006
-	\bibitem{robodyn} T. Buschmann, Skript zur Vorlesung: Roboterdynamik SS14, Lehrstuhl fŸr Angewandte Mechanik, TU MŸnchen 2014
+	\bibitem{robodyn} T. Buschmann, Skript zur Vorlesung: Roboterdynamik SS14, Lehrstuhl f\"ur Angewandte Mechanik, TU M\"unchen 2014
 	\bibitem{robodynbuch} F. Pfeiffer, E. Reithmeier, Roboterdynamik, B.G. Teubner Verlag 1987
 	\bibitem{chung} K. Chung, Wenping Wang, Quick Collision Detection of Polytopes in Virtual Environments, Proceedings of the ACM Symposium on Virtual Reality Software and Technology (VRST 96), Mark Green (ed.) 1996
 	\bibitem{ericson} C. Ericson, Real-Time Collision Detection, MK 2005
